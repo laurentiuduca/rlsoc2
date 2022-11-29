@@ -10,7 +10,7 @@
 //`define ARTYA7
 /**************************************************************************************************/
 //`define VERILATOR
-//`define SIM_MODE
+`define SIM_MODE
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE
@@ -92,7 +92,6 @@ error
 `else
 `define SERIAL_WCNT 13 // 13 for 104MHz, 8 for 64MHz, 9 for 72MHz
 `endif
-`define SKIP_CLK_WIZ_1
 
 //`define STATE
 //`define PC_TRACE
@@ -450,7 +449,7 @@ error
 `define WCSR_MASK1  32'hffff    // ((1 << (CAUSE_STORE_PAGE_FAULT + 1)) - 1;)
 `define WCSR_MASK2  (`MIP_SSIP | `MIP_STIP | `MIP_SEIP)
 `define WCSR_MASK3  (`MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP | `MIP_SEIP)
-`define WCSR_MASK4  (`MIP_SSIP | `MIP_STIP)
+`define WCSR_MASK4  (`MIP_MSIP | `MIP_SSIP | `MIP_STIP) // allow clearing MIP_MSIP
 
 `define MASK_STATUS (`MSTATUS_MASK & ~`MSTATUS_FS)
 
@@ -792,7 +791,7 @@ error
 `define WCSR_MASK1  32'hffff    // ((1 << (CAUSE_STORE_PAGE_FAULT + 1)) - 1;)
 `define WCSR_MASK2  (`MIP_SSIP | `MIP_STIP | `MIP_SEIP)
 `define WCSR_MASK3  (`MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP | `MIP_SEIP)
-`define WCSR_MASK4  (`MIP_SSIP | `MIP_STIP)
+`define WCSR_MASK4  (`MIP_MSIP | `MIP_SSIP | `MIP_STIP) // allow clearing MIP_MSIP
 
 `define MASK_STATUS (`MSTATUS_MASK & ~`MSTATUS_FS)
 

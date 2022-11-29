@@ -518,6 +518,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, r_halt, w_insn_addr, w_data_addr, w_insn_d
     wire [31:0] w_deleg = (r_priv_t <= `PRIV_S) ? ((cause & `CAUSE_INTERRUPT) ? (mideleg >> (cause & 32'h1f))  & 1 :
                                                                                 (medeleg >> (cause & 32'h1f))) & 1 : 0;
 
+    // wfi keeps pc constant
+    wire r_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
+
     always @(posedge CLK) begin /////// update program counter
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
         else if(w_pagefault != ~32'h0) begin  pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
@@ -525,6 +528,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, r_halt, w_insn_addr, w_data_addr, w_insn_d
             if(pending_exception != ~0)   begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
             else begin
                 if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
+		else if(r_executing_wfi)  begin pc <= pc; end
                 else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0) || (r_tkn) || (!r_cinsn));
