@@ -393,16 +393,6 @@ module m_mmu(
     wire [31:0] w_cons_qnum;
     wire [31:0] w_cons_qsel;
 
-    /***********************************           Disk         ***********************************/
-    wire        w_disk_we   = (r_mc_mode != 0) ? (w_mem_we && w_mem_paddr[31:12] == 20'h4000b) :
-                            (w_mem_we && !w_tlb_busy && w_dev == `VIRTIO_BASE_TADDR && w_virt != 0);
-    wire [31:0] w_disk_data;
-    wire [31:0] w_disk_addr = (r_mc_mode != 0) ? w_mem_paddr : {4'b0, w_offset};
-    wire        w_disk_req;
-    wire [31:0] w_disk_qnum;
-    wire [31:0] w_disk_qsel;
-
-
     /***********************************           image        ***********************************/
 //    wire        w_imag_we       = w_mem_we && r_mc_mode != 0 && w_dram_addr[31:28] == 4'h9;
     wire        w_imag_we       = w_mem_we && r_mc_mode != 0 && w_mem_paddr[31:28] == 4'h9;
@@ -413,15 +403,10 @@ module m_mmu(
         case (r_dev)
             `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
             `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
-            `VIRTIO_BASE_TADDR: r_data_data <= (r_virt == 0) ? w_cons_data : w_disk_data;
             default           : r_data_data <= w_dram_odata;
         endcase
     end
     assign w_data_data = r_data_data;
-    /*assign      w_data_data =   (r_dev == `CLINT_BASE_TADDR)    ? r_clint_odata     :
-                                (r_dev == `PLIC_BASE_TADDR)     ? r_plic_odata      :
-                                (r_dev == `VIRTIO_BASE_TADDR)   ?
-                                    ((r_virt == 0) ? w_cons_data : w_disk_data) : w_dram_odata;*/
 
     /***********************************          VirtIO        ***********************************/
     wire        w_key_we;
@@ -476,40 +461,16 @@ integer i;
             end
         end
 `endif
-        else begin
-            case ({w_cons_req, w_disk_req, w_key_req})
-                3'b100: begin
-                    r_mc_mode <= 1;
-                    r_mc_qnum <= w_cons_qnum;
-                    r_mc_qsel <= w_cons_qsel;
-                end
-                3'b010: begin
-                    r_mc_mode <= 2;
-                    r_mc_qnum <= w_disk_qnum;
-                    r_mc_qsel <= w_disk_qsel;
-                end
-                3'b001: begin
-                    r_mc_mode <= 3;
-                    r_mc_qnum <= w_cons_qnum;
-                    r_mc_qsel <= 0;
-                end
-            endcase
-        end
-        /*else if(w_cons_req) begin
+        else if(w_cons_req) begin
             r_mc_mode <= 1;
             r_mc_qnum <= w_cons_qnum;
             r_mc_qsel <= w_cons_qsel;
-        end
-        else if(w_disk_req) begin
-            r_mc_mode <= 2;
-            r_mc_qnum <= w_disk_qnum;
-            r_mc_qsel <= w_disk_qsel;
         end
         else if(w_key_req) begin
             r_mc_mode <= 3;
             r_mc_qnum <= w_cons_qnum;
             r_mc_qsel <= 0;
-        end*/
+        end
         if(r_tohost[31:16]==`CMD_POWER_OFF) begin
             r_mc_done <= 1;
         end
@@ -520,16 +481,16 @@ integer i;
 `ifdef LAUR_SHOW_MC_MODE
     reg [1:0] old_r_mc_mode=1;
     reg [31:0] old_r_tohost=31'hffff;
-    reg [2:0] three=7;
+    reg [2:0] two=3;
     reg old_r_mc_done=0;
     always @(posedge CLK) begin
-         if((old_r_mc_mode != r_mc_mode) || (three != {w_cons_req, w_disk_req, w_key_req})
+         if((old_r_mc_mode != r_mc_mode) || (two != {w_cons_req, w_key_req})
 		 || (r_mc_done != old_r_mc_done))
 	 begin
-	     $write("r_mc_mode=%x r_tohost[31:16]=%x {w_cons_req, w_disk_req, w_key_req}=%x r_mc_done=%x\n", 
-		     r_mc_mode, r_tohost[31:16], {w_cons_req, w_disk_req, w_key_req}, r_mc_done);
+	     $write("r_mc_mode=%x r_tohost[31:16]=%x {w_cons_req, w_key_req}=%x r_mc_done=%x\n", 
+		     r_mc_mode, r_tohost[31:16], {w_cons_req, w_key_req}, r_mc_done);
 	     old_r_mc_mode <= r_mc_mode;
-	     three <= {w_cons_req, w_disk_req, w_key_req};
+	     two <= {w_cons_req, w_key_req};
 	     old_r_mc_done <= r_mc_done;
 	 end
     end
@@ -561,26 +522,17 @@ integer i;
                 endcase
             end
             20'h4000a: r_mc_arg <= w_cons_data;
-            20'h4000b: r_mc_arg <= w_disk_data;
             20'h4000c: r_mc_arg <= cons_fifo[r_consf_head];
             default:   r_mc_arg <= w_dram_odata;
         endcase
     end
 
     wire [31:0] w_mc_arg = r_mc_arg;
-    /*wire [31:0] w_mc_arg =  (w_mem_paddr == `MODE_ADDR)        ? r_mc_mode                  :
-                            (w_mem_paddr == `QNUM_ADDR)        ? r_mc_qnum                  :
-                            (w_mem_paddr == `QSEL_ADDR)        ? r_mc_qsel                  :
-                            (w_mem_paddr[31:12] == `CONQ_ADDR) ? w_cons_data                :
-                            (w_mem_paddr[31:12] == `DISQ_ADDR) ? w_disk_data                : 
-                            (w_mem_paddr == `KEYQ_ADDR)        ? cons_fifo[r_consf_head]    :
-                            w_dram_odata;*/
 
-    wire [31:0] w_cons_irq, w_disk_irq;
-    wire        w_cons_irq_oe, w_disk_irq_oe;
-    wire        w_isdisk        = w_virt != 0;
-    wire [31:0] w_virt_irq      = (w_key_req) ? w_cons_irq : (w_isdisk) ? w_disk_irq : w_cons_irq;
-    wire        w_virt_irq_oe   = w_cons_irq_oe | w_disk_irq_oe | w_key_req;
+    wire [31:0] w_cons_irq;
+    wire        w_cons_irq_oe;
+    wire [31:0] w_virt_irq      = w_cons_irq;
+    wire        w_virt_irq_oe   = w_cons_irq_oe | w_key_req;
 
     m_RVuc mc(CLK, (r_mc_mode!=0), w_dram_busy, w_mc_addr, w_mc_arg, w_mc_wdata,
                 w_mc_we, w_mc_ctrl, w_mc_aces);
@@ -588,10 +540,6 @@ integer i;
 
     m_console   console(CLK, 1'b1, w_cons_we, w_cons_addr, w_mem_wdata, plic_pending_irq, w_cons_data,
                         w_cons_irq, w_cons_irq_oe, r_mc_mode, w_cons_req, w_cons_qnum, w_cons_qsel, w_key_req);
-    
-    m_disk      disk(CLK, 1'b1, w_disk_we, w_disk_addr, w_mem_wdata, plic_pending_irq, w_disk_data,
-                        w_disk_irq, w_disk_irq_oe, r_mc_mode, w_disk_req, w_disk_qnum, w_disk_qsel);
-
 
     /***********************************           PLIC         ***********************************/
     wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
@@ -648,8 +596,6 @@ integer i;
                     (w_isread && w_tlb_data_r_oe)  ||
                     (w_iswrite && w_tlb_data_w_oe))         ? 0 : 1;*/
     
-    /*wire w_mc_busy =    (r_mc_done)                                                 ? 0 :
-                        (r_mc_mode != 0 || w_cons_req || w_key_req || w_disk_req)   ? 1 : 0;*/
     wire w_mc_busy =    (r_mc_mode != 0) ? 1 : 0;
 
 
