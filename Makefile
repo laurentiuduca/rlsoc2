@@ -29,7 +29,7 @@ VERIFLAGS += --public --top-module m_topsim --clk CLK
 VERIFLAGS += --x-assign 0 --x-initial 0
 VERIFLAGS += --no-threads -O2
 #VERIFLAGS += --threads 3 -DVL_THREADED -O2
-VERIFLAGS += -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-COMBDLY
+VERIFLAGS += -Wno-WIDTH -Wno-CASEINCOMPLETE -Wno-COMBDLY -Wno-LATCH
 VERIFLAGS += --exe sim.cpp --cc
 
 VERIFLAGS2=${VERIFLAGS}
