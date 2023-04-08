@@ -192,6 +192,9 @@ error
 `define CLINT_BASE_TADDR 4'h6
 `define CLINT_SIZE      32'hc0000
 
+`define HVC_BASE_ADDR   32'h70000000
+`define HVC_BASE_TADDR  4'h7
+
 /**** Micro Controller                                                                         ****/
 /**************************************************************************************************/
 `define MC_MEM_SIZE 8*1024    // 32KB

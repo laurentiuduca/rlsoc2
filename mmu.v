@@ -100,6 +100,7 @@ module m_mmu(
     // Device checker
     reg   [3:0] r_dev               = 0;
     reg   [3:0] r_virt              = 0;
+    reg   [31:0] r_mem_paddr        = 0;
 
     // TO HOST
     reg  [31:0] r_tohost            = 0;
@@ -125,6 +126,7 @@ module m_mmu(
     reg   [4:0] r_consf_cnts        = 0;  // Note!!
     reg         r_consf_en          = 0;
     reg   [7:0] cons_fifo [0:15];
+    reg [7:0] r_char_value=0;
 `ifdef SIM_MODE
     wire w_file_we;
     read_file rf(.clk(CLK), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER + 64'd10000000));
@@ -403,6 +405,13 @@ module m_mmu(
         case (r_dev)
             `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
             `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
+            `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
+                                    $display("HVC_BASE_ADDR %x", r_consf_cnts);
+                                    r_data_data <= {24'h0, 3'h0, r_consf_cnts};
+                                end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
+                                    $display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
+                                    r_data_data <= {24'h0, r_char_value};
+                                end
             default           : r_data_data <= w_dram_odata;
         endcase
     end
@@ -423,22 +432,17 @@ module m_mmu(
 `ifdef SIM_MODE
 integer i;
 `endif
-
+reg r_read_a_char=0;
     always@(posedge CLK) begin
-        if(r_mc_done) begin
-	    //$write("r_mc_done=%d\n", r_mc_done);
-            r_mc_mode <= 0;
-            r_mc_done <= 0;
-            if(r_mc_mode==3) begin
-//`ifdef SIM_MODE
-//                r_consf_en <= 1;
-//                r_consf_head <= (r_consf_head < 8) ? r_consf_head + 1 : r_consf_head;
-//`else
+        if(r_mem_paddr != (`HVC_BASE_ADDR + 4))
+            r_read_a_char <= 0;
+        else if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts) begin
+                $display("HVC_BASE_ADDR+4 r_consf_cnts %x", r_consf_cnts);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
                 r_consf_head <= r_consf_head + 1;
                 r_consf_cnts <= r_consf_cnts - 1;
-//`endif
-            end
+                r_read_a_char <= 1;
+                r_char_value <= cons_fifo[r_consf_head];
         end
 `ifdef SIM_MODE
 	else if(w_file_we) begin
@@ -453,6 +457,7 @@ integer i;
 	end
 `else
         else if(r_key_we) begin
+            $display("r_key_we  r_consf_cnts %x", r_consf_cnts);
             if(r_consf_cnts < 16) begin
                 cons_fifo[r_consf_tail] <= r_key_data;
                 r_consf_tail            <= r_consf_tail + 1;
@@ -461,40 +466,7 @@ integer i;
             end
         end
 `endif
-        else if(w_cons_req) begin
-            r_mc_mode <= 1;
-            r_mc_qnum <= w_cons_qnum;
-            r_mc_qsel <= w_cons_qsel;
-        end
-        else if(w_key_req) begin
-            r_mc_mode <= 3;
-            r_mc_qnum <= w_cons_qnum;
-            r_mc_qsel <= 0;
-        end
-        if(r_tohost[31:16]==`CMD_POWER_OFF) begin
-            r_mc_done <= 1;
-        end
-
     end
-
-//`define LAUR_SHOW_MC_MODE 1
-`ifdef LAUR_SHOW_MC_MODE
-    reg [1:0] old_r_mc_mode=1;
-    reg [31:0] old_r_tohost=31'hffff;
-    reg [2:0] two=3;
-    reg old_r_mc_done=0;
-    always @(posedge CLK) begin
-         if((old_r_mc_mode != r_mc_mode) || (two != {w_cons_req, w_key_req})
-		 || (r_mc_done != old_r_mc_done))
-	 begin
-	     $write("r_mc_mode=%x r_tohost[31:16]=%x {w_cons_req, w_key_req}=%x r_mc_done=%x\n", 
-		     r_mc_mode, r_tohost[31:16], {w_cons_req, w_key_req}, r_mc_done);
-	     old_r_mc_mode <= r_mc_mode;
-	     two <= {w_cons_req, w_key_req};
-	     old_r_mc_done <= r_mc_done;
-	 end
-    end
-`endif
 
 `define LAUR_WRITE_TIME
 `ifdef LAUR_WRITE_TIME
@@ -512,34 +484,21 @@ integer i;
 `endif
 
     reg  [31:0] r_mc_arg = 0;
-    always@(*) begin
-        case (w_mem_paddr[31:12])
-            20'h40009: begin
-                case (w_mem_paddr[3:0])
-                    4: r_mc_arg <= r_mc_qnum;
-                    8: r_mc_arg <= r_mc_qsel;
-                    default: r_mc_arg <= r_mc_mode;
-                endcase
-            end
-            20'h4000a: r_mc_arg <= w_cons_data;
-            20'h4000c: r_mc_arg <= cons_fifo[r_consf_head];
-            default:   r_mc_arg <= w_dram_odata;
-        endcase
-    end
-
     wire [31:0] w_mc_arg = r_mc_arg;
 
-    wire [31:0] w_cons_irq;
-    wire        w_cons_irq_oe;
+    wire [31:0] w_cons_irq=0;
+    wire        w_cons_irq_oe=0;
     wire [31:0] w_virt_irq      = w_cons_irq;
     wire        w_virt_irq_oe   = w_cons_irq_oe | w_key_req;
 
+`ifdef laur0
     m_RVuc mc(CLK, (r_mc_mode!=0), w_dram_busy, w_mc_addr, w_mc_arg, w_mc_wdata,
                 w_mc_we, w_mc_ctrl, w_mc_aces);
 
 
     m_console   console(CLK, 1'b1, w_cons_we, w_cons_addr, w_mem_wdata, plic_pending_irq, w_cons_data,
                         w_cons_irq, w_cons_irq_oe, r_mc_mode, w_cons_req, w_cons_qnum, w_cons_qsel, w_key_req);
+`endif
 
     /***********************************           PLIC         ***********************************/
     wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
@@ -613,6 +572,7 @@ integer i;
     always@(posedge CLK) begin
         r_dev   <= w_dev;
         r_virt  <= w_virt;
+        r_mem_paddr <= w_mem_paddr;
 
         /*********************************         TOHOST         *********************************/
         // OUTPUT CHAR
