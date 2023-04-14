@@ -121,9 +121,10 @@ module m_mmu(
     reg  [31:0] r_mc_done           = 0;
 
     /***** Keyboard Input *************************************************************************/
-    reg   [3:0] r_consf_head        = 0;  // Note!!
-    reg   [3:0] r_consf_tail        = 0;  // Note!!
-    reg   [4:0] r_consf_cnts        = 0;  // Note!!
+    `define KEYBOARD_QUEUE_SIZE 32
+    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
+    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
+    reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
     reg         r_consf_en          = 0;
     reg   [7:0] cons_fifo [0:15];
     reg [7:0] r_char_value=0;
@@ -407,7 +408,7 @@ module m_mmu(
             `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
             `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
                                     $display("HVC_BASE_ADDR %x", r_consf_cnts);
-                                    r_data_data <= {24'h0, 3'h0, r_consf_cnts};
+                                    r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts};
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     $display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
                                     r_data_data <= {24'h0, r_char_value};
@@ -458,7 +459,7 @@ reg r_read_a_char=0;
 `else
         else if(r_key_we) begin
             $display("r_key_we  r_consf_cnts %x", r_consf_cnts);
-            if(r_consf_cnts < 16) begin
+            if(r_consf_cnts < `KEYBOARD_QUEUE_SIZE) begin
                 cons_fifo[r_consf_tail] <= r_key_data;
                 r_consf_tail            <= r_consf_tail + 1;
                 r_consf_cnts            <= r_consf_cnts + 1;
