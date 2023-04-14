@@ -62,7 +62,7 @@ always @(posedge clk) begin
 
     // wait for the user to login as root
     if((w_mtime >= min_time) && !boot_done) begin
-	$display("file, w_mtime=%d consider boot_done", w_mtime);
+	$display("read_file.v, w_mtime=%d consider boot_done", w_mtime);
     	boot_done <= 1;
     end
     if(wait_delay >= `READ_WAIT_DELAY)

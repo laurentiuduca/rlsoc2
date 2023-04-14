@@ -407,10 +407,10 @@ module m_mmu(
             `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
             `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
             `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
-                                    $display("HVC_BASE_ADDR %x", r_consf_cnts);
+                                    //$display("HVC_BASE_ADDR %x", r_consf_cnts);
                                     r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts};
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
-                                    $display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
+                                    //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
                                     r_data_data <= {24'h0, r_char_value};
                                 end
             default           : r_data_data <= w_dram_odata;
@@ -436,13 +436,15 @@ integer i;
 reg r_read_a_char=0;
     always@(posedge CLK) begin
         if(r_mem_paddr != (`HVC_BASE_ADDR + 4))
-            r_read_a_char <= 0;
-        else if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts) begin
+            	r_read_a_char <= 0;
+        else 
+	if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts)
+	    	r_read_a_char <= 1;
+        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts) begin
                 $display("HVC_BASE_ADDR+4 r_consf_cnts %x", r_consf_cnts);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
                 r_consf_head <= r_consf_head + 1;
                 r_consf_cnts <= r_consf_cnts - 1;
-                r_read_a_char <= 1;
                 r_char_value <= cons_fifo[r_consf_head];
         end
 `ifdef SIM_MODE
@@ -450,11 +452,13 @@ reg r_read_a_char=0;
 		$display("\nw_file_we\n");
 		if(r_consf_cnts != 0)
 			$display("warning: w_file_we and r_consf_cnts = %d with r_consf_en=%d", r_consf_cnts, r_consf_en);
-		for(i = 0; i < rf.n; i++)
-			cons_fifo[r_consf_tail+i] = rf.fifo[i];
-		r_consf_tail <= r_consf_tail + rf.n;
-		r_consf_cnts <= rf.n;
-		r_consf_en <= 1;
+		else begin
+			for(i = 0; i < rf.n; i++)
+				cons_fifo[r_consf_tail+i] = rf.fifo[i];
+			r_consf_tail <= r_consf_tail + rf.n;
+			r_consf_cnts <= rf.n;
+			r_consf_en <= 1;
+		end
 	end
 `else
         else if(r_key_we) begin
@@ -477,8 +481,6 @@ reg r_read_a_char=0;
 		old_w_mtime = w_mtime;
 		if(w_mtime % 32'd300000 == 32'd0) begin
 			$write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
-			if(w_mtime >= 32'd150000000)
-				$finish();
 		end
 	    end
     end
