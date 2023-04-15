@@ -134,9 +134,14 @@ module m_mmu(
 `endif
 
 `ifdef SIM_MODE
-`define LAUR_EN_CONSOLE_INPUT
-`ifdef LAUR_EN_CONSOLE_INPUT
     initial begin
+`define LAUR_EMPTY_CONSOLE_BUFFER
+`ifdef LAUR_EMPTY_CONSOLE_BUFFER
+	r_consf_en = 0;
+	r_consf_head = 0;
+	r_consf_tail = 0;
+        r_consf_cnts = 0;
+`else
         r_consf_en = 1;
         cons_fifo[0] = 8'h72;  // "r"
         cons_fifo[1] = 8'h6f;  // "o"
@@ -144,20 +149,10 @@ module m_mmu(
         cons_fifo[3] = 8'h74;  // "t"
         cons_fifo[4] = 8'hd;   // "(CR)"
         cons_fifo[5] = 8'hd;   // "(CR)"
-`ifdef laur0
-        cons_fifo[6] = 8'h74;  // "t"
-        cons_fifo[7] = 8'h6f;  // "o"
-        cons_fifo[8] = 8'h70;  // "p"
-        cons_fifo[9] = 8'hd;   // "(CR)"
-        r_consf_tail = 10;
-        r_consf_cnts = 10;
-`else
         r_consf_tail = 6;
         r_consf_cnts = 6;
 `endif
-	
     end
-`endif
 `endif
 
     /**********************************************************************************************/
@@ -431,9 +426,9 @@ module m_mmu(
     end
 
 `ifdef SIM_MODE
-integer i;
+    integer i;
 `endif
-reg r_read_a_char=0;
+    reg r_read_a_char=0;
     always@(posedge CLK) begin
         if(r_mem_paddr != (`HVC_BASE_ADDR + 4))
             	r_read_a_char <= 0;
@@ -479,7 +474,7 @@ reg r_read_a_char=0;
     always @(posedge CLK) begin
 	    if(old_w_mtime != w_mtime) begin
 		old_w_mtime = w_mtime;
-		if(w_mtime % 32'd300000 == 32'd0) begin
+		if(w_mtime % 32'd1000000 == 32'd0) begin
 			$write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
 		end
 	    end
