@@ -540,13 +540,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, r_halt, w_insn_addr, w_data_addr, w_insn_d
     
     /***********************************           FIN          ***********************************/
     always@(posedge CLK) begin
-`ifdef REAL_MTIME
         if(RST_X) mtime <= mtime + 1;
-`endif
         if(state == `S_FIN && !w_busy) begin 
-`ifndef REAL_MTIME
-            mtime <= mtime + 1;
-`endif
             if((pending_exception == ~0) ||
                (pending_exception != ~0 && (pending_exception & `CAUSE_INTERRUPT)) ||
                (pending_exception != ~0 && r_op_ECALL)) begin

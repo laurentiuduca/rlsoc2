@@ -27,7 +27,7 @@ error
 `define SKIP_CACHE
 
 `define LINUX
-`define TIMEOUT 900000001
+`define TIMEOUT 64'd30000000001
 //`define DEBUG
 //`define TRACE
 //`define MIDDLE
@@ -74,7 +74,7 @@ error
         `define ENABLE_TIMER 64'd2000000000  // 80000000 * 25
     `endif
 `else
-    `define ENABLE_TIMER 64'd170000000
+    `define ENABLE_TIMER 64'd2500000000
 `endif
 
 /**************************************************************************************************/

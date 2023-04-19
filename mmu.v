@@ -474,7 +474,7 @@ module m_mmu(
     always @(posedge CLK) begin
 	    if(old_w_mtime != w_mtime) begin
 		old_w_mtime = w_mtime;
-		if(w_mtime % 32'd1000000 == 32'd0) begin
+		if(w_mtime % 32'd10000000 == 32'd0) begin
 			$write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
 		end
 	    end
