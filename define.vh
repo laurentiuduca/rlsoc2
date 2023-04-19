@@ -24,7 +24,7 @@ error
 `endif
 //`define RAM_DEBUG
 
-//`define SKIP_CACHE
+`define SKIP_CACHE
 
 `define LINUX
 `define TIMEOUT 900000001
