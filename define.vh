@@ -19,8 +19,8 @@ error
 `endif
 
 `ifdef SIM_MODE
-`define DRAM_SIM
-`define CACHE_DEBUG
+//`define DRAM_SIM
+//`define CACHE_DEBUG
 `endif
 //`define RAM_DEBUG
 

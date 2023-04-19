@@ -1162,8 +1162,10 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                 end
         8'd1: begin // mem read
 		r_odata <= {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]};
-		state <= 10;
-		r_cnt <= 0;
+		//state <= 11; // 10
+		//r_cnt <= 0;
+		state <= 0;
+                r_stall <= 0;
 	end 
 	8'd10: begin
 		if(r_cnt <= `LATENCY)
@@ -1189,8 +1191,10 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                                 mem[r_maddr+2] <= w_data2;
                                 mem[r_maddr+3] <= w_data3;
                 end
-		r_cnt <= 0;
-		state <= 10;
+		//r_cnt <= 0;
+		//state <= 11; // 10
+		state <= 0;
+                r_stall <= 0;
 	end
         endcase
     end
