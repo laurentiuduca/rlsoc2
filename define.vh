@@ -100,8 +100,6 @@ error
 //`define VIRTIO_LOG "init_virtio.txt"
 //`define CONSOLE_MEM "/home/pub/riscv/data_vefify/cons-test-initmem.txt"
 /**************************************************************************************************/
-//`define USE_UART
-//`define SIM_MODE
 /**************************************************************************************************/
 //`ifdef LINUX
 //    `undef HEX_DIR

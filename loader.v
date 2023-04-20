@@ -75,6 +75,10 @@ module UartTx(CLK, RST_X, DATA, WE, TXD, READY);
             TXD       <= 1'b1;
             waitnum   <= 0;
             if( WE )begin
+		$write("%c", DATA);
+`ifndef VERILATOR
+                $fflush();
+`endif
                 READY <= 1'b0;
                 cmd   <= {DATA, 1'b0};
                 cnt   <= 10;

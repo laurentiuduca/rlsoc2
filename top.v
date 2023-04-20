@@ -105,44 +105,6 @@ module m_topsim(CLK, RST_X);
     reg [3:0] r_uart_cycle = 0;
     reg [7:0] r_uart_data  = 0;
 
-`ifdef USE_UART
-    always@(posedge CLK) begin
-        if (w_init_done) begin
-            if (!r_uart_busy && !w_txd) begin
-                r_uart_busy  <= 1;
-                r_uart_data  <= 0;
-                r_uart_count <= 0;
-                r_uart_cycle <= 1;
-            end else if (r_uart_busy && (r_uart_count == 8) && w_txd) begin
-                r_uart_count <= 0;
-                r_uart_busy  <= 0;
-                r_uart_cycle <= 0;
-                $write("%c", r_uart_data);
-    `ifndef VERILATOR
-                $fflush();
-    `endif
-            end else if (r_uart_busy && (r_uart_cycle == 8)) begin
-                r_uart_count <= r_uart_count + 1;
-                r_uart_cycle <= 1;
-            end else if (r_uart_busy && (r_uart_cycle == 4) && (r_uart_count > 0)) begin
-                r_uart_cycle <= r_uart_cycle + 1;
-                r_uart_data  <= {w_txd,r_uart_data[7:1]};
-            end else if (r_uart_busy) begin
-                r_uart_cycle <= r_uart_cycle + 1;
-            end
-        end
-    end
-`else
-    always@(posedge CLK) begin
-        if(w_uart_we) begin
-            $write("%c", w_uart_data);
-    `ifndef VERILATOR
-            $fflush();
-    `endif
-        end
-    end
-`endif
-
     wire [2:0] w_init_state;
     wire w_pl_init_we;
 
@@ -269,6 +231,7 @@ module m_topsim(CLK, RST_X);
         $finish();
     end
 
+    /**********************************************************************************************/
     // LOAD
     integer i,j;
     //integer k;
@@ -315,85 +278,6 @@ module m_topsim(CLK, RST_X);
         $write("-------------------------------------------------------------------\n");
     end
 
-/**********************************************************************************************/
-
-`ifdef RAM_DEBUG
-reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
-always @(posedge CLK)
-begin
-	if(	(p.r_cpc[31:30] == 3) && (((mmu.idbmem.r_ctrl==1) && (mmu.idbmem.r_mask==8)) || 
-			(mmu.idbmem.r_ctrl==3 && (mmu.idbmem.r_mask!=15)))
-	       		&&
-		((o_pc != p.r_cpc) || (o_ir != p.r_ir)) && (bbl_cnt < 20)) begin
-		o_pc <= p.r_cpc;
-		o_ir <= p.r_ir;
-		bbl_cnt <= bbl_cnt + 1;
-		$write("%08d pc=%08x ir=%08x r_addr=%08x %19x odata=%x ctrl=%x mask=%x\n",
-                	p.mtime[31:0], p.r_cpc, p.r_ir,
-	                mmu.idbmem.r_addr, 
-			mmu.idbmem.w_odata_aux, mmu.idbmem.w_odata, 
-			mmu.idbmem.r_ctrl, mmu.idbmem.r_mask);
-	end
-end
-`endif
-
-//`define DEBUG_MEMMOVE
-`ifdef DEBUG_MEMMOVE
-//`define ADDR_MEMMOVE_START 32'h80002942
-`define ADDR_MEMMOVE_START 32'hc02b3330
-//`define ADDR_WORD_COPY 32'h8000296a
-`define ADDR_WORD_COPY 32'hc02b334e
-//`define ADDR_MEMMOVE_STOP 32'h800029e2
-`define ADDR_MEMMOVE_STOP 32'hc02b339c
-//`define TEXT_ADDR 32'h8000bd84
-`define TEXT_ADDR 32'hc0c000d0
-`define STRLEN_TEXT 170
-
-//`define ADDR_MEMMOVE_START 32'h80002934
-//`define ADDR_WORD_COPY 32'h8000295c
-//`define ADDR_MEMMOVE_STOP 32'h800029d4
-//`define TEXT_ADDR 32'h8000bdf8
-//`define STRLEN_TEXT 53
-reg [31:0] old_pc=0, t3;
-reg [7:0] a0,a1,a2,a3;
-always @(posedge CLK)
-begin
-    if((p.r_cpc >= `ADDR_MEMMOVE_START) && (p.r_cpc <= `ADDR_MEMMOVE_STOP) && 
-	    ((old_pc != p.r_cpc) || (p.regs.mem[28] != t3))) begin
-        old_pc <= p.r_cpc;
-	t3 <= p.regs.mem[28];
-        $write("%08d %08x %08x mem addr: %08x %08x %16x %1x %8x\n", 
-		p.mtime[31:0], p.r_cpc, p.r_ir, 
-		mmu.idbmem.idbmem.w_addr, mmu.idbmem.r_addr,
-		mmu.idbmem.r_odata, mmu.idbmem.r_addr[3:0], mmu.idbmem.w_odata_t);
-        // REGSTATE
-        for(i=0;i<32;i=i+1)
-	    if((p.regs.mem[i] != 32'd0) || (i == 7))
-	    if((i >= 5) && (i <= 7))
-		$write("t%1d=%x ", i-5, p.regs.mem[i]);
-	    else if((i >= 28)) begin
-  	        if((i == 28) && (p.r_cpc >= `ADDR_WORD_COPY)) begin // 32'h20 = ' '
-		    $write("t3=%c%c%c%c=%x ", 
-			    (p.regs.mem[i] >> 24) >= 32'h20 ? (p.regs.mem[i] >> 24) : 32'h20, 
-			    ((p.regs.mem[i] >> 16) & 8'hff) >= 32'h20 ? ((p.regs.mem[i] >> 16) & 8'hff) : 32'h20, 
-			    ((p.regs.mem[i] >> 8) & 8'hff) >= 32'h20 ? ((p.regs.mem[i] >> 8) & 8'hff) : 32'h20,
-			    (p.regs.mem[i] & 8'hff) >= 32'h20 ? (p.regs.mem[i] & 8'hff) : 32'h20, 
-			    p.regs.mem[i]);
-		end else
-		    $write("t%1d=%x ", i-28+3, p.regs.mem[i]);
-            end
-	    else if((i >= 10) && (i <= 17))
-                $write("a%1d=%x ", i-10, p.regs.mem[i]);
-	    else
-		$write("R[%2d]=%x ", i, p.regs.mem[i]);
-        $write("\n");
-	$write("mem[%x]: ", `TEXT_ADDR);
-        for(i=(`TEXT_ADDR & 32'h3ffffff);i<((`TEXT_ADDR+`STRLEN_TEXT)&32'h3ffffff);i=i+1)
-            $write("%c", mmu.idbmem.idbmem.mem[i]);//, mmu.idbmem.idbmem.mem[i]);
-        $write("\n");
-    end
-end
-`endif //DEBUG_MEMMOVE
 /**********************************************************************************************/
 
 `ifdef DEBUG
@@ -589,28 +473,6 @@ end
     end
 `endif
 
-    /**********************************************************************************************/
-
-    wire init_txd, tx_ready;
-
-    reg [7:0]   uartdata = 0;
-    reg         uartwe   = 0;
-    reg [16:0]  imemaddr = 0;
-
-    always@(posedge CLK) begin
-        if(r_cnt > 10 && tx_ready && !uartwe) begin
-            uartdata <= mem_bbl[imemaddr];
-            imemaddr <= imemaddr + 1;
-            uartwe   <= 1;
-        end else begin
-            uartwe   <= 0;
-            uartdata <= 0;
-        end
-    end
-
-    UartTx UartTx_init(CLK, RST_X, uartdata, uartwe, init_txd, tx_ready);
-
-    assign w_rxd = init_txd;
 
 endmodule
 
