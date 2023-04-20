@@ -19,12 +19,12 @@ error
 `endif
 
 `ifdef SIM_MODE
-//`define DRAM_SIM
+//`define DRAM_SIM // slower
 //`define CACHE_DEBUG
 `endif
 //`define RAM_DEBUG
 
-`define SKIP_CACHE
+//`define SKIP_CACHE
 
 `define LINUX
 `define TIMEOUT 64'd30000000001

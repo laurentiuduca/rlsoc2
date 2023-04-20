@@ -273,62 +273,43 @@ module m_topsim(CLK, RST_X);
     integer i,j;
     //integer k;
     reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
-    reg  [7:0] mem_mc[0:`MC_MEM_SIZE-1];
     reg  [7:0] mem_disk[0:`DISK_SIZE-1];
     initial begin
 `ifndef VERILATOR
     #1
 `endif
 `ifdef LINUX
-        /*$write("Load micro-ctrl program: %s\n", `MC_PROG);
-        $readmemh(`MC_PROG, mem_mc);
-        j=0;
-
-        for(i=0;i<`MC_MEM_SIZE;i=i+4) begin
-            mmu.mc.LCMEM.mem1.mem[j]=mem_mc[i];
-            mmu.mc.LCMEM.mem2.mem[j]=mem_mc[i+1];
-            mmu.mc.LCMEM.mem3.mem[j]=mem_mc[i+2];
-            mmu.mc.LCMEM.mem4.mem[j]=mem_mc[i+3];
-            j=j+1;
-        end*/
         $write("Load image file: %s\n", `IMAGE_FILE);
         $readmemh(`IMAGE_FILE, mem_disk);
-        //j=`BBL_SIZE/4;
         j=`BBL_SIZE;
 
-        /*for(i=0;i<`DISK_SIZE;i=i+4) begin
-            mmu.idbmem.idbmem.mem1.mem[j]=mem_disk[i];
-            mmu.idbmem.idbmem.mem2.mem[j]=mem_disk[i+1];
-            mmu.idbmem.idbmem.mem3.mem[j]=mem_disk[i+2];
-            mmu.idbmem.idbmem.mem4.mem[j]=mem_disk[i+3];
-            j=j+1;
-        end*/
         for(i=0;i<`DISK_SIZE;i=i+1) begin
+`ifdef DRAM_SIM
 `ifdef SKIP_CACHE
 	    mmu.idbmem.idbmem.mem[j]=mem_disk[i];
 `else
 	    mmu.idbmem.cache_ctrl.idbmem.mem[j]=mem_disk[i];
 `endif
+`else
+	    mmu.idbmem.idbmem.mem[j]=mem_disk[i];
+`endif // DRAM_SIM
             j=j+1;
         end
-`endif
+`endif // LINUX
         $write("Running %s\n", {`HEX_DIR,`HEXFILE});
         $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
         j=0;
 
-        /*for(i=0;i<`BBL_SIZE;i=i+4) begin
-            mmu.idbmem.idbmem.mem1.mem[j]=mem_bbl[i];
-            mmu.idbmem.idbmem.mem2.mem[j]=mem_bbl[i+1];
-            mmu.idbmem.idbmem.mem3.mem[j]=mem_bbl[i+2];
-            mmu.idbmem.idbmem.mem4.mem[j]=mem_bbl[i+3];
-            j=j+1;
-        end*/
         for(i=0;i<`BBL_SIZE;i=i+1) begin
+`ifdef DRAM_SIM
 `ifdef SKIP_CACHE
             mmu.idbmem.idbmem.mem[j]=mem_bbl[i];
 `else
 	    mmu.idbmem.cache_ctrl.idbmem.mem[j]=mem_bbl[i];
 `endif
+`else
+	    mmu.idbmem.idbmem.mem[j]=mem_bbl[i];
+`endif // DRAM_SIM
             j=j+1;
         end
         $write("-------------------------------------------------------------------\n");
