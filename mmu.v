@@ -102,9 +102,6 @@ module m_mmu(
     reg   [3:0] r_virt              = 0;
     reg   [31:0] r_mem_paddr        = 0;
 
-    // TO HOST
-    reg  [31:0] r_tohost            = 0;
-
     // PLIC
     reg  [31:0] plic_served_irq     = 0;
     reg  [31:0] plic_pending_irq    = 0;
@@ -574,9 +571,9 @@ module m_mmu(
 
         /*********************************         TOHOST         *********************************/
         // OUTPUT CHAR
-        if(r_tohost[31:16]==`CMD_PRINT_CHAR) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_mem_wdata[31:16]==`CMD_PRINT_CHAR)) begin
             r_uart_we   <= 1;
-            r_uart_data <= r_tohost[7:0];
+            r_uart_data <= w_mem_wdata[7:0];
 `ifdef LAUR_MEM_RB
 	end else if(r_rb_uart_we) begin
 		r_uart_we <= 1;
@@ -587,15 +584,11 @@ module m_mmu(
             r_uart_data <= 0;
         end
         // Finish Simulation
-        if(r_tohost[31:16]==`CMD_POWER_OFF) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_mem_wdata[31:16]==`CMD_POWER_OFF)) begin
             if(r_mc_mode==0) r_finish = 1;
             else begin
-                r_tohost <= 0;
+                $display("Warning: CMD_POWER_OFF with r_mc_mode non zero");
             end
-        end
-        else begin
-            r_tohost <= (w_mem_paddr==`TOHOST_ADDR && w_mem_we) ? w_mem_wdata   :
-                        (r_tohost[31:16]==`CMD_PRINT_CHAR)      ? 0             : r_tohost;
         end
 
         /**********************************         PLIC         **********************************/
