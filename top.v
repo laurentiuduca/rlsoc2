@@ -94,9 +94,6 @@ module m_topsim(CLK, RST_X);
     wire        ddr3_odt;
 `endif
 
-    wire [7:0]  w_uart_data;
-    wire        w_uart_we;
-
     wire [15:0] w_led;
 
     /**********************************************************************************************/
@@ -173,8 +170,6 @@ module m_topsim(CLK, RST_X);
         // output clk, rst (active-low)
         .o_clk          (),
         .o_rst_x        (),
-        .w_uart_data    (w_uart_data),
-        .w_uart_we      (w_uart_we),
         .w_led          (w_led),
         .w_init_stage   (w_init_stage),
         .w_checksum     (),

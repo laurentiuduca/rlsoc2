@@ -72,8 +72,6 @@ module m_mmu(
 `endif
     output wire         o_clk,
     output wire         o_rst_x,
-    output wire  [7:0]  w_uart_data,
-    output wire         w_uart_we,
     output wire [15:0]  w_led,
     input  wire         w_init_stage,
     output wire [31:0]  w_checksum,
@@ -610,9 +608,6 @@ module m_mmu(
     /**********************************************************************************************/
 
     UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
-
-    assign w_uart_data = r_uart_data;
-    assign w_uart_we   = r_uart_we;
 
     wire [31:0]  w_pl_init_addr;
     wire [31:0]  w_pl_init_data;
