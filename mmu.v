@@ -616,8 +616,7 @@ module m_mmu(
     end
     /**********************************************************************************************/
 
-    wire w_cons_txd;
-    UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_cons_txd, w_tx_ready);
+    UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
 
     assign w_uart_data = r_uart_data;
     assign w_uart_we   = r_uart_we;
@@ -652,14 +651,6 @@ module m_mmu(
     end
 
     assign w_checksum = r_checksum;
-
-    /**********************************************************************************************/
-
-    wire w_debug_txd;
-    wire w_rec_done;
-    m_debug_key debug_KEY(CLK, RST_X, w_debug_btnd, w_debug_txd, w_key_we, w_key_data, w_mtime[31:0], w_rec_done);
-
-    assign w_txd = (w_rec_done) ? w_debug_txd : w_cons_txd;
 
 /**************************************************************************************************/
     reg          r_bbl_done   = 0;
