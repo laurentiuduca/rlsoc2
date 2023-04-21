@@ -24,11 +24,12 @@ module m_topsim();
         #50  RST_X = 0;
         #300 RST_X = 1;
     end
-
+`ifdef laur0
     initial begin
 	$dumpfile("signals.vcd");
         $dumpvars(0, m_topsim);
     end
+`endif
 `else
 module m_topsim(CLK, RST_X);
     input reg CLK, RST_X;
@@ -99,11 +100,6 @@ module m_topsim(CLK, RST_X);
     wire [15:0] w_led;
 
     /**********************************************************************************************/
-
-    reg       r_uart_busy  = 0;
-    reg [3:0] r_uart_count = 0;
-    reg [3:0] r_uart_cycle = 0;
-    reg [7:0] r_uart_data  = 0;
 
     wire [2:0] w_init_state;
     wire w_pl_init_we;
@@ -223,16 +219,13 @@ module m_topsim(CLK, RST_X);
     always@(posedge CLK) if (w_halt) begin $write("HALT detect! at PC:%x\n", p.pc); $finish(); end
     reg r_finish = 0;
     always@(posedge CLK) r_finish <= w_finish;
-    always@(posedge CLK) if (r_finish & !r_uart_busy) begin
+    always@(posedge CLK) if (r_finish) begin
         $write("FINISH!\n");
-`ifdef DEBUG
-        if (p.mtime < 90000001) $fclose(fp);
-`endif
         $finish();
     end
 
     /**********************************************************************************************/
-    // LOAD
+    // LOAD linux
     integer i,j;
     //integer k;
     reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
