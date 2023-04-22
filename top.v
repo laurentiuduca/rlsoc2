@@ -49,7 +49,7 @@ module m_topsim(CLK, RST_X);
     wire w_mem_we;
     wire [31:0] w_mem_wdata;
 
-    /*********************************         TOHOST         *********************************/
+    /**********************************************************************************************/
     // OUTPUT CHAR
     UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
     wire w_txd;
@@ -84,6 +84,8 @@ module m_topsim(CLK, RST_X);
         $write("FINISH!\n");
         $finish();
     end
+
+    
     /**********************************************************************************************/
     // LOAD linux
     integer i,j;

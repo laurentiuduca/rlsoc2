@@ -79,7 +79,7 @@ module m_mmu(
     input  wire         w_debug_btnd,
     output wire  [2:0]  w_init_state,
     output wire w_pl_init_we,
-    /**********************************************************************************************/
+    //--------------------------------------------------------------------------------------------//
     input wire w_tx_ready,
     output wire [31:0] w_mem_paddr,
     output wire w_mem_we,

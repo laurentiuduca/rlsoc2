@@ -1,3 +1,5 @@
+`include "define.vh"
+
 module m_cpummusim(
     input wire CLK, RST_X,
     input wire w_tx_ready,
