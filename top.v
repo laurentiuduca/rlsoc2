@@ -35,8 +35,55 @@ module m_topsim(CLK, RST_X);
     input wire CLK, RST_X;
 `endif
 
-    m_cpummusim core0(CLK, RST_X);
+    m_cpummusim core0(
+        .CLK(CLK), 
+        .RST_X(RST_X), 
+        .w_tx_ready(w_tx_ready),
+        .w_mem_paddr(w_mem_paddr),
+        .w_mem_we(w_mem_we),
+        .w_mem_wdata(w_mem_wdata));
 
+    /**********************************************************************************************/
+    // bus signals
+    wire [31:0] w_mem_paddr;
+    wire w_mem_we;
+    wire [31:0] w_mem_wdata;
+
+    /*********************************         TOHOST         *********************************/
+    // OUTPUT CHAR
+    UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
+    wire w_txd;
+    reg         r_uart_we = 0;
+    reg   [7:0] r_uart_data = 0;
+`ifdef LAUR_MEM_RB
+    // xsim requires declaration before use
+    reg r_rb_uart_we=0;
+    reg [7:0] r_rb_uart_data;
+`endif
+    wire w_tx_ready;
+    reg          r_finish=0;
+    always@(posedge CLK) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_mem_wdata[31:16]==`CMD_PRINT_CHAR)) begin
+            r_uart_we   <= 1;
+            r_uart_data <= w_mem_wdata[7:0];
+`ifdef LAUR_MEM_RB
+	end else if(r_rb_uart_we) begin
+		r_uart_we <= 1;
+		r_uart_data <= r_rb_uart_data;
+`endif
+    	end else begin 
+            r_uart_we   <= 0;
+            r_uart_data <= 0;
+        end
+        // Finish Simulation
+        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_mem_wdata[31:16]==`CMD_POWER_OFF)) begin
+            r_finish = 1;
+        end
+    end
+    always@(posedge CLK) if (r_finish) begin
+        $write("FINISH!\n");
+        $finish();
+    end
     /**********************************************************************************************/
     // LOAD linux
     integer i,j;

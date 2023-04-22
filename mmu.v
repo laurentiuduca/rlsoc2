@@ -20,7 +20,6 @@ module m_mmu(
     input  wire         w_data_we,
     input  wire  [2:0]  w_data_ctrl,
     output wire [31:0]  w_insn_data, w_data_data,
-    output reg          r_finish,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
     input  wire [63:0]  w_mtime, w_mtimecmp,
     output wire [63:0]  w_wmtimecmp,
@@ -32,7 +31,6 @@ module m_mmu(
     output wire [31:0]  w_pagefault,
     input  wire  [1:0]  w_tlb_req,
     input  wire         w_tlb_flush,
-    output wire         w_txd,
     input  wire         w_rxd,
     output wire         w_init_done,
     input  wire         mig_clk,
@@ -80,8 +78,12 @@ module m_mmu(
 `endif
     input  wire         w_debug_btnd,
     output wire  [2:0]  w_init_state,
-    output wire w_pl_init_we);
-    initial r_finish = 0;
+    output wire w_pl_init_we,
+    /**********************************************************************************************/
+    input wire w_tx_ready,
+    output wire [31:0] w_mem_paddr,
+    output wire w_mem_we,
+    output wire [31:0] w_mem_wdata);
 
     /***** Address translation ********************************************************************/
     reg  [31:0] physical_addr       = 0;
@@ -163,8 +165,8 @@ module m_mmu(
     wire  [2:0] w_mc_ctrl;
     wire  [1:0] w_mc_aces;
 
-    wire [31:0] w_mem_wdata = (r_mc_mode!=0) ? w_mc_wdata  : w_data_wdata;
-    wire        w_mem_we    = (r_mc_mode!=0) ? w_mc_we     : w_data_we;
+    assign w_mem_wdata = (r_mc_mode!=0) ? w_mc_wdata  : w_data_wdata;
+    assign        w_mem_we    = (r_mc_mode!=0) ? w_mc_we     : w_data_we;
 
 
     /***********************************        Page walk       ***********************************/
@@ -325,7 +327,7 @@ module m_mmu(
     wire [31:0] w_insn_paddr =  (w_priv == `PRIV_M || w_satp[31] == 0) ? w_insn_addr :
                                 r_tlb_addr;
 
-    wire [31:0] w_mem_paddr  =  (r_mc_mode != 0)                        ? w_mc_addr     :
+    assign w_mem_paddr  =  (r_mc_mode != 0)                        ? w_mc_addr     :
                                 (w_priv == `PRIV_M || w_satp[31] == 0)  ? w_data_addr   : r_tlb_addr;
 //                                (r_pw_state == 5)                       ? r_tlb_addr    :
 //                                (r_tlb_acs)                             ? r_tlb_pte_addr:
@@ -551,12 +553,9 @@ module m_mmu(
     wire w_mc_busy =    (r_mc_mode != 0) ? 1 : 0;
 
 
-    wire w_tx_ready;
     assign w_proc_busy = w_tlb_busy || w_mc_busy || w_dram_busy || !w_tx_ready;
     /**********************************************************************************************/
     // PLIC, CLINT ACCESS
-    reg         r_uart_we = 0;
-    reg   [7:0] r_uart_data = 0;
 `ifdef LAUR_MEM_RB
     // xsim requires declaration before use
     reg r_rb_uart_we=0;
@@ -566,28 +565,6 @@ module m_mmu(
         r_dev   <= w_dev;
         r_virt  <= w_virt;
         r_mem_paddr <= w_mem_paddr;
-
-        /*********************************         TOHOST         *********************************/
-        // OUTPUT CHAR
-        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_mem_wdata[31:16]==`CMD_PRINT_CHAR)) begin
-            r_uart_we   <= 1;
-            r_uart_data <= w_mem_wdata[7:0];
-`ifdef LAUR_MEM_RB
-	end else if(r_rb_uart_we) begin
-		r_uart_we <= 1;
-		r_uart_data <= r_rb_uart_data;
-`endif
-    	end else begin 
-            r_uart_we   <= 0;
-            r_uart_data <= 0;
-        end
-        // Finish Simulation
-        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_mem_wdata[31:16]==`CMD_POWER_OFF)) begin
-            if(r_mc_mode==0) r_finish = 1;
-            else begin
-                $display("Warning: CMD_POWER_OFF with r_mc_mode non zero");
-            end
-        end
 
         /**********************************         PLIC         **********************************/
         if(w_plic_aces) begin
@@ -606,8 +583,6 @@ module m_mmu(
                             (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
     end
     /**********************************************************************************************/
-
-    UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
 
     wire [31:0]  w_pl_init_addr;
     wire [31:0]  w_pl_init_data;

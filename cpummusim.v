@@ -1,9 +1,11 @@
-module m_cpummusim(CLK, RST_X);
+module m_cpummusim(
+    input wire CLK, RST_X,
+    input wire w_tx_ready,
+    output wire [31:0] w_mem_paddr,
+    output wire w_mem_we,
+    output wire [31:0] w_mem_wdata);
 
-    input wire CLK, RST_X;
     wire w_halt;
-
-    wire w_finish;
 
     wire [31:0] w_insn_data, w_insn_addr;
     wire [31:0] w_data_data, w_data_wdata, w_data_addr;
@@ -19,7 +21,6 @@ module m_cpummusim(CLK, RST_X);
     wire [31:0] w_pagefault;
     wire [1:0]  w_tlb_req;
     wire        w_tlb_flush;
-    wire        w_txd;
     wire        w_rxd;
     wire        w_init_done;
     wire        w_init_stage;
@@ -78,7 +79,6 @@ module m_cpummusim(CLK, RST_X);
         .w_data_ctrl    (w_data_ctrl),
         .w_insn_data    (w_insn_data),
         .w_data_data    (w_data_data),
-        .r_finish       (w_finish),
         .w_priv         (w_priv),
         .w_satp         (w_satp),
         .w_mstatus      (w_mstatus),
@@ -93,7 +93,6 @@ module m_cpummusim(CLK, RST_X);
         .w_pagefault    (w_pagefault),
         .w_tlb_req      (w_tlb_req),
         .w_tlb_flush    (w_tlb_flush),
-        .w_txd          (w_txd),
         .w_rxd          (w_rxd),
         .w_init_done    (w_init_done),
         // input clk, rst (active-low)
@@ -141,7 +140,12 @@ module m_cpummusim(CLK, RST_X);
         .w_checksum     (),
         .w_debug_btnd   (1'b0),
 	.w_init_state   (w_init_state),
-	.w_pl_init_we   (w_pl_init_we)
+	.w_pl_init_we   (w_pl_init_we),
+    /*********************************************************************************************/
+    .w_tx_ready(w_tx_ready),
+    .w_mem_paddr(w_mem_paddr),
+    .w_mem_we(w_mem_we),
+    .w_mem_wdata(w_mem_wdata)
     );
 
     m_RVCoreM p(
@@ -178,10 +182,4 @@ module m_cpummusim(CLK, RST_X);
 
     /**********************************************************************************************/
     always@(posedge CLK) if (w_halt) begin $write("HALT detect! at PC:%x\n", p.pc); $finish(); end
-    reg r_finish = 0;
-    always@(posedge CLK) r_finish <= w_finish;
-    always@(posedge CLK) if (r_finish) begin
-        $write("FINISH!\n");
-        $finish();
-    end
 endmodule
