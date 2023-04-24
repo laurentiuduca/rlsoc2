@@ -19,7 +19,7 @@ module m_mmu(
     input  wire [31:0]  w_data_wdata,
     input  wire         w_data_we,
     input  wire  [2:0]  w_data_ctrl,
-    output wire [31:0]  w_insn_data, w_data_data,
+    output wire [31:0]  w_insn_data,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
     input  wire [63:0]  w_mtime, w_mtimecmp,
     output wire [63:0]  w_wmtimecmp,
@@ -35,55 +35,28 @@ module m_mmu(
     output wire         w_init_done,
     input  wire         mig_clk,
     input  wire         mig_rst_x,
-`ifndef ARTYA7
-    inout  wire [15:0]  ddr2_dq,
-    inout  wire  [1:0]  ddr2_dqs_n,
-    inout  wire  [1:0]  ddr2_dqs_p,
-    output wire [12:0]  ddr2_addr,
-    output wire  [2:0]  ddr2_ba,
-    output wire         ddr2_ras_n,
-    output wire         ddr2_cas_n,
-    output wire         ddr2_we_n,
-    output wire         ddr2_ck_p,
-    output wire         ddr2_ck_n,
-    output wire         ddr2_cke,
-    output wire         ddr2_cs_n,
-    output wire  [1:0]  ddr2_dm,
-    output wire         ddr2_odt,
-`else
-    input  wire         ref_clk,
-    inout  wire [15:0]  ddr3_dq,
-    inout  wire  [1:0]  ddr3_dqs_n,
-    inout  wire  [1:0]  ddr3_dqs_p,
-    output wire [13:0]  ddr3_addr,
-    output wire  [2:0]  ddr3_ba,
-    output wire         ddr3_ras_n,
-    output wire         ddr3_cas_n,
-    output wire         ddr3_we_n,
-    output wire         ddr3_ck_p,
-    output wire         ddr3_ck_n,
-    output wire         ddr3_reset_n,
-    output wire         ddr3_cke,
-    output wire         ddr3_cs_n,
-    output wire  [1:0]  ddr3_dm,
-    output wire         ddr3_odt,
-`endif
     output wire         o_clk,
     output wire         o_rst_x,
-    output wire [15:0]  w_led,
-    input  wire         w_init_stage,
     output wire [31:0]  w_checksum,
 `ifdef LAUR_MEM_RB
     output wire [31:0]  w_verify_checksum,
 `endif
     input  wire         w_debug_btnd,
-    output wire  [2:0]  w_init_state,
-    output wire w_pl_init_we,
     //--------------------------------------------------------------------------------------------//
-    input wire w_tx_ready,
-    output wire [31:0] w_mem_paddr,
-    output wire w_mem_we,
-    output wire [31:0] w_mem_wdata);
+    input wire          w_tx_ready,
+    output wire [31:0]  w_mem_paddr,
+    output wire         w_mem_we,
+    input wire [31:0]   w_pl_init_data,
+    input wire          w_pl_init_we,
+    output wire         w_tlb_busy,
+    output wire [31:0]  w_dram_addr,
+    output wire [31:0]  w_dram_wdata,
+    output wire         w_dram_we_t,
+    input wire          w_dram_busy,
+    output wire [2:0]   w_dram_ctrl,
+    input wire          w_set_dram_le,
+    output wire         w_dram_le
+    );
 
     /***** Address translation ********************************************************************/
     reg  [31:0] physical_addr       = 0;
@@ -117,47 +90,9 @@ module m_mmu(
 
     reg  [31:0] r_mc_done           = 0;
 
-    /***** Keyboard Input *************************************************************************/
-    `define KEYBOARD_QUEUE_SIZE 32
-    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
-    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
-    reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
-    reg         r_consf_en          = 0;
-    reg   [7:0] cons_fifo [0:15];
-    reg [7:0] r_char_value=0;
-`ifdef SIM_MODE
-    wire w_file_we;
-    read_file rf(.clk(CLK), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER + 64'd10000000));
-`endif
-
-`ifdef SIM_MODE
-    initial begin
-`define LAUR_EMPTY_CONSOLE_BUFFER
-`ifdef LAUR_EMPTY_CONSOLE_BUFFER
-	r_consf_en = 0;
-	r_consf_head = 0;
-	r_consf_tail = 0;
-        r_consf_cnts = 0;
-`else
-        r_consf_en = 1;
-        cons_fifo[0] = 8'h72;  // "r"
-        cons_fifo[1] = 8'h6f;  // "o"
-        cons_fifo[2] = 8'h6f;  // "o"
-        cons_fifo[3] = 8'h74;  // "t"
-        cons_fifo[4] = 8'hd;   // "(CR)"
-        cons_fifo[5] = 8'hd;   // "(CR)"
-        r_consf_tail = 6;
-        r_consf_cnts = 6;
-`endif
-    end
-`endif
-
     /**********************************************************************************************/
     // dram data
     wire [31:0] w_dram_odata;
-
-    wire        w_tlb_busy;
-    wire        w_dram_busy;
 
     wire [31:0] w_mc_addr;
     wire [31:0] w_mc_wdata;
@@ -165,7 +100,7 @@ module m_mmu(
     wire  [2:0] w_mc_ctrl;
     wire  [1:0] w_mc_aces;
 
-    assign w_mem_wdata = (r_mc_mode!=0) ? w_mc_wdata  : w_data_wdata;
+    wire [31:0] w_mem_wdata = (r_mc_mode!=0) ? w_mc_wdata  : w_data_wdata;
     assign        w_mem_we    = (r_mc_mode!=0) ? w_mc_we     : w_data_we;
 
 
@@ -347,30 +282,25 @@ module m_mmu(
 
     //always@(posedge CLK) w_virt <= w_mem_paddr & 32'h0f000000;
 
-    wire [31:0] w_dram_wdata    = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
-    wire        w_dram_we       = (w_mem_we && !w_tlb_busy
+    assign w_dram_wdata         = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
+    wire      w_dram_we       = (w_mem_we && !w_tlb_busy
                                     && (w_dev == `MEM_BASE_TADDR || w_dev == 0));
 
-    wire [31:0] w_dram_addr =   (r_mc_mode!=0)              ? w_mc_addr         :
+    assign w_dram_addr          =   (r_mc_mode!=0)              ? w_mc_addr         :
                                 (w_iscode && !w_tlb_busy)   ? w_insn_paddr      :
                                 (w_priv == `PRIV_M || w_satp[31] == 0) ? w_data_addr :
                                 (r_tlb_acs && !w_tlb_hit)   ? r_tlb_pte_addr    : w_mem_paddr;
 
-    wire [2:0]  w_dram_ctrl =   (r_mc_mode!=0)              ? (w_mem_ctrl)      :
+    assign          w_dram_ctrl =   (r_mc_mode!=0)              ? (w_mem_ctrl)      :
                                 (w_iscode && !w_tlb_busy)   ? `FUNCT3_LW____    : w_mem_ctrl;
     assign      w_insn_data =   w_dram_odata;
 
     wire        w_dram_aces = (w_dram_addr[31:28] == 8 || w_dram_addr[31:28] == 0 || w_dram_addr[31:28] == 9);
 
-`ifdef LAUR_MEM_RB
-    // xsim requires declaration before use
-    reg r_set_dram_le=0;
-`endif
-
-    wire        w_dram_le   =
+    assign        w_dram_le   =
                     (w_dram_busy)  ? 0 :
 `ifdef LAUR_MEM_RB
-                    (r_set_dram_le) ? 1 :
+                    (w_set_dram_le) ? 1 :
 `endif
                     (!w_dram_aces) ? 0 :
                     (r_mc_mode!=0) ? (w_mc_aces==`ACCESS_READ && w_mc_addr[31:28] != 0) :
@@ -392,79 +322,7 @@ module m_mmu(
 //    wire        w_imag_we       = w_mem_we && r_mc_mode != 0 && w_dram_addr[31:28] == 4'h9;
     wire        w_imag_we       = w_mem_we && r_mc_mode != 0 && w_mem_paddr[31:28] == 4'h9;
     
-    /***********************************          OUTPUT        ***********************************/
-    reg  [31:0] r_data_data = 0;
-    always@(*) begin
-        case (r_dev)
-            `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
-            `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
-            `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
-                                    //$display("HVC_BASE_ADDR %x", r_consf_cnts);
-                                    r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts};
-                                end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
-                                    //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
-                                    r_data_data <= {24'h0, r_char_value};
-                                end
-            default           : r_data_data <= w_dram_odata;
-        endcase
-    end
-    assign w_data_data = r_data_data;
-
     /***********************************          VirtIO        ***********************************/
-    wire        w_key_we;
-    wire  [7:0] w_key_data;
-    wire        w_key_req = r_consf_en && (w_mtime > `ENABLE_TIMER + 64'd1000000) && ((w_mtime & 64'h3ffff) == 0)
-                            && r_mc_mode == 0 && w_init_stage;
-    reg         r_key_we    = 0;
-    reg   [7:0] r_key_data  = 0;
-    always@(posedge CLK) begin
-        r_key_we    <= w_key_we;
-        r_key_data  <= w_key_data;
-    end
-
-`ifdef SIM_MODE
-    integer i;
-`endif
-    reg r_read_a_char=0;
-    always@(posedge CLK) begin
-        if(r_mem_paddr != (`HVC_BASE_ADDR + 4))
-            	r_read_a_char <= 0;
-        else 
-	if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts)
-	    	r_read_a_char <= 1;
-        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts) begin
-                $display("HVC_BASE_ADDR+4 r_consf_cnts %x", r_consf_cnts);
-                r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
-                r_consf_head <= r_consf_head + 1;
-                r_consf_cnts <= r_consf_cnts - 1;
-                r_char_value <= cons_fifo[r_consf_head];
-        end
-`ifdef SIM_MODE
-	else if(w_file_we) begin
-		$display("\nw_file_we\n");
-		if(r_consf_cnts != 0)
-			$display("warning: w_file_we and r_consf_cnts = %d with r_consf_en=%d", r_consf_cnts, r_consf_en);
-		else begin
-			for(i = 0; i < rf.n; i++)
-				cons_fifo[r_consf_tail+i] = rf.fifo[i];
-			r_consf_tail <= r_consf_tail + rf.n;
-			r_consf_cnts <= rf.n;
-			r_consf_en <= 1;
-		end
-	end
-`else
-        else if(r_key_we) begin
-            $display("r_key_we  r_consf_cnts %x", r_consf_cnts);
-            if(r_consf_cnts < `KEYBOARD_QUEUE_SIZE) begin
-                cons_fifo[r_consf_tail] <= r_key_data;
-                r_consf_tail            <= r_consf_tail + 1;
-                r_consf_cnts            <= r_consf_cnts + 1;
-                r_consf_en              <= 1;
-            end
-        end
-`endif
-    end
-
 `define LAUR_WRITE_TIME
 `ifdef LAUR_WRITE_TIME
     reg [31:0] old_w_mtime=0;
@@ -477,10 +335,12 @@ module m_mmu(
 	    end
     end
 `endif
+    /***********************************          VirtIO        ***********************************/
 
     reg  [31:0] r_mc_arg = 0;
     wire [31:0] w_mc_arg = r_mc_arg;
 
+    wire w_key_req=0;
     wire [31:0] w_cons_irq=0;
     wire        w_cons_irq_oe=0;
     wire [31:0] w_virt_irq      = w_cons_irq;
@@ -555,327 +415,13 @@ module m_mmu(
 
     assign w_proc_busy = w_tlb_busy || w_mc_busy || w_dram_busy || !w_tx_ready;
     /**********************************************************************************************/
-    // PLIC, CLINT ACCESS
-`ifdef LAUR_MEM_RB
-    // xsim requires declaration before use
-    reg r_rb_uart_we=0;
-    reg [7:0] r_rb_uart_data;
-`endif
+
     always@(posedge CLK) begin
         r_dev   <= w_dev;
         r_virt  <= w_virt;
         r_mem_paddr <= w_mem_paddr;
-
-        /**********************************         PLIC         **********************************/
-        if(w_plic_aces) begin
-            r_plic_odata    <= (w_plic_mask!=0) ? w_plic_mask : 0;
-            plic_served_irq <= w_plic_served_irq_nxt;
-        end
-
-        if(w_virt_irq_oe) begin
-            plic_pending_irq    <= w_virt_irq;
-        end
-
-        /*********************************          CLINT         *********************************/
-        r_clint_odata <=    (w_offset==28'hbff8) ? w_mtime[31:0] :
-                            (w_offset==28'hbffc) ? w_mtime[63:32] :
-                            (w_offset==28'h4000) ? w_mtimecmp[31:0] :
-                            (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
     end
-    /**********************************************************************************************/
-
-    wire [31:0]  w_pl_init_addr;
-    wire [31:0]  w_pl_init_data;
-    //wire         w_pl_init_we;
-    wire         w_pl_init_done;
-    PLOADER ploader(CLK, RST_X, w_rxd, w_pl_init_addr, w_pl_init_data, w_pl_init_we,
-                    w_pl_init_done, w_key_we, w_key_data);
-
-    /**********************************************************************************************/
-`ifdef SIM_MODE
-    reg  [2:0] r_init_state = 5;
-`else
-    reg  [2:0] r_init_state = 0;
-`endif
-    reg  [31:0]  r_initaddr  = 0;
-    reg  [31:0]  r_checksum = 0;
-    always@(posedge CLK) begin
-//`ifdef LAUR_MEM_RB
-//	r_checksum <= (!RST_X)                      ? 0                             :
-//		      (!w_init_done & w_pl_init_we & 
-//		      ((r_init_state == 2) && (r_initaddr  < `BIN_BBL_SIZE)))
-//		      				    ? r_checksum + w_pl_init_data   :
-//		      r_checksum;
-//`else
-	r_checksum <= (!RST_X)                      ? 0                             :
-                      (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
-		      r_checksum;
-//`endif
-    end
-
-    assign w_checksum = r_checksum;
-
 /**************************************************************************************************/
-    reg          r_bbl_done   = 0;
-    reg          r_disk_done  = 0;
-    reg          r_dtree_done = 0;
-`ifdef LAUR_MEM_RB
-    reg  [31:0]  r_initaddr6  = 0;
-`endif
-    reg  [31:0]  r_initaddr2 = `BBL_SIZE ; /* initial addres for Disk Drive */
-    reg  [31:0]  r_initaddr3 = `D_INITD_ADDR ; /* initial address of Device Tree */
-
-    // Zero init
-    wire w_zero_we;
-    reg  r_zero_we=0;
-    reg  r_zero_done        = 0;
-    reg  [31:0]  r_zeroaddr = 0;
-
-`ifdef LAUR_MEM_RB
-    // xsim requires declaration before use
-    reg r_mem_rb_done=0;
-`endif
-`ifndef SIM_MODE
-    always@(posedge CLK) begin
-        r_init_state <= (!RST_X) ? 0 :
-                      (r_init_state == 0)                ? 1 :
-                      (r_init_state == 1 & r_zero_done)  ? 2 :
-		      (r_init_state == 2 & r_bbl_done)   ? 3 :
-                      (r_init_state == 3 & r_dtree_done) ? 4 :  
-`ifdef LAUR_MEM_RB
-		      (r_init_state == 4 & r_disk_done)  ? 6 :
-		      (r_init_state == 6 & r_mem_rb_done)  ? 5 :
-`else 
-                      (r_init_state == 4 & r_disk_done)  ? 5 :
-`endif
-                      r_init_state;
-    end
-`endif
-
-    //assign w_init_start = (r_initaddr != 0);
-    assign w_init_state = r_init_state;
-
-    assign w_init_done = (r_init_state == 5);
-        
-    always@(posedge CLK) begin	
-	if(r_init_state < 1)
-		$display("r_init_state=%d", r_init_state);
-        if(w_pl_init_we & (r_init_state == 2)) begin     r_initaddr      <= r_initaddr + 4; end
-        if(r_initaddr  >= `BIN_BBL_SIZE)            r_bbl_done      <= 1;
-        if(w_pl_init_we & (r_init_state == 3))      r_initaddr3     <= r_initaddr3 + 4;
-        if(r_initaddr3 >= (`D_INITD_ADDR + `D_SIZE_DEVT))  r_dtree_done    <= 1;
-        if(w_pl_init_we & (r_init_state == 4))      r_initaddr2     <= r_initaddr2 + 4;
-        if(r_initaddr2 >= `BBL_SIZE + `BIN_DISK_SIZE)      r_disk_done     <= 1;
-    end
-
-`ifdef LAUR_MEM_RB
-`ifdef LAUR_MEM_RB_ONLY_CHECK
-        reg [31:0] r_rb_delay=0;
-`endif
-	reg [7:0] r_rb_state=0, r_rb_cnt=0;
-	reg [31:0] r_rb_data=0, r_verify_checksum=0;
-	assign w_verify_checksum = r_verify_checksum;
-	wire w_checksum_match = (r_verify_checksum == r_checksum);
-    	always@(posedge CLK) begin
-		if(r_init_state != 6) begin
-			r_rb_state <= 0;
-			r_set_dram_le <= 0;
-		end else begin
-			if(r_rb_state == 0) begin // idle
-				if(!r_mem_rb_done)
-					r_rb_state <= 1;
-			end else if(r_rb_state == 1) begin
-				// memory is 0 between (`D_INITD_ADDR + `D_SIZE_DEVT) and `BBL_SIZE
-				if(r_initaddr6 < (`BBL_SIZE + `BIN_DISK_SIZE)) begin
-					if(!w_dram_busy) begin
-						r_set_dram_le <= 1;
-						r_rb_state <= 7;
-					end
-				end else begin
-					r_mem_rb_done <= 1;
-					r_rb_state <= 0;
-				end
-			end else if(r_rb_state == 7) begin // we have sent command
-				if(w_dram_busy) begin
-					r_set_dram_le <= 0;
-					r_rb_state <= 2;
-				end
-			end else if(r_rb_state == 2) begin // wait ram data
-				r_set_dram_le <= 0;
-				if(!w_dram_busy) begin
-					// we have w_dram_odata
-					r_verify_checksum <= r_verify_checksum + w_dram_odata;
-					r_rb_data <= w_dram_odata;
-`ifdef LAUR_MEM_RB_ONLY_CHECK
-					$display("mem[%x]: %x='%c%c%c%c'", r_initaddr6, w_dram_odata, 
-						 w_dram_odata >> 24, (w_dram_odata >> 16) & 8'hff, 
-						(w_dram_odata >> 8) & 8'hff, w_dram_odata & 8'hff);
-					r_rb_state <= 20;
-					r_rb_delay <= 0;
-`else
-					r_rb_state <= 3;
-`endif
-					r_rb_cnt <= 0;
-				end
-`ifdef LAUR_MEM_RB_ONLY_CHECK
-			end else if(r_rb_state == 20) begin
-                                if(r_rb_delay < 1) 
-                                        r_rb_delay <= r_rb_delay + 1;
-                                else begin
-                                        r_rb_state <= 0;
-                                        r_initaddr6 <= r_initaddr6 + 4;
-                                        r_rb_delay <= 0;
-                                end	
-`endif
-			end else if(r_rb_state == 3) begin // send 32 bit data
-				if(w_tx_ready)
-				       if(r_rb_cnt < 4) begin
-						r_rb_cnt <= r_rb_cnt + 1;
-						r_rb_uart_data <= r_rb_data[7:0];
-						r_rb_data <= {8'h0, r_rb_data[31:8]};
-						r_rb_state <= 4;
-					end else begin
-						r_rb_uart_we <= 0;
-						r_initaddr6 <= r_initaddr6 + 4;
-						r_rb_state <= 0;
-					end
-			end else if(r_rb_state == 4) begin // send 1 byte
-				r_rb_uart_we <= 1;
-				if(!w_tx_ready)
-					r_rb_state <= 5;
-			end else if(r_rb_state == 5) begin // done sending 1 byte
-				r_rb_state <= 3;
-				r_rb_uart_we <= 0;
-			end
-		end
-    	end
-`endif
-
-    // Zero init
-    wire calib_done;
-    always@(posedge CLK) begin
-`ifdef SIM_MAIN
-	r_zero_we <= 0;
-	r_zero_done <= 1;
-`else
-`ifndef ARTYA7
-        if(!w_dram_busy & !r_zero_done) r_zero_we <= 1;
-`else
-        if(!w_dram_busy & !r_zero_done & calib_done) r_zero_we <= 1;
-`endif
-        if(r_zero_we) begin
-            r_zero_we    <= 0;
-            r_zeroaddr <= r_zeroaddr + 4;
-        end
-        if(r_zeroaddr >= `MEM_SIZE) r_zero_done <= 1;
-`endif
-    end
-
-`ifdef SIM_MODE
-    assign w_zero_we = 0;
-`else
-`ifdef SIM_MAIN
-    assign w_zero_we = 0;
-`else
-    assign w_zero_we = r_zero_we;
-`endif
-`endif
-    /**********************************************************************************************/
-    wire [31:0] w_dram_addr_t   = ((w_dram_addr[31:28]==9) ?
-                                    (w_dram_addr & 32'h3ffffff) + `BBL_SIZE :
-                                    w_dram_addr & 32'h3ffffff);
-    wire [31:0]  w_dram_addr_t2 =
-                    (r_init_state == 1) ? r_zeroaddr     : 
-                    (r_init_state == 2) ? r_initaddr     :
-`ifdef LAUR_MEM_RB
-		    (r_init_state == 6) ? r_initaddr6    :
-`endif
-                    (r_init_state == 3) ? r_initaddr3    : 
-                    (r_init_state == 4) ? r_initaddr2    : w_dram_addr_t;
-    
-    wire [31:0]  w_dram_wdata_t   =   (r_init_state == 1) ? 32'b0 :
-                                    (r_init_state == 5) ? w_dram_wdata : w_pl_init_data;
-    wire         w_dram_we_t      =   (w_pte_we || w_dram_we || w_imag_we) && !w_dram_busy;
-    wire [2:0]   w_dram_ctrl_t  = (!w_init_done) ? `FUNCT3_SW____ : w_dram_ctrl;
-/**************************************************************************************************/
-
-`ifdef LAUR_MEM_RB
-wire w_wr_en = 
-                               (r_init_state == 6) ? 0 :
-				w_zero_we || w_pl_init_we || w_dram_we_t;
-`else
-wire w_wr_en =                  w_zero_we || w_pl_init_we || w_dram_we_t;
-`endif
-
-
-`ifdef SIM_MODE
-    m_dram_sim#(`MEM_SIZE) idbmem(CLK, w_dram_addr_t2, w_dram_odata, w_dram_we_t, w_dram_le,
-                                    w_dram_wdata_t, w_dram_ctrl_t, w_dram_busy, w_mtime[31:0]);
-`else
-    DRAM_conRV dram_con (
-                                // user interface ports
-                               .i_rd_en(w_dram_le),
-                               .i_wr_en(w_wr_en),
-                               .i_addr(w_dram_addr_t2),
-                               .i_data(w_dram_wdata_t),
-                               .o_data(w_dram_odata),
-                               .o_busy(w_dram_busy),
-                               .i_ctrl(w_dram_ctrl_t),
-                               // input clk, rst (active-low)
-                               .mig_clk(mig_clk),
-                               .mig_rst_x(mig_rst_x),
-`ifdef ARTYA7
-                               .ref_clk(ref_clk),
-`endif
-                               // memory interface ports
-`ifndef ARTYA7
-                               .ddr2_dq(ddr2_dq),
-                               .ddr2_dqs_n(ddr2_dqs_n),
-                               .ddr2_dqs_p(ddr2_dqs_p),
-                               .ddr2_addr(ddr2_addr),
-                               .ddr2_ba(ddr2_ba),
-                               .ddr2_ras_n(ddr2_ras_n),
-                               .ddr2_cas_n(ddr2_cas_n),
-                               .ddr2_we_n(ddr2_we_n),
-                               .ddr2_ck_p(ddr2_ck_p),
-                               .ddr2_ck_n(ddr2_ck_n),
-                               .ddr2_cke(ddr2_cke),
-                               .ddr2_cs_n(ddr2_cs_n),
-                               .ddr2_dm(ddr2_dm),
-                               .ddr2_odt(ddr2_odt),
-`else
-                               .ddr3_dq(ddr3_dq),
-                               .ddr3_dqs_n(ddr3_dqs_n),
-                               .ddr3_dqs_p(ddr3_dqs_p),
-                               .ddr3_addr(ddr3_addr),
-                               .ddr3_ba(ddr3_ba),
-                               .ddr3_ras_n(ddr3_ras_n),
-                               .ddr3_cas_n(ddr3_cas_n),
-                               .ddr3_we_n(ddr3_we_n),
-                               .ddr3_ck_p(ddr3_ck_p),
-                               .ddr3_ck_n(ddr3_ck_n),
-                               .ddr3_reset_n(ddr3_reset_n),
-                               .ddr3_cke(ddr3_cke),
-                               .ddr3_cs_n(ddr3_cs_n),
-                               .ddr3_dm(ddr3_dm),
-                               .ddr3_odt(ddr3_odt),
-`endif
-                               // output clk, rst (active-low)
-                               .o_clk(o_clk),
-                               .o_rst_x(o_rst_x),
-                               // other
-                               .o_init_calib_complete(calib_done)
-                               );
-`endif
-
-// first 4 leds are set in main.v
-`ifdef LAUR_MEM_RB
-    assign w_led = ({r_rb_state[2:0], w_checksum_match} << 12) | (r_mem_rb_done << 11) | (r_init_state << 8)
-                    | ({w_pl_init_done, r_disk_done, r_bbl_done, r_zero_done} << 4) | r_init_state;
-`else
-    assign w_led = (w_proc_busy << 12) | (r_mc_mode << 8)
-                    | ({w_pl_init_done, r_disk_done, r_bbl_done, r_zero_done} << 4) | r_init_state;
-`endif
     
 endmodule
 /**************************************************************************************************/

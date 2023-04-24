@@ -581,7 +581,7 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
     output wire             w_stall;
     input  wire      [31:0] w_mtime;
 
-    m_bu_mem#(MEM_SIZE) idbmem(CLK, w_addr, w_odata,
+    m_bu_mem#(MEM_SIZE) mi(CLK, w_addr, w_odata,
                                 w_we, w_le, w_wdata, w_ctrl, w_stall);
 
 endmodule

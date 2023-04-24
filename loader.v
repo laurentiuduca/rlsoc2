@@ -28,7 +28,7 @@ module PLOADER (CLK, RST_X, RXD, ADDR, DATA, WE, DONE, KEY_WE, KEY_DATA);
     output wire         KEY_WE;
     output wire [7:0]   KEY_DATA;
 
-    reg [31:0] waddr; // memory write address
+    reg [31:0] waddr=0; // memory write address
 
     wire SER_EN;
     wire [7:0] SER_DATA;
