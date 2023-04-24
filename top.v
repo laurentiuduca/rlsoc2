@@ -642,9 +642,9 @@ module m_topsim(CLK, RST_X);
         for(i=0;i<`DISK_SIZE;i=i+1) begin
 `ifdef DRAM_SIM
 `ifdef SKIP_CACHE
-	    idbmem.idbmem.mem[j]=mem_disk[i];
+	    idbmem.mi.mem[j]=mem_disk[i];
 `else
-	    idbmem.cache_ctrl.idbmem.mem[j]=mem_disk[i];
+	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
 `endif
 `else
 	    idbmem.mi.mem[j]=mem_disk[i];
@@ -659,9 +659,9 @@ module m_topsim(CLK, RST_X);
         for(i=0;i<`BBL_SIZE;i=i+1) begin
 `ifdef DRAM_SIM
 `ifdef SKIP_CACHE
-            idbmem.idbmem.mem[j]=mem_bbl[i];
+        idbmem.mi.mem[j]=mem_bbl[i];
 `else
-	    idbmem.cache_ctrl.idbmem.mem[j]=mem_bbl[i];
+	    idbmem.cache_ctrl.mi.mem[j]=mem_bbl[i];
 `endif
 `else
 	    idbmem.mi.mem[j]=mem_bbl[i];
@@ -678,18 +678,15 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
 always @(posedge CLK)
 begin
-	if(	(core0.p.r_cpc[31:30] == 3) && (((idbmem.mi.r_ctrl==1) && (idbmem.mi.r_mask==8)) || 
-			(idbmem.mi.r_ctrl==3 && (idbmem.mi.r_mask!=15)))
-	       		&&
-		((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir)) && (bbl_cnt < 20)) begin
+	if ((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir) && (bbl_cnt < 20)) begin
 		o_pc <= core0.p.r_cpc;
 		o_ir <= core0.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
-		$write("%08d pc=%08x ir=%08x r_addr=%08x %19x odata=%x ctrl=%x mask=%x\n",
+		$write("%08d pc=%08x ir=%08x r_addr=%08x odata=%x ctrl=%x\n",
                 	core0.p.mtime[31:0], core0.p.r_cpc, core0.p.r_ir,
 	                idbmem.mi.r_addr, 
-			idbmem.mi.w_odata_aux, idbmem.mi.w_odata, 
-			idbmem.mi.r_ctrl, idbmem.mi.r_mask);
+			idbmem.mi.w_odata, 
+			idbmem.mi.r_ctrl);
 	end
 end
 `endif

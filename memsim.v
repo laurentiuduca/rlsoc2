@@ -355,7 +355,7 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)(
     end
 
 `ifdef SKIP_CACHE 
-    m_bu_mem#(MEM_SIZE) idbmem(.CLK(o_clk), .w_addr(r_maddr), .w_odata(w_dram_odata),
+    m_bu_mem#(MEM_SIZE) mi(.CLK(o_clk), .w_addr(r_maddr), .w_odata(w_dram_odata),
                                .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_ctrl(r_ctrl), .w_stall(w_busy), .w_mask(~r_mask));
 `else
     cache_ctrl#(MEM_SIZE) cache_ctrl(.o_clk(o_clk), .i_rd_en(r_rd), .i_wr_en(r_we), .i_addr(r_maddr), .i_data(r_wdata), 
@@ -473,7 +473,7 @@ module cache_ctrl#(parameter MEM_SIZE = `MEM_SIZE)(
 
     assign o_data = r_o_data;
 
-    m_bu_mem#(MEM_SIZE) idbmem(.CLK(o_clk), .w_addr(w_dram_addr), .w_odata(w_dram_odata),
+    m_bu_mem#(MEM_SIZE) mi(.CLK(o_clk), .w_addr(w_dram_addr), .w_odata(w_dram_odata),
                                .w_we(i_wr_en), .w_le(w_dram_le), .w_wdata(i_data), .w_ctrl(r_ctrl), .w_stall(w_dram_stall), .w_mask(~i_mask));
 endmodule
 `else
