@@ -51,6 +51,7 @@ module m_mmu(
     output wire         w_tlb_busy,
     output wire [31:0]  w_dram_addr,
     output wire [31:0]  w_dram_wdata,
+    input wire  [31:0]  w_dram_odata,
     output wire         w_dram_we_t,
     input wire          w_dram_busy,
     output wire [2:0]   w_dram_ctrl,
@@ -91,8 +92,6 @@ module m_mmu(
     reg  [31:0] r_mc_done           = 0;
 
     /**********************************************************************************************/
-    // dram data
-    wire [31:0] w_dram_odata;
 
     wire [31:0] w_mc_addr;
     wire [31:0] w_mc_wdata;
