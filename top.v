@@ -59,7 +59,9 @@ module m_topsim(CLK, RST_X);
         .w_dram_ctrl(w_dram_ctrl),
         .w_set_dram_le(r_set_dram_le),
         .w_dram_le(w_dram_le),
-        .w_init_done(w_init_done)
+        .w_init_done(w_init_done),
+        .w_wmtimecmp(w_wmtimecmp),
+        .w_clint_we(w_clint_we)
     );
 
     /**********************************************************************************************/
@@ -85,8 +87,8 @@ module m_topsim(CLK, RST_X);
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire [27:0] w_offset    = w_mem_paddr & 28'h7ffffff;
     reg   [31:0] r_mem_paddr        = 0;
-    reg   [3:0] r_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
-    reg   [3:0] r_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
+    reg   [3:0] r_dev       = 0;// & 32'hf0000000;
+    reg   [3:0] r_virt      = 0;// & 32'h0f000000;
         always@(posedge CLK) begin
         r_dev   <= w_dev;
         r_virt  <= w_virt;
@@ -311,6 +313,13 @@ module m_topsim(CLK, RST_X);
                             (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
     end
 
+    // shortcut to w_data_we because we do not use microcontroller
+    wire w_data_we = w_mem_we;
+    wire [63:0] w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
+                                {w_mtimecmp[63:32], w_data_wdata} :
+                          (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
+                                {w_data_wdata, w_mtimecmp[31:0]} : 0;
+    wire w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_data_we != 0);
     /**********************************************************************************************/
 `ifdef SIM_MODE
     reg  [2:0] r_init_state = 5;
@@ -364,7 +373,6 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-    //assign w_init_start = (r_initaddr != 0);
     wire w_init_state = r_init_state;
 
     wire w_init_done = (r_init_state == 5);
@@ -509,7 +517,7 @@ module m_topsim(CLK, RST_X);
     
     wire [31:0]  w_dram_wdata_t   =   (r_init_state == 1) ? 32'b0 :
                                     (r_init_state == 5) ? w_dram_wdata : w_pl_init_data;
-    wire        w_imag_we         = 0;
+    // w_dram_we_t is input
     //wire         w_dram_we_t      =   (w_pte_we || w_dram_we || w_imag_we) && !w_dram_busy;
     wire [2:0]   w_dram_ctrl_t  = (!w_init_done) ? `FUNCT3_SW____ : w_dram_ctrl;
     /**********************************************************************************************/
@@ -681,20 +689,25 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
 always @(posedge CLK)
 begin
-	if (((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir)) || (bbl_cnt < 20)) begin
+	if (((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir)) && (bbl_cnt < 20)) begin
 		o_pc <= core0.p.r_cpc;
 		o_ir <= core0.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
-		$write("%08d pc=%08x ir=%08x r_addr=%08x odata=%x ctrl=%x\n",
+		$write("time=%08d pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
                 	core0.p.mtime[31:0], core0.p.r_cpc, core0.p.r_ir,
-	                idbmem.mi.r_addr, 
+	                idbmem.mi.r_maddr, 
 			idbmem.mi.w_odata, 
 			idbmem.mi.r_ctrl);
+        /*$write("pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
+                	core0.p.r_cpc, core0.p.r_ir,
+	                idbmem.mi.r_maddr, 
+			idbmem.mi.w_odata, 
+			idbmem.mi.r_ctrl);*/
         //$write("w_dram_addr_t2=%x w_dram_odata=%x w_dram_we_t=%x w_dram_le=%x w_dram_wdata_t=%x, w_dram_ctrl_t=%x, w_dram_busy=%x, w_mtime[31:0]=%x\n",
         //    w_dram_addr_t2, w_dram_odata, w_dram_we_t, w_dram_le, w_dram_wdata_t, w_dram_ctrl_t, w_dram_busy, w_mtime[31:0]);
 	end
-    if(w_mtime == 10000)
-        $finish;
+    //if(w_mtime == 10000)
+    //    $finish;
 end
 `endif
 endmodule

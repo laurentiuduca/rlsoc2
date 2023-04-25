@@ -492,7 +492,6 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
     output wire             w_stall;
 
     reg   [2:0] r_ctrl  = 0;
-    reg  [31:0] r_addr  = 0;
     reg  [31:0] r_cnt   = 0;
 
     reg   [7:0] mem [0:MEM_SIZE-1];

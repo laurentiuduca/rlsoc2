@@ -23,7 +23,9 @@ module m_cpummusim(
     output wire [2:0]   w_dram_ctrl,
     input wire          w_set_dram_le,
     output wire         w_dram_le,
-    input wire        w_init_done
+    input wire        w_init_done,
+    input wire [63:0] w_wmtimecmp,
+    input wire        w_clint_we
     );
 
     wire w_halt;
@@ -34,8 +36,6 @@ module m_cpummusim(
     wire [2:0]  w_data_ctrl;
 
     wire [31:0] w_priv, w_satp, w_mstatus;
-    wire [63:0] w_wmtimecmp;
-    wire        w_clint_we;
     wire [31:0] w_wmip;
     wire        w_plic_we;
     wire        w_busy;
@@ -63,8 +63,6 @@ module m_cpummusim(
         .w_mstatus      (w_mstatus),
         .w_mtime        (w_mtime),
         .w_mtimecmp     (w_mtimecmp),
-        .w_wmtimecmp    (w_wmtimecmp),
-        .w_clint_we     (w_clint_we),
         .w_mip          (w_mip),
         .w_wmip         (w_wmip),
         .w_plic_we      (w_plic_we),

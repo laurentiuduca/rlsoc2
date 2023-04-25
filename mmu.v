@@ -22,8 +22,6 @@ module m_mmu(
     output wire [31:0]  w_insn_data,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
     input  wire [63:0]  w_mtime, w_mtimecmp,
-    output wire [63:0]  w_wmtimecmp,
-    output wire         w_clint_we,
     input  wire [31:0]  w_mip,
     output wire [31:0]  w_wmip,
     output wire         w_plic_we,
@@ -353,52 +351,6 @@ module m_mmu(
     m_console   console(CLK, 1'b1, w_cons_we, w_cons_addr, w_mem_wdata, plic_pending_irq, w_cons_data,
                         w_cons_irq, w_cons_irq_oe, r_mc_mode, w_cons_req, w_cons_qnum, w_cons_qsel, w_key_req);
 `endif
-
-    /***********************************           PLIC         ***********************************/
-    wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
-    wire [31:0] w_plic_mask             =   w_plic_pending_irq_nxt & ~plic_served_irq;
-    wire [31:0] w_plic_served_irq_nxt   =   (w_virt_irq_oe) ? plic_served_irq :
-                                            (w_isread) ? plic_served_irq | w_plic_mask :
-                                            plic_served_irq & ~(1 << (w_data_wdata-1));
-
-    wire w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
-            ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
-
-    reg  [31:0] r_wmip = 0;
-    reg         r_plic_we = 0;
-
-    reg  [31:0] r_plic_pending_irq_t    = 0;
-    reg  [31:0] r_plic_served_irq_t     = 0;
-
-    reg         r_virt_irq_oe_t = 0;
-    reg         r_plic_aces_t   = 0;
-
-    wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
-
-    always@(posedge CLK) begin
-        if(!w_tlb_busy) begin
-            //r_plic_we   <= (w_virt_irq_oe || w_plic_aces);
-            r_virt_irq_oe_t         <= w_virt_irq_oe;
-            r_plic_aces_t           <= w_plic_aces;
-            r_plic_pending_irq_t    <= w_plic_pending_irq_nxt;
-            r_plic_served_irq_t     <= w_plic_served_irq_nxt;
-        end
-    end
-
-    assign w_plic_we    = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
-    assign w_wmip       = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
-                            w_mip & ~(`MIP_MEIP | `MIP_SEIP);
-
-//    assign w_plic_we = (w_virt_irq_oe || w_plic_aces);
-//    assign w_wmip    = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
-                        //w_mip & ~(`MIP_MEIP | `MIP_SEIP);
-
-    /***********************************          CLINT         ***********************************/
-    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
-                                {w_mtimecmp[63:32], w_data_wdata} :
-                          (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
-                                {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_data_we != 0);
 
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
