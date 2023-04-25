@@ -32,7 +32,7 @@ module m_mmu(
     input  wire  [1:0]  w_tlb_req,
     input  wire         w_tlb_flush,
     input  wire         w_rxd,
-    output wire         w_init_done,
+    input wire         w_init_done,
     input  wire         mig_clk,
     input  wire         mig_rst_x,
     output wire         o_clk,

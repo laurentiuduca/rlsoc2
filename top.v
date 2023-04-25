@@ -57,7 +57,8 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(w_dram_busy),
         .w_dram_ctrl(w_dram_ctrl),
         .w_set_dram_le(r_set_dram_le),
-        .w_dram_le(w_dram_le)
+        .w_dram_le(w_dram_le),
+        .w_init_done(w_init_done)
     );
 
     /**********************************************************************************************/
@@ -105,6 +106,7 @@ module m_topsim(CLK, RST_X);
     wire w_tx_ready;
     reg          r_finish=0;
     always@(posedge CLK) begin
+        // optimisation instead of w_mem_wdata put w_data_wdata
         if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR)) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
@@ -678,7 +680,7 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
 always @(posedge CLK)
 begin
-	if ((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir) && (bbl_cnt < 20)) begin
+	if ((o_pc != core0.p.r_cpc) && (o_ir != core0.p.r_ir) && (bbl_cnt < 20)) begin
 		o_pc <= core0.p.r_cpc;
 		o_ir <= core0.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
@@ -687,6 +689,8 @@ begin
 	                idbmem.mi.r_addr, 
 			idbmem.mi.w_odata, 
 			idbmem.mi.r_ctrl);
+        $write("w_dram_addr_t2=%x w_dram_odata=%x w_dram_we_t=%x w_dram_le=%x w_dram_wdata_t=%x, w_dram_ctrl_t=%x, w_dram_busy=%x, w_mtime[31:0]=%x\n",
+            w_dram_addr_t2, w_dram_odata, w_dram_we_t, w_dram_le, w_dram_wdata_t, w_dram_ctrl_t, w_dram_busy, w_mtime[31:0]);
 	end
 end
 `endif

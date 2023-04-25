@@ -21,7 +21,8 @@ module m_cpummusim(
     input wire w_dram_busy,
     output wire [2:0]   w_dram_ctrl,
     input wire          w_set_dram_le,
-    output wire         w_dram_le
+    output wire         w_dram_le,
+    input wire        w_init_done
     );
 
     wire w_halt;
@@ -39,7 +40,6 @@ module m_cpummusim(
     wire        w_busy;
     wire [31:0] w_pagefault;
     wire        w_tlb_flush;
-    wire        w_init_done;
     wire        w_init_stage;
 
     wire        CORE_RST_X = RST_X & w_init_done;
