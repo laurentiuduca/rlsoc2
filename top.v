@@ -42,9 +42,6 @@ module m_topsim(CLK, RST_X);
         .w_mem_paddr(w_mem_paddr),
         .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata),
-        .w_pl_init_data(w_pl_init_data),
-        .w_pl_init_we(w_pl_init_we),
-        .w_rxd(w_rxd),
         .w_data_data(w_data_data),
         .w_mtime(w_mtime),
         .w_mtimecmp(w_mtimecmp),
@@ -683,6 +680,20 @@ module m_topsim(CLK, RST_X);
     end
 
 /**********************************************************************************************/
+
+/***********************************          write time        *******************************/
+`define LAUR_WRITE_TIME
+`ifdef LAUR_WRITE_TIME
+    reg [63:0] old_w_mtime=0;
+    always @(posedge CLK) begin
+	    if(old_w_mtime != w_mtime) begin
+		    old_w_mtime = w_mtime;
+		    if(w_mtime % 64'd10000000 == 64'd0) begin
+			    $write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
+		    end
+	    end
+    end
+`endif
 
 `define RAM_DEBUG 
 `ifdef RAM_DEBUG

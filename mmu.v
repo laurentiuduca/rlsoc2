@@ -21,31 +21,14 @@ module m_mmu(
     input  wire  [2:0]  w_data_ctrl,
     output wire [31:0]  w_insn_data,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
-    input  wire [63:0]  w_mtime, w_mtimecmp,
-    input  wire [31:0]  w_mip,
-    output wire [31:0]  w_wmip,
-    output wire         w_plic_we,
     output wire         w_proc_busy,
     output wire [31:0]  w_pagefault,
     input  wire  [1:0]  w_tlb_req,
     input  wire         w_tlb_flush,
-    input  wire         w_rxd,
-    input wire         w_init_done,
-    input  wire         mig_clk,
-    input  wire         mig_rst_x,
-    output wire         o_clk,
-    output wire         o_rst_x,
-    output wire [31:0]  w_checksum,
-`ifdef LAUR_MEM_RB
-    output wire [31:0]  w_verify_checksum,
-`endif
-    input  wire         w_debug_btnd,
     //--------------------------------------------------------------------------------------------//
     input wire          w_tx_ready,
     output wire [31:0]  w_mem_paddr,
     output wire         w_mem_we,
-    input wire [31:0]   w_pl_init_data,
-    input wire          w_pl_init_we,
     output wire         w_tlb_busy,
     output wire [31:0]  w_dram_addr,
     output wire [31:0]  w_dram_wdata,
@@ -69,11 +52,6 @@ module m_mmu(
     reg  [31:0] L0_pte              = 0;
 
     /***** Other Registers ************************************************************************/
-    // Device checker
-    reg   [3:0] r_dev               = 0;
-    reg   [3:0] r_virt              = 0;
-    reg   [31:0] r_mem_paddr        = 0;
-
     // PLIC
     reg  [31:0] plic_served_irq     = 0;
     reg  [31:0] plic_pending_irq    = 0;
@@ -305,73 +283,14 @@ module m_mmu(
                     (r_tlb_use[2:1]!=0) ? 1 :
                     (w_tlb_busy && !w_tlb_hit && (r_pw_state == 0 || r_pw_state==2)) ? 1 : 0;
 
-
-    /***********************************         Console        ***********************************/
-    wire        w_cons_we   = (r_mc_mode != 0) ? (w_mem_we && w_mem_paddr[31:12] == 20'h4000a) :
-                            (w_mem_we && !w_tlb_busy && w_dev == `VIRTIO_BASE_TADDR && w_virt == 0);
-    wire [31:0] w_cons_data;
-    wire [31:0] w_cons_addr = (r_mc_mode != 0) ? w_mem_paddr : {4'b0, w_offset};
-    wire        w_cons_req;
-    wire [31:0] w_cons_qnum;
-    wire [31:0] w_cons_qsel;
-
-    /***********************************           image        ***********************************/
-//    wire        w_imag_we       = w_mem_we && r_mc_mode != 0 && w_dram_addr[31:28] == 4'h9;
-    wire        w_imag_we       = w_mem_we && r_mc_mode != 0 && w_mem_paddr[31:28] == 4'h9;
     
-    /***********************************          VirtIO        ***********************************/
-`define LAUR_WRITE_TIME
-`ifdef LAUR_WRITE_TIME
-    reg [31:0] old_w_mtime=0;
-    always @(posedge CLK) begin
-	    if(old_w_mtime != w_mtime) begin
-		old_w_mtime = w_mtime;
-		if(w_mtime % 32'd10000000 == 32'd0) begin
-			$write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
-		end
-	    end
-    end
-`endif
-    /***********************************          VirtIO        ***********************************/
-
-    reg  [31:0] r_mc_arg = 0;
-    wire [31:0] w_mc_arg = r_mc_arg;
-
-    wire w_key_req=0;
-    wire [31:0] w_cons_irq=0;
-    wire        w_cons_irq_oe=0;
-    wire [31:0] w_virt_irq      = w_cons_irq;
-    wire        w_virt_irq_oe   = w_cons_irq_oe | w_key_req;
-
-`ifdef laur0
-    m_RVuc mc(CLK, (r_mc_mode!=0), w_dram_busy, w_mc_addr, w_mc_arg, w_mc_wdata,
-                w_mc_we, w_mc_ctrl, w_mc_aces);
-
-
-    m_console   console(CLK, 1'b1, w_cons_we, w_cons_addr, w_mem_wdata, plic_pending_irq, w_cons_data,
-                        w_cons_irq, w_cons_irq_oe, r_mc_mode, w_cons_req, w_cons_qnum, w_cons_qsel, w_key_req);
-`endif
-
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
                     !(w_use_tlb)                            ? 0 :
                     (r_pw_state == 7)                       ? 0 : 1;
-/*                    (r_pw_state != 0)                       ? 1 :
-                    ((w_iscode && w_tlb_inst_r_oe) ||
-                    (w_isread && w_tlb_data_r_oe)  ||
-                    (w_iswrite && w_tlb_data_w_oe))         ? 0 : 1;*/
     
-    wire w_mc_busy =    (r_mc_mode != 0) ? 1 : 0;
+    assign w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
 
-
-    assign w_proc_busy = w_tlb_busy || w_mc_busy || w_dram_busy || !w_tx_ready;
-    /**********************************************************************************************/
-
-    always@(posedge CLK) begin
-        r_dev   <= w_dev;
-        r_virt  <= w_virt;
-        r_mem_paddr <= w_mem_paddr;
-    end
 /**************************************************************************************************/
     
 endmodule
