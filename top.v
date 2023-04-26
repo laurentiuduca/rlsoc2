@@ -48,6 +48,7 @@ module m_topsim(CLK, RST_X);
         .w_tlb_req(w_tlb_req),
         .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip),
+        .w_wmip(w_wmip),
         .w_dram_addr(w_dram_addr),
         .w_dram_wdata(w_dram_wdata),
         .w_dram_odata(w_dram_odata),
@@ -58,6 +59,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_le(w_dram_le),
         .w_init_done(w_init_done),
         .w_wmtimecmp(w_wmtimecmp),
+        .w_plic_we(w_plic_we),
         .w_clint_we(w_clint_we)
     );
 

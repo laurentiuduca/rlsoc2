@@ -12,6 +12,7 @@ module m_cpummusim(
     output wire [1:0]  w_tlb_req,
     output wire        w_tlb_busy,
     output wire [31:0] w_mip,
+    input wire [31:0]  w_wmip,
     output wire [31:0] w_dram_addr,
     output wire [31:0] w_dram_wdata,
     input wire  [31:0] w_dram_odata,
@@ -22,6 +23,7 @@ module m_cpummusim(
     output wire         w_dram_le,
     input wire        w_init_done,
     input wire [63:0] w_wmtimecmp,
+    input wire        w_plic_we,
     input wire        w_clint_we
     );
 
@@ -33,17 +35,11 @@ module m_cpummusim(
     wire [2:0]  w_data_ctrl;
 
     wire [31:0] w_priv, w_satp, w_mstatus;
-    wire [31:0] w_wmip;
-    wire        w_plic_we;
     wire        w_busy;
     wire [31:0] w_pagefault;
     wire        w_tlb_flush;
-    wire        w_init_stage;
 
     wire        CORE_RST_X = RST_X & w_init_done;
-    /**********************************************************************************************/
-
-    wire [2:0] w_init_state;
 
     /**********************************************************************************************/
     m_mmu mmu(
@@ -107,7 +103,7 @@ module m_cpummusim(
         .w_core_pc      (),
         .w_core_ir      (),
         .w_core_odata   (),
-        .w_init_stage   (w_init_stage)
+        .w_init_stage   ()
     );
 
     /**********************************************************************************************/
