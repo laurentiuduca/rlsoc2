@@ -45,6 +45,7 @@ module m_topsim(CLK, RST_X);
         .w_data_data(w_data_data),
         .w_mtime(w_mtime),
         .w_mtimecmp(w_mtimecmp),
+        .w_wmtimecmp(w_wmtimecmp),
         .w_tlb_req(w_tlb_req),
         .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip),
@@ -58,7 +59,6 @@ module m_topsim(CLK, RST_X);
         .w_set_dram_le(r_set_dram_le),
         .w_dram_le(w_dram_le),
         .w_init_done(w_init_done),
-        .w_wmtimecmp(w_wmtimecmp),
         .w_plic_we(w_plic_we),
         .w_clint_we(w_clint_we)
     );
@@ -84,11 +84,11 @@ module m_topsim(CLK, RST_X);
 
     wire  [3:0] w_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
-    wire [27:0] w_offset    = w_mem_paddr & 28'h7ffffff;
-    reg   [31:0] r_mem_paddr        = 0;
+    wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
+    reg   [31:0] r_mem_paddr= 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
-        always@(posedge CLK) begin
+    always@(posedge CLK) begin
         r_dev   <= w_dev;
         r_virt  <= w_virt;
         r_mem_paddr <= w_mem_paddr;
@@ -113,9 +113,9 @@ module m_topsim(CLK, RST_X);
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
 `ifdef LAUR_MEM_RB
-	end else if(r_rb_uart_we) begin
-		r_uart_we <= 1;
-		r_uart_data <= r_rb_uart_data;
+	    end else if(r_rb_uart_we) begin
+		    r_uart_we <= 1;
+		    r_uart_data <= r_rb_uart_data;
 `endif
     	end else begin 
             r_uart_we   <= 0;
@@ -178,7 +178,6 @@ module m_topsim(CLK, RST_X);
 
     wire        w_key_we;
     wire  [7:0] w_key_data;
-    wire        w_key_req = 0;
     reg         r_key_we    = 0;
     reg   [7:0] r_key_data  = 0;
     always@(posedge CLK) begin
@@ -316,7 +315,7 @@ module m_topsim(CLK, RST_X);
     wire w_data_we = w_mem_we;
     wire [63:0] w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
-                          (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
+                                (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
     wire w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_data_we != 0);
     /**********************************************************************************************/
@@ -372,7 +371,7 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-    wire w_init_state = r_init_state;
+    wire [2:0] w_init_state = r_init_state;
 
     wire w_init_done = (r_init_state == 5);
         
@@ -652,12 +651,12 @@ module m_topsim(CLK, RST_X);
         for(i=0;i<`DISK_SIZE;i=i+1) begin
 `ifdef DRAM_SIM
 `ifdef SKIP_CACHE
-	    idbmem.mi.mem[j]=mem_disk[i];
+	    idbmem.idbmem.mem[j]=mem_disk[i];
 `else
 	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
 `endif
 `else
-	    idbmem.mi.mem[j]=mem_disk[i];
+	    idbmem.idbmem.mem[j]=mem_disk[i];
 `endif // DRAM_SIM
             j=j+1;
         end
@@ -669,12 +668,12 @@ module m_topsim(CLK, RST_X);
         for(i=0;i<`BBL_SIZE;i=i+1) begin
 `ifdef DRAM_SIM
 `ifdef SKIP_CACHE
-        idbmem.mi.mem[j]=mem_bbl[i];
+        idbmem.idbmem.mem[j]=mem_bbl[i];
 `else
 	    idbmem.cache_ctrl.mi.mem[j]=mem_bbl[i];
 `endif
 `else
-	    idbmem.mi.mem[j]=mem_bbl[i];
+	    idbmem.idbmem.mem[j]=mem_bbl[i];
 `endif // DRAM_SIM
             j=j+1;
         end
@@ -702,20 +701,23 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
 always @(posedge CLK)
 begin
+        //if(core0.p.mtime >= 551 && core0.p.mtime < 10000)
+        //    $display("time=%8d pc=%x state=%x w_mem_paddr=%x proc_busy=%x w_data_addr%x", 
+        //        core0.p.mtime[31:0], core0.p.r_cpc, core0.p.state, w_mem_paddr, core0.p.w_busy, core0.mmu.w_data_addr);
 	if (((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir)) && (bbl_cnt < 20)) begin
 		o_pc <= core0.p.r_cpc;
 		o_ir <= core0.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
-		$write("time=%08d pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
+		/*$write("time=%08d pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
                 	core0.p.mtime[31:0], core0.p.r_cpc, core0.p.r_ir,
-	                idbmem.mi.r_maddr, 
-			idbmem.mi.w_odata, 
-			idbmem.mi.r_ctrl);
+	                idbmem.idbmem.r_maddr, 
+			idbmem.idbmem.w_odata, 
+			idbmem.idbmem.r_ctrl);*/
         /*$write("pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
                 	core0.p.r_cpc, core0.p.r_ir,
-	                idbmem.mi.r_maddr, 
-			idbmem.mi.w_odata, 
-			idbmem.mi.r_ctrl);*/
+	                idbmem.idbmem.r_maddr, 
+			idbmem.idbmem.w_odata, 
+			idbmem.idbmem.r_ctrl);*/
         //$write("w_dram_addr_t2=%x w_dram_odata=%x w_dram_we_t=%x w_dram_le=%x w_dram_wdata_t=%x, w_dram_ctrl_t=%x, w_dram_busy=%x, w_mtime[31:0]=%x\n",
         //    w_dram_addr_t2, w_dram_odata, w_dram_we_t, w_dram_le, w_dram_wdata_t, w_dram_ctrl_t, w_dram_busy, w_mtime[31:0]);
 	end

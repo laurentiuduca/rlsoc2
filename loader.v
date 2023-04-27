@@ -75,7 +75,7 @@ module UartTx(CLK, RST_X, DATA, WE, TXD, READY);
             TXD       <= 1'b1;
             waitnum   <= 0;
             if( WE )begin
-		$write("%c", DATA);
+		        $write("%c", DATA);
 `ifndef VERILATOR
                 $fflush();
 `endif

@@ -15,7 +15,8 @@
 /**************************************************************************************************/
 module m_mmu(
     input  wire         CLK, RST_X,
-    input  wire [31:0]  w_insn_addr, w_data_addr,
+    input  wire [31:0]  w_insn_addr,
+    input  wire [31:0]  w_data_addr,
     input  wire [31:0]  w_data_wdata,
     input  wire         w_data_we,
     input  wire  [2:0]  w_data_ctrl,
@@ -51,21 +52,8 @@ module m_mmu(
     reg  [31:0] L1_pte              = 0;
     reg  [31:0] L0_pte              = 0;
 
-    /***** Other Registers ************************************************************************/
-    // PLIC
-    reg  [31:0] plic_served_irq     = 0;
-    reg  [31:0] plic_pending_irq    = 0;
-    reg  [31:0] r_plic_odata        = 0;
-
-    // CLINT
-    reg  [31:0] r_clint_odata       = 0;
-
     /***** Micro Controller ***********************************************************************/
     reg   [1:0] r_mc_mode           = 0;
-    reg  [31:0] r_mc_qnum           = 0;
-    reg  [31:0] r_mc_qsel           = 0;
-
-    reg  [31:0] r_mc_done           = 0;
 
     /**********************************************************************************************/
 
