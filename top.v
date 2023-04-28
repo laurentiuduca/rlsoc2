@@ -529,8 +529,9 @@ module m_topsim(CLK, RST_X);
 
 
 `ifdef SIM_MODE
-    m_dram_sim#(`MEM_SIZE) idbmem(CLK, w_dram_addr_t2, w_dram_odata, w_dram_we_t, w_dram_le,
-                                    w_dram_wdata_t, w_dram_ctrl_t, w_dram_busy, w_mtime[31:0]);
+    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
+        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
+        .w_mtime(w_mtime[31:0]));
 `else
     DRAM_conRV dram_con (
                                 // user interface ports
@@ -696,33 +697,31 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-`define RAM_DEBUG 
+//`define RAM_DEBUG 
 `ifdef RAM_DEBUG
 reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
 always @(posedge CLK)
 begin
-        //if(core0.p.mtime >= 551 && core0.p.mtime < 10000)
-        //    $display("time=%8d pc=%x state=%x w_mem_paddr=%x proc_busy=%x w_data_addr%x", 
-        //        core0.p.mtime[31:0], core0.p.r_cpc, core0.p.state, w_mem_paddr, core0.p.w_busy, core0.mmu.w_data_addr);
-	if (((o_pc != core0.p.r_cpc) || (o_ir != core0.p.r_ir)) && (bbl_cnt < 20)) begin
+        if(core0.p.r_ir == 32'h00f11623) begin
+            $display("p.r_ir=%x w_data_ctrl=%x w_dram_ctrl=%x w_dram_ctrl_t=%x r_ctrl=%x w_le=%x w_we=%x", 
+                core0.p.r_ir, core0.w_data_ctrl, core0.w_dram_ctrl, w_dram_ctrl_t, 
+                idbmem.idbmem.r_ctrl, idbmem.w_le, idbmem.w_we
+            ) ;
+        end
+/*
+    if(core0.p.r_cpc < 32'h800024aa) begin// && o_pc != core0.p.r_cpc) begin
 		o_pc <= core0.p.r_cpc;
 		o_ir <= core0.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
-		/*$write("time=%08d pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
-                	core0.p.mtime[31:0], core0.p.r_cpc, core0.p.r_ir,
-	                idbmem.idbmem.r_maddr, 
-			idbmem.idbmem.w_odata, 
-			idbmem.idbmem.r_ctrl);*/
-        /*$write("pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x\n",
-                	core0.p.r_cpc, core0.p.r_ir,
-	                idbmem.idbmem.r_maddr, 
-			idbmem.idbmem.w_odata, 
-			idbmem.idbmem.r_ctrl);*/
-        //$write("w_dram_addr_t2=%x w_dram_odata=%x w_dram_we_t=%x w_dram_le=%x w_dram_wdata_t=%x, w_dram_ctrl_t=%x, w_dram_busy=%x, w_mtime[31:0]=%x\n",
-        //    w_dram_addr_t2, w_dram_odata, w_dram_we_t, w_dram_le, w_dram_wdata_t, w_dram_ctrl_t, w_dram_busy, w_mtime[31:0]);
+		$write("t=%08d pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x sp=%x a3=%x a4=%x a5=%x m[be3c]=%x m[be3d]=%x\n",
+                	core0.p.mtime[31:0], 
+                    core0.p.r_cpc, core0.p.r_ir,
+	                idbmem.idbmem.r_maddr, idbmem.idbmem.w_odata, idbmem.idbmem.r_ctrl, 
+                    core0.p.regs.mem[2], core0.p.regs.mem[13], core0.p.regs.mem[14], core0.p.regs.mem[15],
+                    idbmem.idbmem.mem[32'hbe3c], idbmem.idbmem.mem[32'hbe3d]
+        );
 	end
-    //if(w_mtime == 10000)
-    //    $finish;
+*/
 end
 `endif
 endmodule

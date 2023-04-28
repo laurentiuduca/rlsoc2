@@ -279,6 +279,8 @@ module m_mmu(
     
     assign w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
 
+    assign w_dram_we_t =   (w_pte_we || w_dram_we) && !w_dram_busy;
+
 /**************************************************************************************************/
     
 endmodule
