@@ -20,7 +20,6 @@ module m_cpummusim(
     output wire w_dram_we_t,
     input wire w_dram_busy,
     output wire [2:0]   w_dram_ctrl,
-    input wire          w_set_dram_le,
     output wire         w_dram_le,
     input wire        w_init_done,
     input wire        w_plic_we,
@@ -68,7 +67,6 @@ module m_cpummusim(
         .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy),
         .w_dram_ctrl(w_dram_ctrl),
-        .w_set_dram_le(w_set_dram_le),
         .w_dram_le(w_dram_le)
     );
 

@@ -56,7 +56,6 @@ module m_topsim(CLK, RST_X);
         .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy),
         .w_dram_ctrl(w_dram_ctrl),
-        .w_set_dram_le(r_set_dram_le),
         .w_dram_le(w_dram_le),
         .w_init_done(w_init_done),
         .w_plic_we(w_plic_we),
@@ -535,8 +534,12 @@ module m_topsim(CLK, RST_X);
         .w_mtime(w_mtime[31:0]));
 `else
     DRAM_conRV dram_con (
-                                // user interface ports
+                               // user interface ports
+`ifdef LAUR_MEM_RB
+                               .i_rd_en(w_dram_le | r_set_dram_le)
+`else
                                .i_rd_en(w_dram_le),
+`endif
                                .i_wr_en(w_wr_en),
                                .i_addr(w_dram_addr_t2),
                                .i_data(w_dram_wdata_t),
@@ -549,7 +552,7 @@ module m_topsim(CLK, RST_X);
 `ifdef ARTYA7
                                .ref_clk(ref_clk),
 `endif
-                               // memory interface ports
+                               // ddr interface ports
 `ifndef ARTYA7
                                .ddr2_dq(ddr2_dq),
                                .ddr2_dqs_n(ddr2_dqs_n),

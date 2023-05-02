@@ -35,7 +35,6 @@ module m_mmu(
     output wire         w_dram_we_t,
     input wire          w_dram_busy,
     output wire [2:0]   w_dram_ctrl,
-    input wire          w_set_dram_le,
     output wire         w_dram_le
     );
 
@@ -259,10 +258,7 @@ module m_mmu(
     wire        w_dram_aces = (w_dram_addr[31:28] == 8 || w_dram_addr[31:28] == 0 || w_dram_addr[31:28] == 9);
 
     assign        w_dram_le   =
-                    (w_dram_busy)  ? 0 :
-`ifdef LAUR_MEM_RB
-                    (w_set_dram_le) ? 1 :
-`endif
+                    //(w_dram_busy)  ? 0 :
                     (!w_dram_aces) ? 0 :
                     (r_mc_mode!=0) ? (w_mc_aces==`ACCESS_READ && w_mc_addr[31:28] != 0) :
                     (w_priv == `PRIV_M || w_satp[31] == 0) ? (w_iscode || w_isread) :
@@ -275,7 +271,7 @@ module m_mmu(
                     !(w_use_tlb)                            ? 0 :
                     (r_pw_state == 7)                       ? 0 : 1;
 
-    assign w_dram_we_t =   (w_pte_we || w_dram_we) && !w_dram_busy;
+    assign w_dram_we_t =   (w_pte_we || w_dram_we); // && !w_dram_busy;
 
 /**************************************************************************************************/
     
