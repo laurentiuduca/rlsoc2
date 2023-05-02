@@ -119,10 +119,11 @@ module m_mmu(
     always@(posedge CLK) begin
         if(r_pw_state == 0) begin
             // PAGE WALK START
-            if(!w_dram_busy && w_use_tlb) begin
+            if(w_use_tlb) begin
                 // tlb miss
                 if(!w_tlb_hit) begin
-                    r_pw_state <= 1;
+                    if(!w_dram_busy)
+                        r_pw_state <= 1;
                 end
                 else begin
                     r_pw_state <= 7;
@@ -224,9 +225,6 @@ module m_mmu(
 
     assign w_mem_paddr  =  (r_mc_mode != 0)                        ? w_mc_addr     :
                                 (w_priv == `PRIV_M || w_satp[31] == 0)  ? w_data_addr   : r_tlb_addr;
-//                                (r_pw_state == 5)                       ? r_tlb_addr    :
-//                                (r_tlb_acs)                             ? r_tlb_pte_addr:
-//                                                                          w_data_addr;
 
     wire [2:0]  w_mem_ctrl   =  (r_mc_mode != 0)                        ? w_mc_ctrl         :
                                 (w_priv == `PRIV_M || w_satp[31] == 0)  ? w_data_ctrl       :

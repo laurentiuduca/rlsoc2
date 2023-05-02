@@ -94,6 +94,7 @@ module m_topsim(CLK, RST_X);
         r_mem_paddr <= w_mem_paddr;
     end
 
+    // w_dram_busy is also used in mmu
     wire w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
     /**********************************************************************************************/
     // OUTPUT CHAR
@@ -157,7 +158,7 @@ module m_topsim(CLK, RST_X);
 
 `ifdef SIM_MODE
     initial begin
-`define LAUR_EMPTY_CONSOLE_BUFFER
+//`define LAUR_EMPTY_CONSOLE_BUFFER
 `ifdef LAUR_EMPTY_CONSOLE_BUFFER
 	r_consf_en = 0;
 	r_consf_head = 0;
