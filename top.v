@@ -38,7 +38,7 @@ module m_topsim(CLK, RST_X);
     m_cpummusim core0(
         .CLK(CLK), 
         .RST_X(RST_X), 
-        .w_tx_ready(w_tx_ready),
+        .w_proc_busy(w_proc_busy),
         .w_mem_paddr(w_mem_paddr),
         .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata),
@@ -69,6 +69,7 @@ module m_topsim(CLK, RST_X);
     wire w_mem_we;
     wire [31:0] w_data_wdata;
     wire [63:0] w_mtime, w_mtimecmp;
+    wire w_proc_busy;
     wire w_dram_we_t, w_dram_le;
     wire [2:0]   w_dram_ctrl;
     
@@ -94,6 +95,7 @@ module m_topsim(CLK, RST_X);
         r_mem_paddr <= w_mem_paddr;
     end
 
+    wire w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
     /**********************************************************************************************/
     // OUTPUT CHAR
     UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
@@ -151,7 +153,7 @@ module m_topsim(CLK, RST_X);
     reg [7:0] r_char_value=0;
 `ifdef SIM_MODE
     wire w_file_we;
-    read_file rf(.clk(CLK), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER + 64'd10000000));
+    read_file rf(.clk(CLK), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER));
 `endif
 
 `ifdef SIM_MODE
@@ -515,8 +517,7 @@ module m_topsim(CLK, RST_X);
     
     wire [31:0]  w_dram_wdata_t   =   (r_init_state == 1) ? 32'b0 :
                                     (r_init_state == 5) ? w_dram_wdata : w_pl_init_data;
-    // w_dram_we_t is input
-    //wire         w_dram_we_t      =   (w_pte_we || w_dram_we || w_imag_we) && !w_dram_busy;
+
     wire [2:0]   w_dram_ctrl_t  = (!w_init_done) ? `FUNCT3_SW____ : w_dram_ctrl;
     /**********************************************************************************************/
 

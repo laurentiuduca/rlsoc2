@@ -22,12 +22,10 @@ module m_mmu(
     input  wire  [2:0]  w_data_ctrl,
     output wire [31:0]  w_insn_data,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
-    output wire         w_proc_busy,
     output wire [31:0]  w_pagefault,
     input  wire  [1:0]  w_tlb_req,
     input  wire         w_tlb_flush,
     //--------------------------------------------------------------------------------------------//
-    input wire          w_tx_ready,
     output wire [31:0]  w_mem_paddr,
     output wire         w_mem_we,
     output wire         w_tlb_busy,
@@ -276,8 +274,6 @@ module m_mmu(
     assign w_tlb_busy = 
                     !(w_use_tlb)                            ? 0 :
                     (r_pw_state == 7)                       ? 0 : 1;
-    
-    assign w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
 
     assign w_dram_we_t =   (w_pte_we || w_dram_we) && !w_dram_busy;
 

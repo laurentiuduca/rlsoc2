@@ -2,7 +2,6 @@
 
 module m_cpummusim(
     input wire CLK, RST_X,
-    input wire w_tx_ready,
     output wire [31:0] w_mem_paddr,
     output wire w_mem_we,
     output wire [31:0] w_data_wdata,
@@ -14,6 +13,7 @@ module m_cpummusim(
     output wire        w_tlb_busy,
     output wire [31:0] w_mip,
     input wire [31:0]  w_wmip,
+    input wire w_proc_busy,
     output wire [31:0] w_dram_addr,
     output wire [31:0] w_dram_wdata,
     input wire  [31:0] w_dram_odata,
@@ -54,13 +54,11 @@ module m_cpummusim(
         .w_priv         (w_priv),
         .w_satp         (w_satp),
         .w_mstatus      (w_mstatus),
-        .w_proc_busy    (w_busy),
         .w_pagefault    (w_pagefault),
         .w_tlb_req      (w_tlb_req),
         .w_tlb_flush    (w_tlb_flush),
 
         //-------------------------------------------------------------------------------------------------------//
-        .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr),
         .w_mem_we(w_mem_we),
         .w_tlb_busy(w_tlb_busy),
@@ -96,7 +94,7 @@ module m_cpummusim(
         .w_mip          (w_mip),
         .w_wmip         (w_wmip),
         .w_plic_we      (w_plic_we),
-        .w_busy         (w_busy),
+        .w_busy         (w_proc_busy),
         .w_pagefault    (w_pagefault),
         .w_tlb_req      (w_tlb_req),
         .w_tlb_flush    (w_tlb_flush),
