@@ -36,49 +36,41 @@ module m_topsim(CLK, RST_X);
 `endif
 
     m_cpummusim core0(
-        .CLK(CLK), 
-        .RST_X(RST_X), 
-        .w_proc_busy(w_proc_busy),
-        .w_mem_paddr(w_mem_paddr),
-        .w_mem_we(w_mem_we),
-        .w_data_wdata(w_data_wdata),
-        .w_data_data(w_data_data),
-        .w_mtime(w_mtime),
-        .w_mtimecmp(w_mtimecmp),
-        .w_wmtimecmp(w_wmtimecmp),
-        .w_tlb_req(w_tlb_req),
-        .w_tlb_busy(w_tlb_busy),
-        .w_mip(w_mip),
-        .w_wmip(w_wmip),
-        .w_dram_addr(w_dram_addr),
-        .w_dram_wdata(w_dram_wdata),
-        .w_dram_odata(w_dram_odata),
-        .w_dram_we_t(w_dram_we_t),
-        .w_dram_busy(w_dram_busy),
-        .w_dram_ctrl(w_dram_ctrl),
-        .w_dram_le(w_dram_le),
-        .w_init_done(w_init_done),
-        .w_plic_we(w_plic_we),
-        .w_clint_we(w_clint_we)
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0),
+        .w_init_done(w_init_done), .w_proc_busy(w_proc_busy),
+        .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
+        .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp),
+        .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
+        .w_mip(w_mip), .w_wmip(w_wmip),
+        .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
+        .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
+        .w_plic_we(w_plic_we), .w_clint_we(w_clint_we)
     );
 
     /**********************************************************************************************/
-    // bus signals
+    wire w_init_done;
+    wire w_proc_busy;
     wire [31:0] w_mem_paddr;
     wire w_mem_we;
     wire [31:0] w_data_wdata;
-    wire [63:0] w_mtime, w_mtimecmp;
-    wire w_proc_busy;
-    wire w_dram_we_t, w_dram_le;
-    wire [2:0]   w_dram_ctrl;
-    
-    wire [31:0] w_dram_odata;
-    wire [31:0] w_dram_wdata;
-    wire w_dram_busy;
-    wire [31:0] w_dram_addr;
-
+    wire [31:0] w_data_data;
+    wire [63:0] w_mtime, w_mtimecmp, w_wmtimecmp;
     wire [1:0]  w_tlb_req;
     wire        w_tlb_busy;
+    wire [31:0] w_mip;
+    wire [31:0] w_wmip;
+    wire [31:0] w_dram_addr;
+    wire [31:0] w_dram_wdata;
+    wire [31:0] w_dram_odata;
+    wire w_dram_we_t;
+    wire w_dram_busy;
+    wire [2:0]   w_dram_ctrl;
+    wire w_dram_le;
+    wire w_plic_we, w_clint_we;
+
+    reg [31:0] core=0; // bus grant core
+    /**********************************************************************************************/
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
 
@@ -246,7 +238,6 @@ module m_topsim(CLK, RST_X);
             default           : r_data_data <= w_dram_odata;
         endcase
     end
-    wire [31:0] w_data_data;
     assign w_data_data = r_data_data;
 
     /*********************************          INTERRUPTS          *********************************/
@@ -292,9 +283,8 @@ module m_topsim(CLK, RST_X);
         end
     end
 
-    wire w_plic_we      = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
-    wire [31:0] w_mip;
-    wire [31:0] w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
+    assign w_plic_we      = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
+    assign w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
                             w_mip & ~(`MIP_MEIP | `MIP_SEIP);
     
     always@(posedge CLK) begin
@@ -315,11 +305,11 @@ module m_topsim(CLK, RST_X);
 
     // shortcut to w_data_we because we do not use microcontroller
     wire w_data_we = w_mem_we;
-    wire [63:0] w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
+    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
                                 (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    wire w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_data_we != 0);
+    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_data_we != 0);
     /**********************************************************************************************/
 `ifdef SIM_MODE
     reg  [2:0] r_init_state = 5;
@@ -375,7 +365,7 @@ module m_topsim(CLK, RST_X);
 
     wire [2:0] w_init_state = r_init_state;
 
-    wire w_init_done = (r_init_state == 5);
+    assign w_init_done = (r_init_state == 5);
         
     always@(posedge CLK) begin	
 	    if(r_init_state < 1)

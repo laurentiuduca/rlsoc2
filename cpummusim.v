@@ -2,6 +2,7 @@
 
 module m_cpummusim(
     input wire CLK, RST_X,
+    input wire [31:0] w_hart_id,
     output wire [31:0] w_mem_paddr,
     output wire w_mem_we,
     output wire [31:0] w_data_wdata,
@@ -74,6 +75,7 @@ module m_cpummusim(
         .CLK            (CLK),
         .RST_X          (CORE_RST_X),
         .w_stall        (1'b0),
+        .w_hart_id      (w_hart_id),
         .r_halt         (w_halt),
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),

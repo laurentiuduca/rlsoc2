@@ -13,13 +13,14 @@
 
 /***** 2 read 1 write port, register file                                                     *****/
 /**************************************************************************************************/
-module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata);
+module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_hart_id);
     input  wire        CLK;
     input  wire [ 4:0] w_rs1, w_rs2;
     output wire [31:0] w_rdata1, w_rdata2;
     input  wire        w_we;
     input  wire [ 4:0] rd;
     input  wire [31:0] w_wdata;
+    input  wire [31:0] w_hart_id;
 
     reg [31:0] mem [0:31];
 
@@ -36,6 +37,7 @@ module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata);
     initial begin
         for(i=0; i<32; i=i+1) mem[i] = 0;
 `ifdef LINUX
+        mem[10] = w_hart_id;
         mem[11] = `D_INITD_ADDR + `D_START_PC;
 `endif
     end
@@ -44,11 +46,12 @@ endmodule
 
 /***** main processor                                                                         *****/
 /**************************************************************************************************/
-module m_RVCoreM(CLK, RST_X, w_stall, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
+module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage);
     input  wire         CLK, RST_X, w_stall;
+    input  wire [31:0]  w_hart_id;
     input  wire [31:0]  w_insn_data, w_data_data;
     input  wire [63:0]  w_wmtimecmp;
     input  wire         w_clint_we;
@@ -86,7 +89,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, r_halt, w_insn_addr, w_data_addr, w_insn_d
     reg  [31:0] mepc           = 0;            //
     reg  [31:0] mcause         = 0;            //
     reg  [31:0] mtval          = 0;            //
-    reg  [31:0] mhartid        = 0;            //
+    wire  [31:0] mhartid        = w_hart_id;            //
     reg  [31:0] misa           = 32'h00141105; // RV32acim, Machine ISA register (MISA)
     reg  [31:0] mie            = 0;            //
     reg  [31:0] mip            = 0;            //
@@ -230,7 +233,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, r_halt, w_insn_addr, w_data_addr, w_insn_d
                       
     wire [31:0] w_rrs1, w_rrs2;
     wire w_regfile_we = (w_wb_r_enable && state==`S_WB);
-    m_regfile regs(CLK, w_rs1, w_rs2, w_rrs1, w_rrs2, w_regfile_we, r_rd, w_wb_r_data);
+    m_regfile regs(CLK, w_rs1, w_rs2, w_rrs1, w_rrs2, w_regfile_we, r_rd, w_wb_r_data, w_hart_id);
 
     always @(posedge CLK) if(state == `S_ID) begin
         r_rrs1    <= w_rrs1;      // operand which is read from register file

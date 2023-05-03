@@ -143,7 +143,8 @@ module m_mmu(
             r_pw_state  <= 2;
         end
         else if(r_pw_state == 2) begin
-            r_pw_state  <= 3;
+            if(!w_dram_busy)
+                r_pw_state  <= 3;
         end
         // Level 0
         else if(r_pw_state == 3 && !w_dram_busy) begin
@@ -256,7 +257,7 @@ module m_mmu(
     wire        w_dram_aces = (w_dram_addr[31:28] == 8 || w_dram_addr[31:28] == 0 || w_dram_addr[31:28] == 9);
 
     assign        w_dram_le   =
-                    //(w_dram_busy)  ? 0 :
+                    (w_dram_busy)  ? 0 :
                     (!w_dram_aces) ? 0 :
                     (r_mc_mode!=0) ? (w_mc_aces==`ACCESS_READ && w_mc_addr[31:28] != 0) :
                     (w_priv == `PRIV_M || w_satp[31] == 0) ? (w_iscode || w_isread) :
@@ -269,7 +270,7 @@ module m_mmu(
                     !(w_use_tlb)                            ? 0 :
                     (r_pw_state == 7)                       ? 0 : 1;
 
-    assign w_dram_we_t =   (w_pte_we || w_dram_we); // && !w_dram_busy;
+    assign w_dram_we_t =   w_pte_we || w_dram_we && !w_dram_busy;
 
 /**************************************************************************************************/
     

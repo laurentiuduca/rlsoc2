@@ -78,7 +78,7 @@ module m_RVuc(CLK, RST_X, w_stall, w_mic_addr, w_data, w_mic_wdata, w_mic_mmuwe,
 
     wire w_reg_w = (w_reg_we && r_state==`MC_IF && !w_stall); // regfile write_enable
     
-    m_regfile regs(CLK, w_rs1, w_rs2, w_rrs1, w_rrs2, w_reg_w, r_rd, w_reg_d);
+    m_regfile regs(CLK, w_rs1, w_rs2, w_rrs1, w_rrs2, w_reg_w, r_rd, w_reg_d, 0);
 
     reg  [31:0] r_mic_addr  = 0;
     always @(posedge CLK) begin
