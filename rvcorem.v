@@ -51,7 +51,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage);
     input  wire         CLK, RST_X, w_stall;
-    input  wire [`NCORES-1:0] w_ipi;
+    input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
     input  wire [31:0]  w_insn_data, w_data_data;
     input  wire [63:0]  w_wmtimecmp;

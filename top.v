@@ -71,7 +71,8 @@ module m_topsim(CLK, RST_X);
     wire w_dram_le;
 
     reg [31:0] r_grant=0; // bus granted core
-    wire [`NCORES-1:0] w_ipi;
+    wire [31:0] w_grant=r_grant;
+    wire [31:0] w_ipi;
     /**********************************************************************************************/
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
@@ -273,6 +274,9 @@ module m_topsim(CLK, RST_X);
     reg         r_virt_irq_oe_t = 0;
     reg         r_plic_aces_t   = 0;
 
+    reg [32-1:0] r_ipi=0;
+    assign w_ipi = r_ipi;
+
     wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
 
     always@(posedge CLK) begin
@@ -288,7 +292,7 @@ module m_topsim(CLK, RST_X);
     assign w_plic_we      = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
     assign w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
                             w_mip & ~(`MIP_MEIP | `MIP_SEIP);
-    
+
     always@(posedge CLK) begin
         if(w_plic_aces) begin
             r_plic_odata    <= (w_plic_mask!=0) ? w_plic_mask : 0;
@@ -303,6 +307,20 @@ module m_topsim(CLK, RST_X);
                             (w_offset==28'hbffc) ? w_mtime[63:32] :
                             (w_offset==28'h4000) ? w_mtimecmp[31:0] :
                             (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
+        
+        // one core sends ipi, the target clears it
+        if(r_dev == `CLINT_BASE_TADDR && w_offset[27:8]==20'h0) begin
+            if(w_data_data == 32'h0) // clear ipi
+                if(w_grant == 0)
+                    r_ipi <= {r_ipi[31:1], 1'b0};
+                else
+                    r_ipi <= {r_ipi[31:2], 1'b0,r_ipi[0]};
+            else // send ipi
+                if(w_grant == 0)
+                    r_ipi <= 32'h02; // signal core 1
+                else
+                    r_ipi <= 32'h01; // signal core 0
+        end
     end
 
     // shortcut to w_data_we because we do not use microcontroller
