@@ -37,7 +37,7 @@ module m_topsim(CLK, RST_X);
 
     m_cpummusim core0(
         .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi),
-        .w_init_done(w_init_done), .w_proc_busy(bus_proc_busy[0]),
+        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr[0]), .w_mem_we(bus_mem_we[0]),
         .w_data_wdata(bus_data_wdata[0]), .w_data_data(bus_data_data[0]),
         .w_mtime(bus_mtime[0]), .w_mtimecmp(bus_mtimecmp[0]), .w_wmtimecmp(bus_wmtimecmp[0]), .w_clint_we(bus_clint_we[0]),
@@ -50,7 +50,7 @@ module m_topsim(CLK, RST_X);
 
      m_cpummusim core1(
         .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi),
-        .w_init_done(w_init_done), .w_proc_busy(bus_proc_busy[1]),
+        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr[1]), .w_mem_we(bus_mem_we[1]),
         .w_data_wdata(bus_data_wdata[1]), .w_data_data(bus_data_data[1]),
         .w_mtime(bus_mtime[1]), .w_mtimecmp(bus_mtimecmp[1]), .w_wmtimecmp(bus_wmtimecmp[1]), .w_clint_we(bus_clint_we[1]),
@@ -62,7 +62,7 @@ module m_topsim(CLK, RST_X);
     );   
     
     busarbiter ba(.CLK(CLK), .RST_X(RST_X), .w_grant(w_grant),
-        .w_init_done(w_init_done), .w_proc_busy(w_proc_busy), .w_tx_ready(w_tx_ready),
+        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
@@ -71,7 +71,6 @@ module m_topsim(CLK, RST_X);
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
 
-                                    .bus_proc_busy(bus_proc_busy),
         .bus_mem_paddr(bus_mem_paddr), .bus_mem_we(bus_mem_we),
         .bus_data_wdata(bus_data_wdata), .bus_data_data(bus_data_data),
         .bus_mtime(bus_mtime), .bus_mtimecmp(bus_mtimecmp), .bus_wmtimecmp(bus_wmtimecmp), .bus_clint_we(bus_clint_we),
@@ -85,7 +84,6 @@ module m_topsim(CLK, RST_X);
     // bus interface
 
     wire w_init_done;
-    wire w_proc_busy, bus_proc_busy[0:`NCORES-1];
     wire [31:0] w_mem_paddr, bus_mem_paddr[0:`NCORES-1];
     wire w_mem_we, bus_mem_we[0:`NCORES-1];
     wire [31:0] w_data_wdata, bus_data_wdata[0:`NCORES-1];
@@ -122,9 +120,6 @@ module m_topsim(CLK, RST_X);
         r_virt  <= w_virt;
         r_mem_paddr <= w_mem_paddr;
     end
-
-    // w_dram_busy is also used in mmu
-    wire w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
 
     /***********************************          OUTPUT        ***********************************/
     reg  [31:0] r_data_data = 0;

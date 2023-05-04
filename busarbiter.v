@@ -2,8 +2,8 @@
 
 module busarbiter(
     // here we do not keep the w_ notation for wire
-    input wire CLK, RST_X, output wire [31:0] w_grant, input wire w_tx_ready,
-    input wire w_init_done, input wire w_proc_busy,
+    input wire CLK, RST_X, output wire [31:0] w_grant,
+    input wire w_init_done, input wire w_tx_ready,
     output reg [31:0] w_mem_paddr, output reg w_mem_we,
     output reg [31:0] w_data_wdata, input wire [31:0] w_data_data,
     output reg [63:0] w_mtime, output reg [63:0] w_mtimecmp, input wire [63:0] w_wmtimecmp, input wire w_clint_we,
@@ -12,7 +12,6 @@ module busarbiter(
     output reg [31:0] w_dram_addr, output reg [31:0] w_dram_wdata, input wire [31:0] w_dram_odata, output reg w_dram_we_t,
     input wire w_dram_busy, output reg [2:0] w_dram_ctrl, output reg w_dram_le,
 
-    output reg bus_proc_busy[0:`NCORES-1],
     input wire [31:0] bus_mem_paddr[0:`NCORES-1], input wire bus_mem_we[0:`NCORES-1],
     input wire [31:0] bus_data_wdata[0:`NCORES-1], 
     output wire [31:0] bus_data_data[0:`NCORES-1],
@@ -89,7 +88,6 @@ else
     task setbyid();
     input id;
     begin
-            bus_proc_busy[id] <= w_proc_busy;
             w_mem_paddr <= bus_mem_paddr[id]; w_mem_we <= bus_mem_we[id];
             w_data_wdata <= bus_data_wdata[id]; bus_data_data[id] = w_data_data;
             w_mtime <= bus_mtime[id]; w_mtimecmp <= bus_mtimecmp[id]; bus_wmtimecmp[id] <= w_wmtimecmp; bus_clint_we[id] = w_clint_we;

@@ -18,7 +18,7 @@ module m_cpummusim(
     output wire [31:0] w_mip,
     input wire [31:0]  w_wmip,
     input wire        w_plic_we,
-    input wire w_proc_busy,
+    input wire w_tx_ready,
     output wire [31:0] w_dram_addr,
     output wire [31:0] w_dram_wdata,
     input wire  [31:0] w_dram_odata,
@@ -40,6 +40,7 @@ module m_cpummusim(
     wire        w_busy;
     wire [31:0] w_pagefault;
     wire        w_tlb_flush;
+    wire        w_proc_busy;
 
     wire        CORE_RST_X = RST_X & w_init_done;
 
@@ -59,6 +60,7 @@ module m_cpummusim(
         .w_pagefault    (w_pagefault),
         .w_tlb_req      (w_tlb_req),
         .w_tlb_flush    (w_tlb_flush),
+        .w_proc_busy    (w_proc_busy),
 
         //-------------------------------------------------------------------------------------------------------//
         .w_mem_paddr(w_mem_paddr),
@@ -71,7 +73,8 @@ module m_cpummusim(
         .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy),
         .w_dram_ctrl(w_dram_ctrl),
-        .w_dram_le(w_dram_le)
+        .w_dram_le(w_dram_le),
+        .w_tx_ready(w_tx_ready)
     );
 
     m_RVCoreM p(
