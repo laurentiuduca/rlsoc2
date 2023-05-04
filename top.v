@@ -62,7 +62,7 @@ module m_topsim(CLK, RST_X);
     );   
     
     busarbiter ba(.CLK(CLK), .RST_X(RST_X), .w_grant(w_grant),
-        .w_init_done(w_init_done), .w_proc_busy(w_proc_busy),
+        .w_init_done(w_init_done), .w_proc_busy(w_proc_busy), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
@@ -375,9 +375,9 @@ module m_topsim(CLK, RST_X);
     reg  [31:0]  r_initaddr  = 0;
     reg  [31:0]  r_checksum = 0;
     always@(posedge CLK) begin
-	r_checksum <= (!RST_X)                      ? 0                             :
+	    r_checksum <= (!RST_X)                      ? 0                             :
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
-		      r_checksum;
+		               r_checksum;
     end
 
     wire w_checksum = r_checksum;
