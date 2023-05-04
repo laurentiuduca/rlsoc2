@@ -36,12 +36,12 @@ module m_topsim(CLK, RST_X);
 `endif
 
     m_cpummusim core0(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(w_ipi),
         .w_init_done(w_init_done), .w_proc_busy(w_proc_busy),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
-        .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
+        .w_pw_state(w_pw_state), .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_we(w_plic_we),
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le)
@@ -56,6 +56,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] w_data_data;
     wire [63:0] w_mtime, w_mtimecmp, w_wmtimecmp;
     wire w_clint_we;
+    wire [2:0]  w_pw_state;
     wire [1:0]  w_tlb_req;
     wire        w_tlb_busy;
     wire [31:0] w_mip;
@@ -69,7 +70,8 @@ module m_topsim(CLK, RST_X);
     wire [2:0]   w_dram_ctrl;
     wire w_dram_le;
 
-    reg [31:0] grant=0; // bus granted core
+    reg [31:0] r_grant=0; // bus granted core
+    wire [`NCORES-1:0] w_ipi;
     /**********************************************************************************************/
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);

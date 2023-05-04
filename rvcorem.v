@@ -46,11 +46,12 @@ endmodule
 
 /***** main processor                                                                         *****/
 /**************************************************************************************************/
-module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
+module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage);
     input  wire         CLK, RST_X, w_stall;
+    input  wire [`NCORES-1:0] w_ipi;
     input  wire [31:0]  w_hart_id;
     input  wire [31:0]  w_insn_data, w_data_data;
     input  wire [63:0]  w_wmtimecmp;
@@ -627,6 +628,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, r_halt, w_insn_addr, w_data_add
     reg [31:0] old_insn_addr;
 `endif
 
+    reg r_ipi_taken=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
             if(mtime > `ENABLE_TIMER) begin
@@ -636,6 +638,14 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, r_halt, w_insn_addr, w_data_add
                 else if(mtimecmp < mtime) begin
                     mip <= mip | `MIP_MTIP;
                 end
+                else if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
+                    if(priv == `PRIV_M)
+                        mip <= mip | `MIP_MSIP;
+                    else
+                        mip <= mip | `MIP_SSIP;
+                    r_ipi_taken <= 1;
+                end else if(!w_ipi)
+                    r_ipi_taken <= 0;
             end
         end
 

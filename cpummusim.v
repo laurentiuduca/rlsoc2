@@ -3,6 +3,7 @@
 module m_cpummusim(
     input wire CLK, RST_X,
     input wire [31:0] w_hart_id,
+    input  wire [`NCORES-1:0] w_ipi,
     output wire [31:0] w_mem_paddr,
     output wire w_mem_we,
     output wire [31:0] w_data_wdata,
@@ -10,6 +11,7 @@ module m_cpummusim(
     output wire [63:0] w_mtime,
     output wire [63:0] w_mtimecmp,
     input wire [63:0] w_wmtimecmp,
+    output wire [2:0] w_pw_state,
     output wire [1:0]  w_tlb_req,
     output wire        w_tlb_busy,
     output wire [31:0] w_mip,
@@ -61,6 +63,7 @@ module m_cpummusim(
         //-------------------------------------------------------------------------------------------------------//
         .w_mem_paddr(w_mem_paddr),
         .w_mem_we(w_mem_we),
+        .r_pw_state(w_pw_state),
         .w_tlb_busy(w_tlb_busy),
         .w_dram_addr(w_dram_addr),
         .w_dram_wdata(w_dram_wdata),
@@ -76,6 +79,7 @@ module m_cpummusim(
         .RST_X          (CORE_RST_X),
         .w_stall        (1'b0),
         .w_hart_id      (w_hart_id),
+        .w_ipi          (w_ipi),
         .r_halt         (w_halt),
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),
