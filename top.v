@@ -36,43 +36,77 @@ module m_topsim(CLK, RST_X);
 `endif
 
     m_cpummusim core0(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(w_ipi),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi),
+        .w_init_done(w_init_done), .w_proc_busy(bus_proc_busy[0]),
+        .w_mem_paddr(bus_mem_paddr[0]), .w_mem_we(bus_mem_we[0]),
+        .w_data_wdata(bus_data_wdata[0]), .w_data_data(bus_data_data[0]),
+        .w_mtime(bus_mtime[0]), .w_mtimecmp(bus_mtimecmp[0]), .w_wmtimecmp(bus_wmtimecmp[0]), .w_clint_we(bus_clint_we[0]),
+        .w_pw_state(bus_pw_state[0]), 
+        .w_tlb_req(bus_tlb_req[0]), .w_tlb_busy(bus_tlb_busy[0]),
+        .w_mip(bus_mip[0]), .w_wmip(bus_wmip[0]), .w_plic_we(bus_plic_we[0]),
+        .w_dram_addr(bus_dram_addr[0]), .w_dram_wdata(bus_dram_wdata[0]), .w_dram_odata(bus_dram_odata[0]), .w_dram_we_t(bus_dram_we_t[0]),
+        .w_dram_busy(bus_dram_busy[0]), .w_dram_ctrl(bus_dram_ctrl[0]), .w_dram_le(bus_dram_le[0])
+    );
+
+     m_cpummusim core1(
+        .CLK(CLK), .RST_X(0), .w_hart_id(0), .w_ipi(bus_ipi),
+        .w_init_done(w_init_done), .w_proc_busy(bus_proc_busy[1]),
+        .w_mem_paddr(bus_mem_paddr[1]), .w_mem_we(bus_mem_we[1]),
+        .w_data_wdata(bus_data_wdata[1]), .w_data_data(bus_data_data[1]),
+        .w_mtime(bus_mtime[1]), .w_mtimecmp(bus_mtimecmp[1]), .w_wmtimecmp(bus_wmtimecmp[1]), .w_clint_we(bus_clint_we[1]),
+        .w_pw_state(bus_pw_state[1]), 
+        .w_tlb_req(bus_tlb_req[1]), .w_tlb_busy(bus_tlb_busy[1]),
+        .w_mip(bus_mip[1]), .w_wmip(bus_wmip[1]), .w_plic_we(bus_plic_we[1]),
+        .w_dram_addr(bus_dram_addr[1]), .w_dram_wdata(bus_dram_wdata[1]), .w_dram_odata(bus_dram_odata[1]), .w_dram_we_t(bus_dram_we_t[1]),
+        .w_dram_busy(bus_dram_busy[1]), .w_dram_ctrl(bus_dram_ctrl[1]), .w_dram_le(bus_dram_le[1])
+    );   
+    
+    busarbiter ba(.CLK(CLK), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_proc_busy(w_proc_busy),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
-        .w_pw_state(w_pw_state), .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
+        .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_we(w_plic_we),
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
-        .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le)
+        .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
+
+                                    .bus_proc_busy(bus_proc_busy),
+        .bus_mem_paddr(bus_mem_paddr), .bus_mem_we(bus_mem_we),
+        .bus_data_wdata(bus_data_wdata), .bus_data_data(bus_data_data),
+        .bus_mtime(bus_mtime), .bus_mtimecmp(bus_mtimecmp), .bus_wmtimecmp(bus_wmtimecmp), .bus_clint_we(bus_clint_we),
+        .bus_pw_state(bus_pw_state), .bus_tlb_req(bus_tlb_req), .bus_tlb_busy(bus_tlb_busy),
+        .bus_mip(bus_mip), .bus_wmip(bus_wmip), .bus_plic_we(bus_plic_we),
+        .bus_dram_addr(bus_dram_addr), .bus_dram_wdata(bus_dram_wdata), .bus_dram_odata(bus_dram_odata), .bus_dram_we_t(bus_dram_we_t),
+        .bus_dram_busy(bus_dram_busy), .bus_dram_ctrl(bus_dram_ctrl), .bus_dram_le(bus_dram_le)
     );
 
     /**********************************************************************************************/
-    wire w_init_done;
-    wire w_proc_busy;
-    wire [31:0] w_mem_paddr;
-    wire w_mem_we;
-    wire [31:0] w_data_wdata;
-    wire [31:0] w_data_data;
-    wire [63:0] w_mtime, w_mtimecmp, w_wmtimecmp;
-    wire w_clint_we;
-    wire [2:0]  w_pw_state;
-    wire [1:0]  w_tlb_req;
-    wire        w_tlb_busy;
-    wire [31:0] w_mip;
-    wire [31:0] w_wmip;
-    wire w_plic_we;
-    wire [31:0] w_dram_addr;
-    wire [31:0] w_dram_wdata;
-    wire [31:0] w_dram_odata;
-    wire w_dram_we_t;
-    wire w_dram_busy;
-    wire [2:0]   w_dram_ctrl;
-    wire w_dram_le;
+    // bus interface
 
-    reg [31:0] r_grant=0; // bus granted core
-    wire [31:0] w_grant=r_grant;
-    wire [31:0] w_ipi;
+    wire w_init_done;
+    wire w_proc_busy, bus_proc_busy[0:`NCORES-1];
+    wire [31:0] w_mem_paddr, bus_mem_paddr[0:`NCORES-1];
+    wire w_mem_we, bus_mem_we[0:`NCORES-1];
+    wire [31:0] w_data_wdata, bus_data_wdata[0:`NCORES-1];
+    wire [31:0] w_data_data, bus_data_data[0:`NCORES-1];
+    wire [63:0] w_mtime, w_mtimecmp, w_wmtimecmp, bus_mtime[0:`NCORES-1], bus_mtimecmp[0:`NCORES-1], bus_wmtimecmp[0:`NCORES-1];
+    wire w_clint_we, bus_clint_we[0:`NCORES-1];
+    wire [2:0]  w_pw_state, bus_pw_state[0:`NCORES-1];
+    wire [1:0]  w_tlb_req, bus_tlb_req[0:`NCORES-1];
+    wire        w_tlb_busy, bus_tlb_busy[0:`NCORES-1];
+    wire [31:0] w_mip, w_wmip, bus_mip[0:`NCORES-1], bus_wmip[0:`NCORES-1];
+    wire w_plic_we, bus_plic_we[0:`NCORES-1];
+    wire [31:0] w_dram_addr, bus_dram_addr[0:`NCORES-1];
+    wire [31:0] w_dram_wdata, bus_dram_wdata[0:`NCORES-1];
+    wire [31:0] w_dram_odata, bus_dram_odata[0:`NCORES-1];
+    wire w_dram_we_t, bus_dram_we_t[0:`NCORES-1];
+    wire w_dram_busy, bus_dram_busy[0:`NCORES-1];
+    wire [2:0]   w_dram_ctrl, bus_dram_ctrl[0:`NCORES-1];
+    wire w_dram_le, bus_dram_le[0:`NCORES-1];
+
+    wire [31:0] w_grant;
+    wire [31:0] bus_ipi;
     /**********************************************************************************************/
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
@@ -91,6 +125,113 @@ module m_topsim(CLK, RST_X);
 
     // w_dram_busy is also used in mmu
     wire w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
+
+    /***********************************          OUTPUT        ***********************************/
+    reg  [31:0] r_data_data = 0;
+    always@(*) begin
+        case (r_dev)
+            `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
+            `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
+            `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
+                                    //$display("HVC_BASE_ADDR %x", r_consf_cnts);
+                                    r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts};
+                                end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
+                                    //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
+                                    r_data_data <= {24'h0, r_char_value};
+                                end
+            default           : r_data_data <= w_dram_odata;
+        endcase
+    end
+    assign w_data_data = r_data_data;
+
+    /*********************************          INTERRUPTS          *********************************/
+    wire [31:0] w_cons_irq=0;
+    wire        w_cons_irq_oe=0;
+    wire        w_key_req=0;
+    wire [31:0] w_virt_irq      = w_cons_irq;
+    wire        w_virt_irq_oe   = w_cons_irq_oe | w_key_req;
+    // PLIC
+    reg  [31:0] plic_served_irq     = 0;
+    reg  [31:0] plic_pending_irq    = 0;
+    reg  [31:0] r_plic_odata        = 0;
+    // CLINT
+    reg  [31:0] r_clint_odata       = 0;
+
+    wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
+    wire [31:0] w_plic_mask             =   w_plic_pending_irq_nxt & ~plic_served_irq;
+    wire [31:0] w_plic_served_irq_nxt   =   (w_virt_irq_oe) ? plic_served_irq :
+                                            (w_isread) ? plic_served_irq | w_plic_mask :
+                                            plic_served_irq & ~(1 << (w_data_wdata-1));
+
+    wire w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
+            ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
+
+    reg  [31:0] r_wmip = 0;
+    reg         r_plic_we = 0;
+
+    reg  [31:0] r_plic_pending_irq_t    = 0;
+    reg  [31:0] r_plic_served_irq_t     = 0;
+
+    reg         r_virt_irq_oe_t = 0;
+    reg         r_plic_aces_t   = 0;
+
+    reg [32-1:0] r_ipi=0;
+    assign bus_ipi = r_ipi;
+
+    wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
+
+    always@(posedge CLK) begin
+        if(!w_tlb_busy) begin
+            //r_plic_we   <= (w_virt_irq_oe || w_plic_aces);
+            r_virt_irq_oe_t         <= w_virt_irq_oe;
+            r_plic_aces_t           <= w_plic_aces;
+            r_plic_pending_irq_t    <= w_plic_pending_irq_nxt;
+            r_plic_served_irq_t     <= w_plic_served_irq_nxt;
+        end
+    end
+
+    assign w_plic_we      = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
+    assign w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
+                            w_mip & ~(`MIP_MEIP | `MIP_SEIP);
+
+    always@(posedge CLK) begin
+        if(w_plic_aces) begin
+            r_plic_odata    <= (w_plic_mask!=0) ? w_plic_mask : 0;
+            plic_served_irq <= w_plic_served_irq_nxt;
+        end
+
+        if(w_virt_irq_oe) begin
+            plic_pending_irq    <= w_virt_irq;
+        end
+
+        r_clint_odata <=    (w_offset==28'hbff8) ? w_mtime[31:0] :
+                            (w_offset==28'hbffc) ? w_mtime[63:32] :
+                            (w_offset==28'h4000) ? w_mtimecmp[31:0] :
+                            (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
+        
+        // one core sends ipi, the target clears it
+        if(r_dev == `CLINT_BASE_TADDR && w_offset[27:8]==20'h0) begin
+            if(w_data_data == 32'h0) // clear ipi
+                if(w_grant == 0)
+                    r_ipi <= {r_ipi[31:1], 1'b0};
+                else
+                    r_ipi <= {r_ipi[31:2], 1'b0,r_ipi[0]};
+            else // send ipi
+                if(w_grant == 0)
+                    r_ipi <= 32'h02; // signal core 1
+                else
+                    r_ipi <= 32'h01; // signal core 0
+        end
+    end
+
+    // shortcut to w_data_we because we do not use microcontroller
+    wire w_data_we = w_mem_we;
+    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
+                                {w_mtimecmp[63:32], w_data_wdata} :
+                                (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
+                                {w_data_wdata, w_mtimecmp[31:0]} : 0;
+    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_offset[27:23]==4 && w_data_we != 0); // do not write ipi_clear
+
     /**********************************************************************************************/
     // OUTPUT CHAR
     UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
@@ -225,111 +366,6 @@ module m_topsim(CLK, RST_X);
 `endif
     end
 
-    /***********************************          OUTPUT        ***********************************/
-    reg  [31:0] r_data_data = 0;
-    always@(*) begin
-        case (r_dev)
-            `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
-            `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
-            `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
-                                    //$display("HVC_BASE_ADDR %x", r_consf_cnts);
-                                    r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts};
-                                end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
-                                    //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
-                                    r_data_data <= {24'h0, r_char_value};
-                                end
-            default           : r_data_data <= w_dram_odata;
-        endcase
-    end
-    assign w_data_data = r_data_data;
-
-    /*********************************          INTERRUPTS          *********************************/
-    wire [31:0] w_cons_irq=0;
-    wire        w_cons_irq_oe=0;
-    wire        w_key_req=0;
-    wire [31:0] w_virt_irq      = w_cons_irq;
-    wire        w_virt_irq_oe   = w_cons_irq_oe | w_key_req;
-    // PLIC
-    reg  [31:0] plic_served_irq     = 0;
-    reg  [31:0] plic_pending_irq    = 0;
-    reg  [31:0] r_plic_odata        = 0;
-    // CLINT
-    reg  [31:0] r_clint_odata       = 0;
-
-    wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
-    wire [31:0] w_plic_mask             =   w_plic_pending_irq_nxt & ~plic_served_irq;
-    wire [31:0] w_plic_served_irq_nxt   =   (w_virt_irq_oe) ? plic_served_irq :
-                                            (w_isread) ? plic_served_irq | w_plic_mask :
-                                            plic_served_irq & ~(1 << (w_data_wdata-1));
-
-    wire w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
-            ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
-
-    reg  [31:0] r_wmip = 0;
-    reg         r_plic_we = 0;
-
-    reg  [31:0] r_plic_pending_irq_t    = 0;
-    reg  [31:0] r_plic_served_irq_t     = 0;
-
-    reg         r_virt_irq_oe_t = 0;
-    reg         r_plic_aces_t   = 0;
-
-    reg [32-1:0] r_ipi=0;
-    assign w_ipi = r_ipi;
-
-    wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
-
-    always@(posedge CLK) begin
-        if(!w_tlb_busy) begin
-            //r_plic_we   <= (w_virt_irq_oe || w_plic_aces);
-            r_virt_irq_oe_t         <= w_virt_irq_oe;
-            r_plic_aces_t           <= w_plic_aces;
-            r_plic_pending_irq_t    <= w_plic_pending_irq_nxt;
-            r_plic_served_irq_t     <= w_plic_served_irq_nxt;
-        end
-    end
-
-    assign w_plic_we      = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
-    assign w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
-                            w_mip & ~(`MIP_MEIP | `MIP_SEIP);
-
-    always@(posedge CLK) begin
-        if(w_plic_aces) begin
-            r_plic_odata    <= (w_plic_mask!=0) ? w_plic_mask : 0;
-            plic_served_irq <= w_plic_served_irq_nxt;
-        end
-
-        if(w_virt_irq_oe) begin
-            plic_pending_irq    <= w_virt_irq;
-        end
-
-        r_clint_odata <=    (w_offset==28'hbff8) ? w_mtime[31:0] :
-                            (w_offset==28'hbffc) ? w_mtime[63:32] :
-                            (w_offset==28'h4000) ? w_mtimecmp[31:0] :
-                            (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
-        
-        // one core sends ipi, the target clears it
-        if(r_dev == `CLINT_BASE_TADDR && w_offset[27:8]==20'h0) begin
-            if(w_data_data == 32'h0) // clear ipi
-                if(w_grant == 0)
-                    r_ipi <= {r_ipi[31:1], 1'b0};
-                else
-                    r_ipi <= {r_ipi[31:2], 1'b0,r_ipi[0]};
-            else // send ipi
-                if(w_grant == 0)
-                    r_ipi <= 32'h02; // signal core 1
-                else
-                    r_ipi <= 32'h01; // signal core 0
-        end
-    end
-
-    // shortcut to w_data_we because we do not use microcontroller
-    wire w_data_we = w_mem_we;
-    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
-                                {w_mtimecmp[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
-                                {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_offset[27:23]==4 && w_data_we != 0); // do not write ipi_clear
     /**********************************************************************************************/
 `ifdef SIM_MODE
     reg  [2:0] r_init_state = 5;
