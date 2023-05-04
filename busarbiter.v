@@ -29,41 +29,64 @@ module busarbiter(
     assign w_grant=grant;
 
     reg [7:0] state=0;
+    integer i;
+    wire [2:0] a_pw_state = grant == 0 ? bus_pw_state[1] : bus_pw_state[0];
+    wire a_tlb_busy = grant == 0 ? bus_tlb_busy[1] : bus_tlb_busy[0];
+    reg a_w_dram_busy=0;
 
-`ifdef laurnotdefined
-    always @(posedge CLK) begin /////// update program counter
+/*
+- restore other core // w_dram_busy is 0 and txready
+if(tlbbusy)
+    if r_pw_state==0|2 
+        v <= w
+    else
+        v <= w except w_dram_busy
+        wait 1 clk
+        v <= w_procbusy
+else
+    v <= w except w_dram_busy
+    wait 1 clk
+    v <= w_procbusy
+
+- preempt //w_dram_busy is 0 and txready
+if(tlbbusy)
+    v_dram_busy <= 1
+else
+    v_dram_busy <= 1
+*/
+
+    always @(posedge CLK) begin
         if(!RST_X) begin
             grant <= 0;
-            setall(0);
             state <= 0;
-        end else begin
-            case(state)
-            0: begin          
-                setall(0);
-            end
-            endcase
+            a_w_dram_busy <= w_dram_busy;
+        end else if(w_init_done) begin
+            a_w_dram_busy <= w_dram_busy;
+            if(state == 0) begin
+                if(!w_dram_busy && w_tx_ready) begin
+                    grant <= 1 - grant; // only 2 cores for now
+                    if(a_tlb_busy)
+                        if(a_pw_state == 0 || a_pw_state == 2) ; // all by default
+                        else begin
+                            a_w_dram_busy <= 1;
+                            state <= 1;
+                        end
+                end
+            end else if(state == 1) 
+                state <= 2; // wait for the real w_dram_busy
+            else if(state == 2)
+                state <= 0;
         end
     end
-`endif
 
-    always @(*)
-        setandwait(0);
-
-    task setandwait();
-    input id;
-    begin
-            bus_proc_busy[id] <= w_proc_busy;
-            w_mem_paddr <= bus_mem_paddr[id]; w_mem_we <= bus_mem_we[id];
-            w_data_wdata <= bus_data_wdata[id]; bus_data_data[id] = w_data_data;
-            w_mtime <= bus_mtime[id]; w_mtimecmp <= bus_mtimecmp[id]; bus_wmtimecmp[id] <= w_wmtimecmp; bus_clint_we[id] = w_clint_we;
-            w_tlb_req <= bus_tlb_req[id]; w_tlb_busy <= bus_tlb_busy[id];
-            w_mip <= bus_mip[id]; bus_wmip[id] <= w_wmip; bus_plic_we[id] = w_plic_we;
-            w_dram_addr <= bus_dram_addr[id]; w_dram_wdata <= bus_dram_wdata[id]; bus_dram_odata[id] <= w_dram_odata; w_dram_we_t <= bus_dram_we_t[id];
-            bus_dram_busy[id] <= w_dram_busy; w_dram_ctrl <= bus_dram_ctrl[id]; w_dram_le <= bus_dram_le[id];
+    always @(*) begin
+        if(grant == 0)
+            setbyid(0);
+        else
+            setbyid(1);
     end
-    endtask
 
-    task setall();
+    task setbyid();
     input id;
     begin
             bus_proc_busy[id] <= w_proc_busy;
@@ -73,7 +96,10 @@ module busarbiter(
             w_tlb_req <= bus_tlb_req[id]; w_tlb_busy <= bus_tlb_busy[id];
             w_mip <= bus_mip[id]; bus_wmip[id] <= w_wmip; bus_plic_we[id] = w_plic_we;
             w_dram_addr <= bus_dram_addr[id]; w_dram_wdata <= bus_dram_wdata[id]; bus_dram_odata[id] <= w_dram_odata; w_dram_we_t <= bus_dram_we_t[id];
-            bus_dram_busy[id] <= w_dram_busy; w_dram_ctrl <= bus_dram_ctrl[id]; w_dram_le <= bus_dram_le[id];
+            bus_dram_busy[id] <= a_w_dram_busy; w_dram_ctrl <= bus_dram_ctrl[id]; w_dram_le <= bus_dram_le[id];
+            for(i=0; i<`NCORES; i=i+1)
+                if(id != i)
+                    bus_dram_busy[i] = 1;
     end
     endtask
 

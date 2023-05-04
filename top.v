@@ -49,7 +49,7 @@ module m_topsim(CLK, RST_X);
     );
 
      m_cpummusim core1(
-        .CLK(CLK), .RST_X(0), .w_hart_id(0), .w_ipi(bus_ipi),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi),
         .w_init_done(w_init_done), .w_proc_busy(bus_proc_busy[1]),
         .w_mem_paddr(bus_mem_paddr[1]), .w_mem_we(bus_mem_we[1]),
         .w_data_wdata(bus_data_wdata[1]), .w_data_data(bus_data_data[1]),
