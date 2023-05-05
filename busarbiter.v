@@ -27,24 +27,36 @@ module busarbiter(
     reg [31:0] grant=0; // bus granted core
     assign w_grant=grant;
 
-    reg [7:0] state=0;
+    reg [7:0] state=7;
     integer i;
-    wire a_tlb_busy = grant == 0 ? bus_tlb_busy[1] : bus_tlb_busy[0];
+    wire a_mem_we = grant == 0 ? bus_mem_we[1] : bus_mem_we[0];
+    wire a_dram_le = grant == 0 ? bus_dram_le[1] : bus_dram_le[0];
+    wire a_dram_we_t = grant == 0 ? bus_dram_we_t[1] : bus_dram_we_t[0];
+    reg [7:0] cnt=0;
 
     reg a_w_dram_busy = w_dram_busy;
     always @(posedge CLK) begin
         if(!RST_X) begin
             grant <= 0;
-            state <= 0;
+            state <= 7;
             a_w_dram_busy <= w_dram_busy;
+            cnt <= 0;
         end else if(w_init_done) begin
-            if(state == 0) begin
-                if(!w_tlb_busy && !w_dram_busy && w_tx_ready) begin
-                    grant <= (grant + 1) & (`NCORES-1);
-                    a_w_dram_busy <= 1;
-                    state <= 1;
-                end else
+            if(state == 7) begin
+                if(w_dram_busy) begin
+                    state <= 0;
                     a_w_dram_busy <= w_dram_busy;
+                end
+            end else if(state == 0) begin
+                a_w_dram_busy <= w_dram_busy;
+                if((!w_tlb_busy && !w_dram_busy && w_tx_ready) && cnt < 10)
+                    cnt <= cnt + 1;
+                if((!w_tlb_busy && !w_dram_busy && w_tx_ready) &&
+                    (a_mem_we || a_dram_le || a_dram_we_t || cnt > 2)) begin
+                        grant <= (grant + 1) & (`NCORES-1);
+                        a_w_dram_busy <= 1;
+                        state <= 1;
+                end
             end else if(state == 1) begin
                 // grant has just changed, a_w_dram_busy is 1; wait for w_dram_busy
                 if(w_dram_busy || (bus_dram_we_t[grant]==0 && bus_dram_le[grant]==0))
@@ -53,6 +65,7 @@ module busarbiter(
                 if(!w_dram_busy)
                     state <= 0;
                 a_w_dram_busy <= w_dram_busy;
+                cnt <= 0;
             end
         end
     end
