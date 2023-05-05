@@ -49,7 +49,7 @@ module m_topsim(CLK, RST_X);
     );
 
      m_cpummusim core1(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr[1]), .w_mem_we(bus_mem_we[1]),
         .w_data_wdata(bus_data_wdata[1]), .w_data_data(bus_data_data[1]),
@@ -743,31 +743,28 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-//`define RAM_DEBUG 
+`define RAM_DEBUG 
 `ifdef RAM_DEBUG
-reg [31:0] o_pc=-1, o_ir=-1, bbl_cnt=0;
+reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, bbl_cnt=0, old_time=-1;
 always @(posedge CLK)
 begin
-        if(core0.p.r_ir == 32'h00f11623) begin
-            $display("p.r_ir=%x w_data_ctrl=%x w_dram_ctrl=%x w_dram_ctrl_t=%x r_ctrl=%x w_le=%x w_we=%x", 
-                core0.p.r_ir, core0.w_data_ctrl, core0.w_dram_ctrl, w_dram_ctrl_t, 
-                idbmem.idbmem.r_ctrl, idbmem.w_le, idbmem.w_we
-            ) ;
-        end
-/*
-    if(core0.p.r_cpc < 32'h800024aa) begin// && o_pc != core0.p.r_cpc) begin
-		o_pc <= core0.p.r_cpc;
-		o_ir <= core0.p.r_ir;
+    if((core0.p.r_cpc != o_pc0 || core0.p.r_ir != o_ir0 || core1.p.r_cpc != o_pc1 || core1.p.r_ir != o_ir1 || w_mtime != old_time) && bbl_cnt < 50) begin
+		o_pc0 <= core0.p.r_cpc;
+		o_ir0 <= core0.p.r_ir;
+		o_pc1 <= core1.p.r_cpc;
+		o_ir1 <= core1.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
-		$write("t=%08d pc=%08x ir=%08x r_maddr=%08x odata=%x ctrl=%x sp=%x a3=%x a4=%x a5=%x m[be3c]=%x m[be3d]=%x\n",
+		$write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x bus_dram_busy=%x,%x \n",
                 	core0.p.mtime[31:0], 
                     core0.p.r_cpc, core0.p.r_ir,
-	                idbmem.idbmem.r_maddr, idbmem.idbmem.w_odata, idbmem.idbmem.r_ctrl, 
-                    core0.p.regs.mem[2], core0.p.regs.mem[13], core0.p.regs.mem[14], core0.p.regs.mem[15],
-                    idbmem.idbmem.mem[32'hbe3c], idbmem.idbmem.mem[32'hbe3d]
+                    core1.p.r_cpc, core1.p.r_ir,
+                    ba.grant[0], ba.state,
+                    ba.a_w_dram_busy, w_dram_busy, 
+                    w_dram_le, w_dram_we_t, w_mem_we,
+                    bus_dram_busy[0], bus_dram_busy[1]
         );
 	end
-*/
+
 end
 `endif
 endmodule

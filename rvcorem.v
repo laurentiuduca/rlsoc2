@@ -377,7 +377,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_tkn       <= 0;
                     r_jmp_pc    <= 0;
                     $write("UNKNOWN OPCODE DETECT!!\n");
-                    $write("TC:%08d PC:%08x OPCODE=%7b, ir=%8x\n", mtime[31:0], pc, r_opcode, r_ir);
+                    $write("TC:%08d PC:%08x OPCODE=%7b, ir=%8x hartid=%x\n", mtime[31:0], pc, r_opcode, r_ir, mhartid);
                     $write("Simulation Stopped...\n");
                     $finish();
                 end

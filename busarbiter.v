@@ -29,52 +29,31 @@ module busarbiter(
 
     reg [7:0] state=0;
     integer i;
-    wire [2:0] a_pw_state = grant == 0 ? bus_pw_state[1] : bus_pw_state[0];
     wire a_tlb_busy = grant == 0 ? bus_tlb_busy[1] : bus_tlb_busy[0];
-    reg a_w_dram_busy=0;
 
-/*
-- restore other core // w_dram_busy is 0 and txready
-if(tlbbusy)
-    if r_pw_state==0|2 
-        v <= w
-    else
-        v <= w except w_dram_busy
-        wait 1 clk
-        v <= w_procbusy
-else
-    v <= w except w_dram_busy
-    wait 1 clk
-    v <= w_procbusy
-
-- preempt //w_dram_busy is 0 and txready
-if(tlbbusy)
-    v_dram_busy <= 1
-else
-    v_dram_busy <= 1
-*/
-
+    reg a_w_dram_busy = w_dram_busy;
     always @(posedge CLK) begin
         if(!RST_X) begin
             grant <= 0;
             state <= 0;
             a_w_dram_busy <= w_dram_busy;
         end else if(w_init_done) begin
-            a_w_dram_busy <= w_dram_busy;
             if(state == 0) begin
-                if(!w_dram_busy && w_tx_ready) begin
-                    grant <= 1 - grant; // only 2 cores for now
-                    if(a_tlb_busy)
-                        if(a_pw_state == 0 || a_pw_state == 2) ; // all by default
-                        else begin
-                            a_w_dram_busy <= 1;
-                            state <= 1;
-                        end
-                end
-            end else if(state == 1) 
-                state <= 2; // wait for the real w_dram_busy
-            else if(state == 2)
-                state <= 0;
+                if(!w_tlb_busy && !w_dram_busy && w_tx_ready) begin
+                    grant <= (grant + 1) & (`NCORES-1);
+                    a_w_dram_busy <= 1;
+                    state <= 1;
+                end else
+                    a_w_dram_busy <= w_dram_busy;
+            end else if(state == 1) begin
+                // grant has just changed, a_w_dram_busy is 1; wait for w_dram_busy
+                if(w_dram_busy || (bus_dram_we_t[grant]==0 && bus_dram_le[grant]==0))
+                    state <= 2;
+            end else if(state == 2) begin
+                if(!w_dram_busy)
+                    state <= 0;
+                a_w_dram_busy <= w_dram_busy;
+            end
         end
     end
 
