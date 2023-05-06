@@ -748,6 +748,9 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, bbl_cnt=0, old_time=-1;
 always @(posedge CLK)
 begin
+    if(w_mtime >= 400)
+        $finish;
+/*
     if((core0.p.r_cpc != o_pc0 || core0.p.r_ir != o_ir0 || core1.p.r_cpc != o_pc1 || core1.p.r_ir != o_ir1 || w_mtime != old_time) && bbl_cnt < 50) begin
 		o_pc0 <= core0.p.r_cpc;
 		o_ir0 <= core0.p.r_ir;
@@ -765,8 +768,15 @@ begin
                     bus_dram_busy[1], bus_dram_busy[0]
         );
 	end
-
+*/
 end
+always @(*) begin
+    if(w_mtime >= 40)
+        $finish;
+    $write("t=%8d (le=%x w=%x w_dram_busy=%x w_dram_addr_t2=%x w_dram_odata=%x) a_dram_le=%x a_w_dram_busy=%x a_w_dram_odata=%x state=%x\n", 
+        w_mtime, w_dram_le, w_dram_we_t, w_dram_busy, w_dram_addr_t2, w_dram_odata, ba.a_dram_le, ba.a_w_dram_busy, ba.a_w_dram_odata, ba.state);
+end 
+
 `endif
 endmodule
 
