@@ -18,18 +18,18 @@ module m_topsim();
     reg CLK = 0;
     reg RST_X;
 
-    initial forever #50 CLK = ~CLK;
+    always #50 CLK = ~CLK;
 
     initial begin
         #50  RST_X = 0;
         #300 RST_X = 1;
     end
-`ifdef laur0
+
     initial begin
 	    $dumpfile("signals.vcd");
         $dumpvars(0, m_topsim);
     end
-`endif
+
 `else
 module m_topsim(CLK, RST_X);
     input wire CLK, RST_X;
@@ -690,6 +690,7 @@ module m_topsim(CLK, RST_X);
 `ifndef VERILATOR
     #1
 `endif
+
 `ifdef LINUX
         $write("Load image file: %s\n", `IMAGE_FILE);
         $readmemh(`IMAGE_FILE, mem_disk);
@@ -708,6 +709,7 @@ module m_topsim(CLK, RST_X);
             j=j+1;
         end
 `endif // LINUX
+
         $write("Running %s\n", {`HEX_DIR,`HEXFILE});
         $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
         j=0;

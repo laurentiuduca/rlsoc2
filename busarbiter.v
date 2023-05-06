@@ -98,26 +98,16 @@ module busarbiter(
     end
 */
     always @(*) begin
-        if(grant == 0)
-            setbyid(0);
-        else
-            setbyid(1);
-    end
-
-    task setbyid();
-    input id;
-    begin
-            w_mem_paddr <= bus_mem_paddr[id]; w_mem_we <= bus_mem_we[id];
-            w_data_wdata <= bus_data_wdata[id]; bus_data_data[id] = w_data_data;
-            w_mtime <= bus_mtime[id]; w_mtimecmp <= bus_mtimecmp[id]; bus_wmtimecmp[id] <= w_wmtimecmp; bus_clint_we[id] = w_clint_we;
-            w_tlb_req <= bus_tlb_req[id]; w_tlb_busy <= bus_tlb_busy[id];
-            w_mip <= bus_mip[id]; bus_wmip[id] <= w_wmip; bus_plic_we[id] = w_plic_we;
-            w_dram_addr <= bus_dram_addr[id]; w_dram_wdata <= bus_dram_wdata[id]; bus_dram_odata[id] <= a_w_dram_odata; w_dram_we_t <= a_dram_we_t;
-            bus_dram_busy[id] <= a_w_dram_busy; w_dram_ctrl <= bus_dram_ctrl[id]; w_dram_le <= a_dram_le;
+            w_mem_paddr <= bus_mem_paddr[grant]; w_mem_we <= bus_mem_we[grant];
+            w_data_wdata <= bus_data_wdata[grant]; bus_data_data[grant] = w_data_data;
+            w_mtime <= bus_mtime[grant]; w_mtimecmp <= bus_mtimecmp[grant]; bus_wmtimecmp[grant] <= w_wmtimecmp; bus_clint_we[grant] = w_clint_we;
+            w_tlb_req <= bus_tlb_req[grant]; w_tlb_busy <= bus_tlb_busy[grant];
+            w_mip <= bus_mip[grant]; bus_wmip[grant] <= w_wmip; bus_plic_we[grant] = w_plic_we;
+            w_dram_addr <= bus_dram_addr[grant]; w_dram_wdata <= bus_dram_wdata[grant]; bus_dram_odata[grant] <= a_w_dram_odata; w_dram_we_t <= a_dram_we_t;
+            bus_dram_busy[grant] <= a_w_dram_busy; w_dram_ctrl <= bus_dram_ctrl[grant]; w_dram_le <= a_dram_le;
             for(i=0; i<`NCORES; i=i+1)
-                if(id != i)
+                if(grant != i)
                     bus_dram_busy[i] = 1;
     end
-    endtask
 
 endmodule

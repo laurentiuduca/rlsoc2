@@ -10,7 +10,9 @@
 # General
 TOPSOURCE = top.v
 TOPSOURCE-SIM-MAIN = main.v dram.v
-OTHERSOURCE = rvcorem.v memory.v busarbiter.v cpummusim.v memsim.v mmu.v console.v disk.v microc.v loader.v debug.v read_file.v
+OTHERSOURCE = rvcorem.v memory.v busarbiter.v cpummusim.v memsim.v mmu.v console.v loader.v read_file.v
+OLDSOURCE = disk.v microc.v debug.v
+
 
 # VCS
 VCS       = vcs
@@ -67,7 +69,7 @@ icarus-sim-main:
 	iverilog -o simple.vvp ${TOPSOURCE-SIM-MAIN} ${OTHERSOURCE} ${VERIFLAGS_SM} 
 
 icarus:
-	iverilog -o simple.vvp ${TOPSOURCE} ${OTHERSOURCE} -DICARUS
+	iverilog -o simple.vvp ${TOPSOURCE} ${OTHERSOURCE} -DICARUS -g2012
 run-i:
 	vvp simple.vvp
 run:

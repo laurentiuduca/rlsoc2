@@ -1194,9 +1194,10 @@ module m_alu_i (w_in1, w_in2, w_funct3, w_funct7, r_rslt);
             `FUNCT3_OR____ : r_rslt = w_in1 | w_in2;
             `FUNCT3_AND___ : r_rslt = w_in1 & w_in2;
             default        : begin
-                $write("ILLEGAL INSTRUCTION! in alu_i\n");
+                $write("ILLEGAL INSTRUCTION! in alu_i: w_funct3=%x\n", w_funct3);
                 r_rslt = 0;
-                $finish();
+                if(w_funct3 != 3'hz)
+                    $finish();
             end
         endcase
     end
