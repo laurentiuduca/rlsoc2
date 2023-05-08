@@ -34,20 +34,6 @@ module busarbiter(
     input [31:0] bus_dram_addr1, input [31:0] bus_dram_wdata1, output reg [31:0] bus_dram_odata1=0, input bus_dram_we_t1,
     output reg bus_dram_busy1=0, input wire [2:0] bus_dram_ctrl1, input bus_dram_le1
     );
-`ifdef laurnotdefined
-    reg [31:0] bus_data_data0=0;
-    reg [63:0] bus_wmtimecmp0=0;
-    reg bus_clint_we0=0;
-    reg [31:0] bus_wmip0=0; reg bus_plic_we0=0;
-    reg [31:0] bus_dram_odata0=0;
-    reg bus_dram_busy0=0;
-    reg [31:0] bus_data_data1=0;
-    reg [63:0] bus_wmtimecmp1=0;
-    reg bus_clint_we1=0;
-    reg [31:0] bus_wmip1=0; reg bus_plic_we1=0;
-    reg [31:0] bus_dram_odata1=0;
-    reg bus_dram_busy1=0;
-`endif
     /**********************************************************************************************/
     
     reg [31:0] grant=0; // bus granted core
@@ -57,11 +43,11 @@ module busarbiter(
     integer i;
     reg [7:0] cnt=0;
     
-    wire a_w_dram_busy = (state == 0) ? (no_req ? 1 : w_dram_busy) :
+    wire a_w_dram_busy = (state == 0) ? w_dram_busy :
                          (state == 1) ? 1 : 
-                         (state == 2) ? w_dram_busy : w_dram_busy;
+                         (state == 2) ? 1 : w_dram_busy;
 
-    wire no_req = !w_dram_busy && !w_mem_we && !w_dram_le && !w_dram_we_t && (w_core_ir[6:0] != `OPCODE_AMO_____);
+    wire no_req = !w_mem_we && !w_dram_le && !w_dram_we_t && (w_core_ir[6:0] != `OPCODE_AMO_____);
 
     always @(posedge CLK) begin
         if(!RST_X) begin
@@ -70,7 +56,7 @@ module busarbiter(
         end else if(w_init_done) begin
             if(state == 0) begin
                 if(no_req) begin
-                    state <= 2;
+                    state <= 1;
                 end
             end else if(state == 1) begin
                 // must signal busy to the core
@@ -92,19 +78,33 @@ module busarbiter(
 
     always @(posedge CLK) begin
         if(grant == 0) begin
-            bus_data_data0 = w_data_data;
-            bus_wmtimecmp0 <= w_wmtimecmp; bus_clint_we0 = w_clint_we;
-            bus_wmip0 <= w_wmip; bus_plic_we0 = w_plic_we;
-            bus_dram_odata0 <= w_dram_odata;
-            bus_dram_busy0 <= a_w_dram_busy; 
-            bus_dram_busy1 <= 1;
+            bus_data_data0  = w_data_data;
+            bus_wmtimecmp0  = w_wmtimecmp;
+            bus_clint_we0 <= w_clint_we;
+            bus_wmip0 <= w_wmip; bus_plic_we0 <= w_plic_we;
+            bus_dram_odata0 = w_dram_odata;
+            bus_dram_busy0  = a_w_dram_busy;
+            
+            bus_data_data1  = 0;
+            bus_wmtimecmp1  = 0;
+            bus_clint_we1 <= 0;
+            bus_wmip1 <= 0; bus_plic_we1 <= 0;
+            bus_dram_odata1 = 0;
+            bus_dram_busy1  = 1;            
         end else begin
-            bus_data_data1 = w_data_data;
-            bus_wmtimecmp1 <= w_wmtimecmp; bus_clint_we1 = w_clint_we;
-            bus_wmip1 <= w_wmip; bus_plic_we1 = w_plic_we;
-            bus_dram_odata1 <= w_dram_odata; 
-            bus_dram_busy1 <= a_w_dram_busy;
-            bus_dram_busy0 <= 1;
+            bus_data_data1  = w_data_data;
+            bus_wmtimecmp1  = w_wmtimecmp;
+            bus_clint_we1 <= w_clint_we;
+            bus_wmip1 <= w_wmip; bus_plic_we1 <= w_plic_we;
+            bus_dram_odata1 = w_dram_odata;
+            bus_dram_busy1  = a_w_dram_busy;
+            
+            bus_data_data0  = 0;
+            bus_wmtimecmp0  = 0;
+            bus_clint_we0 <= 0;
+            bus_wmip0 <= 0; bus_plic_we0 <= 0;
+            bus_dram_odata0 = 0;
+            bus_dram_busy0  = 1;
         end
     end
 

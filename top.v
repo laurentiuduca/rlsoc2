@@ -768,9 +768,9 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, bbl_cnt=0, old_time=-1;
 always @(posedge CLK)
 begin
-    if(w_mtime >= 400)
-        $finish;
-/*
+    //if(w_mtime >= 400)
+    //    $finish;
+
     if((core0.p.r_cpc != o_pc0 || core0.p.r_ir != o_ir0 || core1.p.r_cpc != o_pc1 || core1.p.r_ir != o_ir1 || w_mtime != old_time) && bbl_cnt < 50) begin
 		o_pc0 <= core0.p.r_cpc;
 		o_ir0 <= core0.p.r_ir;
@@ -778,24 +778,18 @@ begin
 		o_ir1 <= core1.p.r_ir;
 		bbl_cnt <= bbl_cnt + 1;
 		$write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x pb=%x,%x bus_dram_busy=%x,%x \n",
-                	core0.p.mtime[31:0], 
+                	w_mtime[31:0], 
                     core0.p.r_cpc, core0.p.r_ir,
                     core1.p.r_cpc, core1.p.r_ir,
                     ba.grant[0], ba.state,
                     ba.a_w_dram_busy, w_dram_busy, 
                     w_dram_le, w_dram_we_t, w_mem_we, 
                     core1.mmu.w_proc_busy, core0.mmu.w_proc_busy,
-                    bus_dram_busy[1], bus_dram_busy[0]
+                    bus_dram_busy1, bus_dram_busy0
         );
 	end
-*/
+
 end
-always @(*) begin
-    if(w_mtime >= 40)
-        $finish;
-    $write("t=%8d (le=%x w=%x w_dram_busy=%x w_dram_addr_t2=%x w_dram_odata=%x) a_dram_le=%x a_w_dram_busy=%x a_w_dram_odata=%x state=%x\n", 
-        w_mtime, w_dram_le, w_dram_we_t, w_dram_busy, w_dram_addr_t2, w_dram_odata, ba.w_dram_le, ba.w_dram_busy, ba.w_dram_odata, ba.state);
-end 
 
 `endif
 endmodule

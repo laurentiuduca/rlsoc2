@@ -67,7 +67,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     output wire [31:0]  w_insn_addr;    // from r_insn_addr
     output wire [2:0]   w_data_ctrl;    // from r_data_ctrl
     output wire [31:0]  w_data_addr;    // from r_mem_addr
-    input wire [63:0]  w_mtime;        // from register mtime
+    input wire [63:0]  w_mtime;        
     output wire [63:0]  w_mtimecmp;     // from register mtimecmp
     output wire [31:0]  w_priv;         // from register priv
     output wire [31:0]  w_satp;         // from register satp
@@ -108,8 +108,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg  [31:0] load_res       = 0;            // For aomic LR/SC
     reg         reserved       = 0;            // For aomic LR/SC
     reg   [1:0] priv           = `PRIV_M;      // Mode
-    reg  [63:0] mtime          = 1;            // Mtime
-    reg  [63:0] mtimecmp       = 1;            // Mtime
+    //reg  [63:0] w_mtime          = 1;            // w_mtime
+    reg  [63:0] mtimecmp       = 1;            // w_mtime
     reg  [31:0] pending_tval   = 0;            //
     reg  [31:0] pending_exception = ~0;        //
 
@@ -377,7 +377,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_tkn       <= 0;
                     r_jmp_pc    <= 0;
                     $write("UNKNOWN OPCODE DETECT!!\n");
-                    $write("TC:%08d PC:%08x OPCODE=%7b, ir=%8x hartid=%x\n", mtime[31:0], pc, r_opcode, r_ir, mhartid);
+                    $write("TC:%08d PC:%08x OPCODE=%7b, ir=%8x hartid=%x\n", w_mtime[31:0], pc, r_opcode, r_ir, mhartid);
                     $write("Simulation Stopped...\n");
                     $finish();
                 end
@@ -592,17 +592,17 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             `CSR_MIP        : r_rcsr_t = mip;
             `CSR_MISA       : r_rcsr_t = misa | 32'h40000000;
 
-            `CSR_MCYCLE     : r_rcsr_t = mtime[31:0];
-            `CSR_MINSTRET   : r_rcsr_t = mtime[31:0];
-            `CSR_CYCLE      : r_rcsr_t = mtime[31:0];
-            `CSR_INSTRET    : r_rcsr_t = mtime[31:0];
-            `CSR_TIME       : r_rcsr_t = mtime[31:0];
+            `CSR_MCYCLE     : r_rcsr_t = w_mtime[31:0];
+            `CSR_MINSTRET   : r_rcsr_t = w_mtime[31:0];
+            `CSR_CYCLE      : r_rcsr_t = w_mtime[31:0];
+            `CSR_INSTRET    : r_rcsr_t = w_mtime[31:0];
+            `CSR_TIME       : r_rcsr_t = w_mtime[31:0];
 
-            `CSR_MCYCLEH    : r_rcsr_t = mtime[63:32];
-            `CSR_MINSTRETH  : r_rcsr_t = mtime[63:32];
-            `CSR_CYCLEH     : r_rcsr_t = mtime[63:32];
-            `CSR_INSTRETH   : r_rcsr_t = mtime[63:32];
-            `CSR_TIMEH      : r_rcsr_t = mtime[63:32];
+            `CSR_MCYCLEH    : r_rcsr_t = w_mtime[63:32];
+            `CSR_MINSTRETH  : r_rcsr_t = w_mtime[63:32];
+            `CSR_CYCLEH     : r_rcsr_t = w_mtime[63:32];
+            `CSR_INSTRETH   : r_rcsr_t = w_mtime[63:32];
+            `CSR_TIMEH      : r_rcsr_t = w_mtime[63:32];
 
             `CSR_SSTATUS    : r_rcsr_t = (w_sstatus_t[31:13]==3 | w_sstatus_t[31:15]==3) ? (w_sstatus_t | 32'h80000000) : w_sstatus_t;
             `CSR_MSTATUS    : r_rcsr_t = (w_mstatus_t[31:13]==3 | w_mstatus_t[31:15]==3) ? (w_mstatus_t | 32'h80000000) : w_mstatus_t;
@@ -630,11 +630,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg r_ipi_taken=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
-            if(mtime > `ENABLE_TIMER) begin
+            if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
                     mip <= w_wmip;
                 end
-                else if(mtimecmp < mtime) begin
+                else if(mtimecmp < w_mtime) begin
                     mip <= mip | `MIP_MTIP;
                 end
                 else if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
@@ -716,7 +716,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 			    stvec      <= r_wb_data_csr & ~3;
 			    `ifdef LAUR_DEBUG_AFTER_CSRW_SATP
 			    $write("stvec write: \ttime:%x stvec<=%x pc=%x\n",
-				    mtime, (r_wb_data_csr & ~3), pc);
+				    w_mtime, (r_wb_data_csr & ~3), pc);
 			    `endif
 		    end
                     `CSR_SCOUNTEREN : scounteren <= r_wb_data_csr & 5;
@@ -738,7 +738,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 		    `CSR_MEDELEG    : begin 
 		    			medeleg    <= (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1);
 					`ifdef LAUR_DEBUG_AFTER_CSRW_SATP
-					$write("medeleg write: \ttime:%x medeleg<=%x r_wb_data_csr=%d\n", mtime, (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1), r_wb_data_csr);
+					$write("medeleg write: \ttime:%x medeleg<=%x r_wb_data_csr=%d\n", w_mtime, (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1), r_wb_data_csr);
 					`endif
 				end
                     `CSR_MIDELEG    : mideleg    <= (mideleg & ~`WCSR_MASK2) | (r_wb_data_csr & `WCSR_MASK2);
@@ -750,7 +750,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 					`ifdef LAUR_DEBUG_AFTER_CSRW_SATP
 					if(r_wb_data_csr[31]) begin
 						$write("satp write: \ttime:%x pc=%x r_insn_addr=%x w_insn_data=%x satp<=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
-                                                        mtime, pc, r_insn_addr, w_insn_data, r_wb_data_csr, pending_exception, stvec, mtvec, w_deleg, w_busy);
+                                                        w_mtime, pc, r_insn_addr, w_insn_data, r_wb_data_csr, pending_exception, stvec, mtvec, w_deleg, w_busy);
 					
 						was_csrw_satp <= 1;
 						old_insn_addr <= r_insn_addr;
@@ -770,7 +770,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     always @(posedge CLK) begin
 	    if(was_csrw_satp && (old_insn_addr != r_insn_addr) && (lcnt < 10)) begin
 		$write("new insn addr: \ttime:%x pc=%x r_insn_addr=%x w_insn_data=%x satp=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
-                                                        mtime, pc, r_insn_addr, w_insn_data, satp, pending_exception, stvec, mtvec, w_deleg, w_busy);
+                                                        w_mtime, pc, r_insn_addr, w_insn_data, satp, pending_exception, stvec, mtvec, w_deleg, w_busy);
 		old_insn_addr <= r_insn_addr;
 		lcnt = lcnt + 1;
 	    end
@@ -850,6 +850,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     assign w_priv     = priv;
     assign w_satp     = satp;
     assign w_mstatus  = mstatus;
+    //assign w_mtime    = w_mtime;
     assign w_mtimecmp = mtimecmp;
     assign w_mip      = mip;
 
