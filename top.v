@@ -36,29 +36,29 @@ module m_topsim(CLK, RST_X);
 `endif
 
     m_cpummusim core0(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr[0]), .w_mem_we(bus_mem_we[0]),
-        .w_data_wdata(bus_data_wdata[0]), .w_data_data(bus_data_data[0]),
-        .w_mtime(bus_mtime[0]), .w_mtimecmp(bus_mtimecmp[0]), .w_wmtimecmp(bus_wmtimecmp[0]), .w_clint_we(bus_clint_we[0]),
-        .w_pw_state(bus_pw_state[0]), 
-        .w_tlb_req(bus_tlb_req[0]), .w_tlb_busy(bus_tlb_busy[0]),
-        .w_mip(bus_mip[0]), .w_wmip(bus_wmip[0]), .w_plic_we(bus_plic_we[0]),
-        .w_dram_addr(bus_dram_addr[0]), .w_dram_wdata(bus_dram_wdata[0]), .w_dram_odata(bus_dram_odata[0]), .w_dram_we_t(bus_dram_we_t[0]),
-        .w_dram_busy(bus_dram_busy[0]), .w_dram_ctrl(bus_dram_ctrl[0]), .w_dram_le(bus_dram_le[0])
+        .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
+        .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
+        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp0), .w_wmtimecmp(bus_wmtimecmp0), .w_clint_we(bus_clint_we0),
+        .w_pw_state(bus_pw_state0), 
+        .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
+        .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
+        .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
+        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
 
      m_cpummusim core1(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr[1]), .w_mem_we(bus_mem_we[1]),
-        .w_data_wdata(bus_data_wdata[1]), .w_data_data(bus_data_data[1]),
-        .w_mtime(bus_mtime[1]), .w_mtimecmp(bus_mtimecmp[1]), .w_wmtimecmp(bus_wmtimecmp[1]), .w_clint_we(bus_clint_we[1]),
-        .w_pw_state(bus_pw_state[1]), 
-        .w_tlb_req(bus_tlb_req[1]), .w_tlb_busy(bus_tlb_busy[1]),
-        .w_mip(bus_mip[1]), .w_wmip(bus_wmip[1]), .w_plic_we(bus_plic_we[1]),
-        .w_dram_addr(bus_dram_addr[1]), .w_dram_wdata(bus_dram_wdata[1]), .w_dram_odata(bus_dram_odata[1]), .w_dram_we_t(bus_dram_we_t[1]),
-        .w_dram_busy(bus_dram_busy[1]), .w_dram_ctrl(bus_dram_ctrl[1]), .w_dram_le(bus_dram_le[1])
+        .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
+        .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
+        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp1), .w_wmtimecmp(bus_wmtimecmp1), .w_clint_we(bus_clint_we1),
+        .w_pw_state(bus_pw_state1), 
+        .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
+        .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
+        .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
+        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1)
     );   
     
     busarbiter ba(.CLK(CLK), .RST_X(RST_X), .w_grant(w_grant),
@@ -71,41 +71,59 @@ module m_topsim(CLK, RST_X);
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
 
-        .bus_mem_paddr(bus_mem_paddr), .bus_mem_we(bus_mem_we),
-        .bus_data_wdata(bus_data_wdata), .bus_data_data(bus_data_data),
-        .bus_mtime(bus_mtime), .bus_mtimecmp(bus_mtimecmp), .bus_wmtimecmp(bus_wmtimecmp), .bus_clint_we(bus_clint_we),
-        .bus_pw_state(bus_pw_state), .bus_tlb_req(bus_tlb_req), .bus_tlb_busy(bus_tlb_busy),
-        .bus_mip(bus_mip), .bus_wmip(bus_wmip), .bus_plic_we(bus_plic_we),
-        .bus_dram_addr(bus_dram_addr), .bus_dram_wdata(bus_dram_wdata), .bus_dram_odata(bus_dram_odata), .bus_dram_we_t(bus_dram_we_t),
-        .bus_dram_busy(bus_dram_busy), .bus_dram_ctrl(bus_dram_ctrl), .bus_dram_le(bus_dram_le)
+        .bus_core_ir0(bus_core_ir_0),
+        .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
+        .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
+        .bus_mtimecmp0(bus_mtimecmp0), .bus_wmtimecmp0(bus_wmtimecmp0), .bus_clint_we0(bus_clint_we0),
+        .bus_pw_state0(bus_pw_state0), .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
+        .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
+        .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
+        .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
+
+        .bus_core_ir1(bus_core_ir_1),
+        .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
+        .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
+        .bus_mtimecmp1(bus_mtimecmp1), .bus_wmtimecmp1(bus_wmtimecmp1), .bus_clint_we1(bus_clint_we1),
+        .bus_pw_state1(bus_pw_state1), .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
+        .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
+        .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
+        .bus_dram_busy1(bus_dram_busy1), .bus_dram_ctrl1(bus_dram_ctrl1), .bus_dram_le1(bus_dram_le1)
     );
 
     /**********************************************************************************************/
     // bus interface
-
     wire w_init_done;
-    wire [31:0] w_mem_paddr, bus_mem_paddr[0:`NCORES-1];
-    wire w_mem_we, bus_mem_we[0:`NCORES-1];
-    wire [31:0] w_data_wdata, bus_data_wdata[0:`NCORES-1];
-    wire [31:0] w_data_data, bus_data_data[0:`NCORES-1];
-    wire [63:0] w_mtime, w_mtimecmp, w_wmtimecmp, bus_mtime[0:`NCORES-1], bus_mtimecmp[0:`NCORES-1], bus_wmtimecmp[0:`NCORES-1];
-    wire w_clint_we, bus_clint_we[0:`NCORES-1];
-    wire [2:0]  w_pw_state, bus_pw_state[0:`NCORES-1];
-    wire [1:0]  w_tlb_req, bus_tlb_req[0:`NCORES-1];
-    wire        w_tlb_busy, bus_tlb_busy[0:`NCORES-1];
-    wire [31:0] w_mip, w_wmip, bus_mip[0:`NCORES-1], bus_wmip[0:`NCORES-1];
-    wire w_plic_we, bus_plic_we[0:`NCORES-1];
-    wire [31:0] w_dram_addr, bus_dram_addr[0:`NCORES-1];
-    wire [31:0] w_dram_wdata, bus_dram_wdata[0:`NCORES-1];
-    wire [31:0] w_dram_odata, bus_dram_odata[0:`NCORES-1];
-    wire w_dram_we_t, bus_dram_we_t[0:`NCORES-1];
-    wire w_dram_busy, bus_dram_busy[0:`NCORES-1];
-    wire [2:0]   w_dram_ctrl, bus_dram_ctrl[0:`NCORES-1];
-    wire w_dram_le, bus_dram_le[0:`NCORES-1];
+    wire [31:0] bus_core_ir_0, bus_core_ir_1;
+    wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
+    wire w_mem_we, bus_mem_we0, bus_mem_we1;
+    wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
+    wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
+    wire [63:0] w_mtimecmp, w_wmtimecmp, bus_mtimecmp0, bus_wmtimecmp0, bus_mtimecmp1, bus_wmtimecmp1;
+    wire w_clint_we, bus_clint_we0, bus_clint_we1;
+    wire [2:0]  w_pw_state, bus_pw_state0, bus_pw_state1;
+    wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
+    wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
+    wire [31:0] w_mip, w_wmip, bus_mip0, bus_wmip0, bus_mip1, bus_wmip1;
+    wire w_plic_we, bus_plic_we0, bus_plic_we1;
+    wire [31:0] w_dram_addr, bus_dram_addr0, bus_dram_addr1;
+    wire [31:0] w_dram_wdata, bus_dram_wdata0, bus_dram_wdata1;
+    wire [31:0] w_dram_odata, bus_dram_odata0, bus_dram_odata1;
+    wire w_dram_we_t, bus_dram_we_t0, bus_dram_we_t1;
+    wire w_dram_busy, bus_dram_busy0, bus_dram_busy1;
+    wire [2:0]   w_dram_ctrl, bus_dram_ctrl0, bus_dram_ctrl1;
+    wire w_dram_le, bus_dram_le0, bus_dram_le1;
 
     wire [31:0] w_grant;
     wire [31:0] bus_ipi;
+
+    reg [63:0] mtime=0;
+    wire [63:0] w_mtime=mtime;
+
+    always@(posedge CLK)
+        if(RST_X) mtime <= mtime + 1;
+
     /**********************************************************************************************/
+
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
 
@@ -776,7 +794,7 @@ always @(*) begin
     if(w_mtime >= 40)
         $finish;
     $write("t=%8d (le=%x w=%x w_dram_busy=%x w_dram_addr_t2=%x w_dram_odata=%x) a_dram_le=%x a_w_dram_busy=%x a_w_dram_odata=%x state=%x\n", 
-        w_mtime, w_dram_le, w_dram_we_t, w_dram_busy, w_dram_addr_t2, w_dram_odata, ba.a_dram_le, ba.a_w_dram_busy, ba.a_w_dram_odata, ba.state);
+        w_mtime, w_dram_le, w_dram_we_t, w_dram_busy, w_dram_addr_t2, w_dram_odata, ba.w_dram_le, ba.w_dram_busy, ba.w_dram_odata, ba.state);
 end 
 
 `endif

@@ -4,11 +4,12 @@ module m_cpummusim(
     input wire CLK, RST_X,
     input wire [31:0] w_hart_id,
     input  wire [31:0] w_ipi,
+    output wire [31:0] w_core_ir,
     output wire [31:0] w_mem_paddr,
     output wire w_mem_we,
     output wire [31:0] w_data_wdata,
     input wire [31:0] w_data_data,
-    output wire [63:0] w_mtime,
+    input wire [63:0] w_mtime,
     output wire [63:0] w_mtimecmp,
     input wire [63:0] w_wmtimecmp,
     input wire        w_clint_we,
@@ -106,7 +107,7 @@ module m_cpummusim(
         .w_tlb_req      (w_tlb_req),
         .w_tlb_flush    (w_tlb_flush),
         .w_core_pc      (),
-        .w_core_ir      (),
+        .w_core_ir      (w_core_ir),
         .w_core_odata   (),
         .w_init_stage   ()
     );

@@ -67,7 +67,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     output wire [31:0]  w_insn_addr;    // from r_insn_addr
     output wire [2:0]   w_data_ctrl;    // from r_data_ctrl
     output wire [31:0]  w_data_addr;    // from r_mem_addr
-    output wire [63:0]  w_mtime;        // from register mtime
+    input wire [63:0]  w_mtime;        // from register mtime
     output wire [63:0]  w_mtimecmp;     // from register mtimecmp
     output wire [31:0]  w_priv;         // from register priv
     output wire [31:0]  w_satp;         // from register satp
@@ -544,7 +544,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     
     /***********************************           FIN          ***********************************/
     always@(posedge CLK) begin
-        if(RST_X) mtime <= mtime + 1;
         if(state == `S_FIN && !w_busy) begin 
             if((pending_exception == ~0) ||
                (pending_exception != ~0 && (pending_exception & `CAUSE_INTERRUPT)) ||
@@ -851,7 +850,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     assign w_priv     = priv;
     assign w_satp     = satp;
     assign w_mstatus  = mstatus;
-    assign w_mtime    = mtime;
     assign w_mtimecmp = mtimecmp;
     assign w_mip      = mip;
 

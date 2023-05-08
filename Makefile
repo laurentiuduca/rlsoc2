@@ -69,7 +69,7 @@ icarus-sim-main:
 	iverilog -o simple.vvp ${TOPSOURCE-SIM-MAIN} ${OTHERSOURCE} ${VERIFLAGS_SM} 
 
 icarus:
-	iverilog -o simple.vvp ${TOPSOURCE} ${OTHERSOURCE} -DICARUS -g2012
+	iverilog -o simple.vvp ${TOPSOURCE} ${OTHERSOURCE} -DICARUS 
 run-i:
 	vvp simple.vvp
 run:
