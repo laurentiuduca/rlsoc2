@@ -67,7 +67,7 @@ module m_topsim(CLK, RST_X);
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
-        .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_we(w_plic_we),
+        .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_aces(w_plic_aces), .r_plic_aces_t(r_plic_aces_t), .w_plic_we(w_plic_we),
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
 
@@ -765,18 +765,14 @@ module m_topsim(CLK, RST_X);
 
 `define RAM_DEBUG 
 `ifdef RAM_DEBUG
-reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, bbl_cnt=0, old_time=-1;
-always @(posedge CLK)
+reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1;
+always @(*)
 begin
-    //if(w_mtime >= 400)
-    //    $finish;
-
-    if((core0.p.r_cpc != o_pc0 || core0.p.r_ir != o_ir0 || core1.p.r_cpc != o_pc1 || core1.p.r_ir != o_ir1 || w_mtime != old_time) && bbl_cnt < 50) begin
+    if(w_mtime < 400) begin
 		o_pc0 <= core0.p.r_cpc;
 		o_ir0 <= core0.p.r_ir;
 		o_pc1 <= core1.p.r_cpc;
 		o_ir1 <= core1.p.r_ir;
-		bbl_cnt <= bbl_cnt + 1;
 		$write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x pb=%x,%x bus_dram_busy=%x,%x \n",
                 	w_mtime[31:0], 
                     core0.p.r_cpc, core0.p.r_ir,
@@ -788,7 +784,6 @@ begin
                     bus_dram_busy1, bus_dram_busy0
         );
 	end
-
 end
 
 `endif

@@ -8,7 +8,7 @@ module busarbiter(
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
     output wire [63:0] w_mtimecmp, input wire [63:0] w_wmtimecmp, input wire w_clint_we,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
-    output wire [31:0] w_mip, input wire [31:0] w_wmip, input wire w_plic_we,
+    output wire [31:0] w_mip, input wire [31:0] w_wmip, input wire w_plic_aces, input wire r_plic_aces_t, input wire w_plic_we,
     output wire [31:0] w_dram_addr, output wire [31:0] w_dram_wdata, input wire [31:0] w_dram_odata, output wire w_dram_we_t,
     input wire w_dram_busy, output wire [2:0] w_dram_ctrl, output wire w_dram_le,
 
@@ -47,7 +47,10 @@ module busarbiter(
                          (state == 1) ? 1 : 
                          (state == 2) ? 1 : w_dram_busy;
 
-    wire no_req = !w_mem_we && !w_dram_le && !w_dram_we_t && (w_core_ir[6:0] != `OPCODE_AMO_____);
+    wire no_req = !w_dram_busy && 
+                    !w_mem_we && !w_dram_le && !w_dram_we_t && 
+                    !w_plic_aces && !r_plic_aces_t &&
+                    (w_core_ir[6:0] != `OPCODE_AMO_____);
 
     always @(posedge CLK) begin
         if(!RST_X) begin
@@ -59,9 +62,13 @@ module busarbiter(
                     state <= 1;
                 end
             end else if(state == 1) begin
-                // must signal busy to the core
-                grant <= (grant + 1) & (`NCORES-1);
-                state <= 2;
+                if(w_plic_aces)
+                    state <= 0;
+                else begin
+                    // must signal busy to the core
+                    grant <= (grant + 1) & (`NCORES-1);
+                    state <= 2;
+                end
             end else if(state == 2) begin
                 // grant has just changed so signal busy to the new core
                 state <= 3;
