@@ -223,17 +223,22 @@ module m_topsim(CLK, RST_X);
                             (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
         
         // one core sends ipi, the target clears it
-        if(r_dev == `CLINT_BASE_TADDR && w_offset[27:8]==20'h0) begin
-            if(w_data_data == 32'h0) // clear ipi
+        if(r_dev == `CLINT_BASE_TADDR && w_offset==28'h0 && w_data_we != 0) begin
+            if(w_data_wdata == 32'h0) begin // clear ipi
+                $display("t=%8x clear ipi w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                    w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                 if(w_grant == 0)
                     r_ipi <= {r_ipi[31:1], 1'b0};
                 else
                     r_ipi <= {r_ipi[31:2], 1'b0,r_ipi[0]};
-            else // send ipi
+            end else begin // send ipi
+                $display("t=%8x send ipi w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                    w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                 if(w_grant == 0)
-                    r_ipi <= 32'h02; // signal core 1
+                    r_ipi <= 32'h2; // signal core 1
                 else
-                    r_ipi <= 32'h01; // signal core 0
+                    r_ipi <= 32'h1; // signal core 0
+            end
         end
     end
 
@@ -763,7 +768,7 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-`define RAM_DEBUG 
+//`define RAM_DEBUG 
 `ifdef RAM_DEBUG
 reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1;
 always @(*)

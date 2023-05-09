@@ -532,7 +532,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             if(pending_exception != ~0)   begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
             else begin
                 if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
-		else if(r_executing_wfi)  begin pc <= pc; end
+		        else if(r_executing_wfi)  begin pc <= pc; end
                 else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0) || (r_tkn) || (!r_cinsn));
@@ -638,6 +638,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     mip <= mip | `MIP_MTIP;
                 end
                 else if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
+                    $display("core%x got ipi: %x", mhartid, w_ipi);
                     if(priv == `PRIV_M)
                         mip <= mip | `MIP_MSIP;
                     else
@@ -646,6 +647,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end else if(!w_ipi)
                     r_ipi_taken <= 0;
             end
+        end else if(r_executing_wfi) begin
+                if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
+                    $display("core%x got ipi: %x", mhartid, w_ipi);
+                    if(priv == `PRIV_M)
+                        mip <= mip | `MIP_MSIP;
+                    else
+                        mip <= mip | `MIP_SSIP;
+                    r_ipi_taken <= 1;
+                end 
         end
 
         if(state == `S_EX2 || state == `S_WB) begin

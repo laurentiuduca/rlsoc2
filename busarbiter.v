@@ -47,7 +47,7 @@ module busarbiter(
                          (state == 1) ? 1 : 
                          (state == 2) ? 1 : w_dram_busy;
 
-    wire no_req = !w_dram_busy && 
+    wire no_req = !w_dram_busy && w_tx_ready && 
                     !w_mem_we && !w_dram_le && !w_dram_we_t && 
                     !w_plic_aces && !r_plic_aces_t &&
                     (w_core_ir[6:0] != `OPCODE_AMO_____);
@@ -62,7 +62,7 @@ module busarbiter(
                     state <= 1;
                 end
             end else if(state == 1) begin
-                if(w_plic_aces)
+                if(!no_req)
                     state <= 0;
                 else begin
                     // must signal busy to the core
