@@ -6,7 +6,7 @@ module busarbiter(
     input wire w_init_done, input wire w_tx_ready,
     output wire [31:0] w_mem_paddr, output wire w_mem_we,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
-    output wire [63:0] w_mtime, output wire [63:0] w_mtimecmp, input wire [63:0] w_wmtimecmp, input wire w_clint_we,
+    output wire [63:0] w_mtimecmp, input wire [63:0] w_wmtimecmp, input wire w_clint_we,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
     output wire [31:0] w_mip, input wire [31:0] w_wmip, input wire w_plic_we,
     output wire [31:0] w_dram_addr, output wire [31:0] w_dram_wdata, input wire [31:0] w_dram_odata, output wire w_dram_we_t,
@@ -68,15 +68,17 @@ module busarbiter(
                 cnt <= 0;
             end else if(state == 3) begin
                 // allow this core to execute its instruction
+                /* verilator lint_off UNSIGNED */
                 if(cnt < 10)
                     cnt <= cnt + 1;
                 else
                     state <= 0;
             end
+
         end
     end
 
-    always @(posedge CLK) begin
+    always @(*) begin
         if(grant == 0) begin
             bus_data_data0  = w_data_data;
             bus_wmtimecmp0  = w_wmtimecmp;
@@ -120,6 +122,6 @@ module busarbiter(
     assign w_dram_we_t  = grant == 0 ? bus_dram_we_t0 : bus_dram_we_t1;
     assign w_dram_ctrl  = grant == 0 ? bus_dram_ctrl0 : bus_dram_ctrl1; 
     assign w_dram_le    = grant == 0 ? bus_dram_le0 : bus_dram_le1;
-    wire   [31:0] w_core_ir    = grant == 0 ? bus_core_ir0 : bus_core_ir1;
+    wire [31:0] w_core_ir = grant == 0 ? bus_core_ir0 : bus_core_ir1;
 
 endmodule
