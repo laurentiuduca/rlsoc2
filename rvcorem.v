@@ -637,25 +637,16 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 else if(mtimecmp < w_mtime) begin
                     mip <= mip | `MIP_MTIP;
                 end
-                else if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
-                    $display("core%x got ipi: %x", mhartid, w_ipi);
-                    if(priv == `PRIV_M)
-                        mip <= mip | `MIP_MSIP;
-                    else
-                        mip <= mip | `MIP_SSIP;
-                    r_ipi_taken <= 1;
-                end else if(!w_ipi)
-                    r_ipi_taken <= 0;
             end
-        end else if(r_executing_wfi) begin
-                if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
-                    $display("core%x got ipi: %x", mhartid, w_ipi);
-                    if(priv == `PRIV_M)
-                        mip <= mip | `MIP_MSIP;
-                    else
-                        mip <= mip | `MIP_SSIP;
-                    r_ipi_taken <= 1;
-                end 
+            if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
+                $display("core%x got ipi=%x mie=%x mtvec=%x", mhartid, w_ipi, mie, mtvec);
+                if(priv == `PRIV_M)
+                    mip <= mip | `MIP_MSIP;
+                else
+                    mip <= mip | `MIP_SSIP;
+                r_ipi_taken <= 1;
+            end else if(!w_ipi)
+                r_ipi_taken <= 0;
         end
 
         if(state == `S_EX2 || state == `S_WB) begin
@@ -745,28 +736,27 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     `CSR_SIE        : mie        <= (mie & ~mideleg) | (r_wb_data_csr & mideleg);
                     `CSR_SIP        : mip        <= (mip & ~mideleg) | (r_wb_data_csr & mideleg);
 
-		    `CSR_MEDELEG    : begin 
+		            `CSR_MEDELEG    : begin 
 		    			medeleg    <= (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1);
-					`ifdef LAUR_DEBUG_AFTER_CSRW_SATP
-					$write("medeleg write: \ttime:%x medeleg<=%x r_wb_data_csr=%d\n", w_mtime, (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1), r_wb_data_csr);
-					`endif
-				end
+					    `ifdef LAUR_DEBUG_AFTER_CSRW_SATP
+					    $write("medeleg write: \ttime:%x medeleg<=%x r_wb_data_csr=%d\n", w_mtime, (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1), r_wb_data_csr);
+					    `endif
+				    end
                     `CSR_MIDELEG    : mideleg    <= (mideleg & ~`WCSR_MASK2) | (r_wb_data_csr & `WCSR_MASK2);
                     `CSR_MIE        : mie        <= (mie & ~`WCSR_MASK3) | (r_wb_data_csr & `WCSR_MASK3);
                     `CSR_MIP        : mip        <= (mip & ~`WCSR_MASK4) | (r_wb_data_csr & `WCSR_MASK4);
 
-		    `CSR_SATP       : begin 
+		            `CSR_SATP       : begin 
 		    			satp       <= r_wb_data_csr; 
-					`ifdef LAUR_DEBUG_AFTER_CSRW_SATP
-					if(r_wb_data_csr[31]) begin
-						$write("satp write: \ttime:%x pc=%x r_insn_addr=%x w_insn_data=%x satp<=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
+					    `ifdef LAUR_DEBUG_AFTER_CSRW_SATP
+					        if(r_wb_data_csr[31]) begin
+						        $write("satp write: \ttime:%x pc=%x r_insn_addr=%x w_insn_data=%x satp<=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
                                                         w_mtime, pc, r_insn_addr, w_insn_data, r_wb_data_csr, pending_exception, stvec, mtvec, w_deleg, w_busy);
-					
-						was_csrw_satp <= 1;
-						old_insn_addr <= r_insn_addr;
-					end
-					`endif
-		    		      end	
+						    was_csrw_satp <= 1;
+						    old_insn_addr <= r_insn_addr;
+					        end
+					    `endif
+		    		end	
 
                     `CSR_MSTATUS    : mstatus    <= (mstatus & ~`MASK_STATUS) | (r_wb_data_csr & `MASK_STATUS);
                     `CSR_SSTATUS    : mstatus    <= (mstatus & ~`MASK_STATUS) | (w_sstatus & `MASK_STATUS);

@@ -65,7 +65,7 @@ module busarbiter(
                 if(!no_req)
                     state <= 0;
                 else begin
-                    // must signal busy to the core
+                    // must signal busy to current core
                     grant <= (grant + 1) & (`NCORES-1);
                     state <= 2;
                 end
