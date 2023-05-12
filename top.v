@@ -246,7 +246,7 @@ module m_topsim(CLK, RST_X);
     wire w_data_we = w_mem_we;
     assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004 && w_data_we != 0) ?
+                                (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004/*8*/ && w_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
     assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_offset[27:23]==4 && w_data_we != 0); // do not write ipi_clear
 
