@@ -51,8 +51,10 @@ module busarbiter(
     wire [3:0] w_funct3  = w_core_ir[14:12];
     wire [12:0] w_funct12 = w_core_ir[31:20];
     wire w_executing_wfi = ((w_opcode==`OPCODE_SYSTEM__) && (w_funct3 == `FUNCT3_PRIV__) || (w_funct12== `FUNCT12_WFI___));
-    wire no_req = (((w_opcode == `OPCODE_OP_IMM__) || (w_opcode == `OPCODE_OP______)) && (w_bus_cpustate == `S_ID)) ||
-                    (w_executing_wfi && w_bus_cpustate == `S_FIN);
+    wire no_req =   ((w_opcode == `OPCODE_OP_IMM__ || w_opcode == `OPCODE_OP______ || w_opcode == `OPCODE_BRANCH__)
+                    //|| (w_opcode == `OPCODE_LOAD____ || w_opcode == `OPCODE_STORE___) 
+                    && ((w_bus_cpustate == `S_ID))) ||
+                    (w_executing_wfi && w_bus_cpustate == `S_ID);
     //wire no_req = !w_dram_busy && w_tx_ready && !w_tlb_busy &&
     //                !w_mem_we && !w_dram_le && !w_dram_we_t && 
     //                !w_plic_aces && !r_plic_aces_t &&
@@ -65,7 +67,7 @@ module busarbiter(
         end else if(w_init_done) begin
             if(state == 0) begin
                 if(no_req) begin
-                    if(w_dram_busy || !w_tx_ready)
+                    if(w_dram_busy || !w_tx_ready || w_mem_we || w_dram_le || w_dram_we_t || w_plic_aces || r_plic_aces_t)
                         $display("t=%8x no_req and busy grant=%1x ir=%x", w_mtime, grant[0], w_core_ir);
                     state <= 1;
                 end

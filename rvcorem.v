@@ -49,7 +49,7 @@ endmodule
 module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
-                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, w_state);
+                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -81,7 +81,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     output wire         w_tlb_flush;    // from r_tlb_flush
 
     /***** registers and CPU architecture state ***************************************************/
-    reg   [3:0] state          = 0;            // State for Multi cycle Processor
+    output reg   [3:0] state   = 0;            // State for Multi cycle Processor
     reg  [31:0] pc             = `D_START_PC;  // Program Counter
 
     reg  [31:0] mstatus        = 0;            ///// CSRs
@@ -171,7 +171,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire        w_wb_r_enable;
     wire [31:0] w_interrupt_mask;
     wire [31:0] w_irq_t;
-    output wire [3:0]  w_state;
+    wire [3:0]  w_state;
     
     /***********************************           INI          ***********************************/
     reg r_init_stage=0;
@@ -638,15 +638,20 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     mip <= mip | `MIP_MTIP;
                 end
             end
-            if((w_ipi & (1<<mhartid)) && r_ipi_taken == 0) begin
-                $display("core%x got ipi=%x mie=%x mtvec=%x", mhartid, w_ipi, mie, mtvec);
-                if(priv == `PRIV_M)
-                    mip <= mip | `MIP_MSIP;
-                else
-                    mip <= mip | `MIP_SSIP;
-                r_ipi_taken <= 1;
-            end else if(!w_ipi)
+            if(w_ipi & (1<<mhartid)) begin
+                if(r_ipi_taken == 0) begin
+                    $display("core%1x got ipi=%x mie=%x mtvec=%x", mhartid, w_ipi, mie, mtvec);
+                    if(priv == `PRIV_M)
+                        mip <= mip | `MIP_MSIP;
+                    else
+                        mip <= mip | `MIP_SSIP;
+                    r_ipi_taken <= 1;
+                end
+            end else begin
                 r_ipi_taken <= 0;
+                if(r_ipi_taken == 1)
+                    $display("core%1x got clear ipi", mhartid);
+            end
         end
 
         if(state == `S_EX2 || state == `S_WB) begin

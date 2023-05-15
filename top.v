@@ -774,6 +774,7 @@ module m_topsim(CLK, RST_X);
 reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0;
 always @(posedge CLK)
 begin
+/*
     if(w_mtime < 40) begin
 		o_pc0 <= core0.p.r_cpc;
 		o_ir0 <= core0.p.r_ir;
@@ -803,6 +804,7 @@ begin
                     bus_dram_busy1, bus_dram_busy0
         );
     end
+*/
 end
 
 `endif

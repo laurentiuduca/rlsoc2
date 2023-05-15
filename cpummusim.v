@@ -111,7 +111,7 @@ module m_cpummusim(
         .w_core_ir      (w_core_ir),
         .w_core_odata   (),
         .w_init_stage   (),
-        .w_state(w_state)
+        .state(w_state)
     );
 
     /**********************************************************************************************/
