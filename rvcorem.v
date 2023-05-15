@@ -49,7 +49,7 @@ endmodule
 module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
-                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage);
+                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, w_state);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -171,7 +171,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire        w_wb_r_enable;
     wire [31:0] w_interrupt_mask;
     wire [31:0] w_irq_t;
-    wire [3:0]  w_state;
+    output wire [3:0]  w_state;
     
     /***********************************           INI          ***********************************/
     reg r_init_stage=0;
@@ -523,7 +523,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                                                                                 (medeleg >> (cause & 32'h1f))) & 1 : 0;
 
     // wfi keeps pc constant
-    wire r_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
+    wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
 
     always @(posedge CLK) begin /////// update program counter
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
@@ -532,7 +532,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             if(pending_exception != ~0)   begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
             else begin
                 if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
-		        else if(r_executing_wfi)  begin pc <= pc; end
+		        else if(w_executing_wfi)  begin pc <= pc; end
                 else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0) || (r_tkn) || (!r_cinsn));

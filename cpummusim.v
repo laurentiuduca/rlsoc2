@@ -5,6 +5,7 @@ module m_cpummusim(
     input wire [31:0] w_hart_id,
     input  wire [31:0] w_ipi,
     output wire [31:0] w_core_ir,
+    output wire [3:0]  w_state,
     output wire [31:0] w_mem_paddr,
     output wire w_mem_we,
     output wire [31:0] w_data_wdata,
@@ -109,7 +110,8 @@ module m_cpummusim(
         .w_core_pc      (),
         .w_core_ir      (w_core_ir),
         .w_core_odata   (),
-        .w_init_stage   ()
+        .w_init_stage   (),
+        .w_state(w_state)
     );
 
     /**********************************************************************************************/

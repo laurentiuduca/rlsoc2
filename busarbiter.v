@@ -6,13 +6,13 @@ module busarbiter(
     input wire w_init_done, input wire w_tx_ready,
     output wire [31:0] w_mem_paddr, output wire w_mem_we,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
-    output wire [63:0] w_mtimecmp, input wire [63:0] w_wmtimecmp, input wire w_clint_we,
+    input wire [63:0] w_mtime, output wire [63:0] w_mtimecmp, input wire [63:0] w_wmtimecmp, input wire w_clint_we,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
     output wire [31:0] w_mip, input wire [31:0] w_wmip, input wire w_plic_aces, input wire r_plic_aces_t, input wire w_plic_we,
     output wire [31:0] w_dram_addr, output wire [31:0] w_dram_wdata, input wire [31:0] w_dram_odata, output wire w_dram_we_t,
     input wire w_dram_busy, output wire [2:0] w_dram_ctrl, output wire w_dram_le,
 
-    input wire [31:0] bus_core_ir0,
+    input wire [31:0] bus_core_ir0, input wire [3:0] bus_cpustate0,
     input wire [31:0] bus_mem_paddr0, input wire bus_mem_we0,
     input wire [31:0] bus_data_wdata0, 
     output reg [31:0] bus_data_data0=0,
@@ -23,7 +23,7 @@ module busarbiter(
     input [31:0] bus_dram_addr0, input [31:0] bus_dram_wdata0, output reg [31:0] bus_dram_odata0=0, input bus_dram_we_t0,
     output reg bus_dram_busy0=0, input wire [2:0] bus_dram_ctrl0, input bus_dram_le0,
 
-    input wire [31:0] bus_core_ir1,
+    input wire [31:0] bus_core_ir1, input wire [3:0] bus_cpustate1,
     input wire [31:0] bus_mem_paddr1, input wire bus_mem_we1,
     input wire [31:0] bus_data_wdata1, 
     output reg [31:0] bus_data_data1=0,
@@ -47,10 +47,16 @@ module busarbiter(
                          (state == 1) ? 1 : 
                          (state == 2) ? 1 : w_dram_busy;
 
-    wire no_req = !w_dram_busy && w_tx_ready && 
-                    !w_mem_we && !w_dram_le && !w_dram_we_t && 
-                    !w_plic_aces && !r_plic_aces_t &&
-                    (w_core_ir[6:0] != `OPCODE_AMO_____);
+    wire [6:0] w_opcode  = w_core_ir[6:0];
+    wire [3:0] w_funct3  = w_core_ir[14:12];
+    wire [12:0] w_funct12 = w_core_ir[31:20];
+    wire w_executing_wfi = ((w_opcode==`OPCODE_SYSTEM__) && (w_funct3 == `FUNCT3_PRIV__) || (w_funct12== `FUNCT12_WFI___));
+    wire no_req = (((w_opcode == `OPCODE_OP_IMM__) || (w_opcode == `OPCODE_OP______)) && (w_bus_cpustate == `S_ID)) ||
+                    (w_executing_wfi && w_bus_cpustate == `S_FIN);
+    //wire no_req = !w_dram_busy && w_tx_ready && !w_tlb_busy &&
+    //                !w_mem_we && !w_dram_le && !w_dram_we_t && 
+    //                !w_plic_aces && !r_plic_aces_t &&
+    //                (w_core_ir[6:0] != `OPCODE_AMO_____);
 
     always @(posedge CLK) begin
         if(!RST_X) begin
@@ -59,6 +65,8 @@ module busarbiter(
         end else if(w_init_done) begin
             if(state == 0) begin
                 if(no_req) begin
+                    if(w_dram_busy || !w_tx_ready)
+                        $display("t=%8x no_req and busy grant=%1x ir=%x", w_mtime, grant[0], w_core_ir);
                     state <= 1;
                 end
             end else if(state == 1) begin
@@ -130,5 +138,5 @@ module busarbiter(
     assign w_dram_ctrl  = grant == 0 ? bus_dram_ctrl0 : bus_dram_ctrl1; 
     assign w_dram_le    = grant == 0 ? bus_dram_le0 : bus_dram_le1;
     wire [31:0] w_core_ir = grant == 0 ? bus_core_ir0 : bus_core_ir1;
-
+    wire [3:0] w_bus_cpustate = grant == 0 ? bus_cpustate0 : bus_cpustate1;
 endmodule

@@ -36,7 +36,7 @@ module m_topsim(CLK, RST_X);
 `endif
 
     m_cpummusim core0(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
@@ -49,7 +49,7 @@ module m_topsim(CLK, RST_X);
     );
 
      m_cpummusim core1(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1),
+        .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
@@ -65,13 +65,13 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
-        .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_aces(w_plic_aces), .r_plic_aces_t(r_plic_aces_t), .w_plic_we(w_plic_we),
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
 
-        .bus_core_ir0(bus_core_ir_0),
+        .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
         .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
         .bus_mtimecmp0(bus_mtimecmp0), .bus_wmtimecmp0(bus_wmtimecmp0), .bus_clint_we0(bus_clint_we0),
@@ -80,7 +80,7 @@ module m_topsim(CLK, RST_X);
         .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
         .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
 
-        .bus_core_ir1(bus_core_ir_1),
+        .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
         .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
         .bus_mtimecmp1(bus_mtimecmp1), .bus_wmtimecmp1(bus_wmtimecmp1), .bus_clint_we1(bus_clint_we1),
@@ -94,6 +94,7 @@ module m_topsim(CLK, RST_X);
     // bus interface
     wire w_init_done;
     wire [31:0] bus_core_ir_0, bus_core_ir_1;
+    wire [3:0] bus_cpustate0, bus_cpustate1;
     wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
     wire w_mem_we, bus_mem_we0, bus_mem_we1;
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
@@ -770,10 +771,10 @@ module m_topsim(CLK, RST_X);
 
 //`define RAM_DEBUG 
 `ifdef RAM_DEBUG
-reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1;
-always @(*)
+reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0;
+always @(posedge CLK)
 begin
-    if(w_mtime < 400) begin
+    if(w_mtime < 40) begin
 		o_pc0 <= core0.p.r_cpc;
 		o_ir0 <= core0.p.r_ir;
 		o_pc1 <= core1.p.r_cpc;
@@ -789,6 +790,19 @@ begin
                     bus_dram_busy1, bus_dram_busy0
         );
 	end
+    if(core0.p.r_cpc >= 32'h800023b0 && core0.p.r_cpc <= 32'h8000242e && rd_cnt < 400) begin
+        rd_cnt <= rd_cnt + 1;
+        $write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x pb=%x,%x bus_dram_busy=%x,%x \n",
+                	w_mtime[31:0],
+                    core0.p.r_cpc, core0.p.r_ir,
+                    core1.p.r_cpc, core1.p.r_ir,
+                    ba.grant[0], ba.state,
+                    ba.a_w_dram_busy, w_dram_busy, 
+                    w_dram_le, w_dram_we_t, w_mem_we, 
+                    core1.mmu.w_proc_busy, core0.mmu.w_proc_busy,
+                    bus_dram_busy1, bus_dram_busy0
+        );
+    end
 end
 
 `endif
