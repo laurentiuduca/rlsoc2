@@ -260,7 +260,6 @@ module m_topsim(CLK, RST_X);
                 if(w_data_wdata == 32'h0) begin
                     $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                         w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
-                                if(w_grant == 0)
                     r_ipi <= {r_ipi[31:2], 1'b0, r_ipi[0]};
                 end else begin
                     $display("t=%8x send ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
@@ -798,7 +797,7 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-`define RAM_DEBUG 
+//`define RAM_DEBUG 
 `ifdef RAM_DEBUG
 reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0;
 always @(posedge CLK)
