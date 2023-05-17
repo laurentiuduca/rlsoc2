@@ -221,8 +221,11 @@ module m_topsim(CLK, RST_X);
         r_clint_odata <=    (w_offset==28'hbff8) ? w_mtime[31:0] :
                             (w_offset==28'hbffc) ? w_mtime[63:32] :
                             (w_offset==28'h4000) ? w_mtimecmp[31:0] :
-                            (w_offset==28'h4004) ? w_mtimecmp[63:32] : 0;
+                            (w_offset==28'h4004) ? w_mtimecmp[63:32] : 
+                            (w_offset==28'h4008) ? w_mtimecmp[31:0] :
+                            (w_offset==28'h400c) ? w_mtimecmp[63:32] : 0;
         
+`ifdef LAUR_CLINT_IPI_BASE
         // one core sends ipi, the target clears it
         if(r_dev == `CLINT_BASE_TADDR && w_offset==28'h0 && w_data_we != 0) begin
             if(w_data_wdata == 32'h0) begin // clear ipi
@@ -236,20 +239,46 @@ module m_topsim(CLK, RST_X);
                 $display("t=%8x send ipi w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                     w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                 if(w_grant == 0)
-                    r_ipi <= 32'h2; // signal core 1
+                    r_ipi <= {r_ipi[31:2], 1'b1, r_ipi[0]}; // signal core 1
                 else
-                    r_ipi <= 32'h1; // signal core 0
+                    r_ipi <= {r_ipi[31:1], 1'b1}; // signal core 0
             end
         end
+`else
+        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0) begin
+            if(w_offset==28'h0) begin
+                if(w_data_wdata == 32'h0) begin
+                    $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    r_ipi <= {r_ipi[31:1], 1'b0};
+                end else begin
+                    $display("t=%8x send ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    r_ipi <= {r_ipi[31:1], 1'b1}; // signal core 0
+                end
+            end else /*if(w_offset == 28'h4)*/ begin
+                if(w_data_wdata == 32'h0) begin
+                    $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                                if(w_grant == 0)
+                    r_ipi <= {r_ipi[31:2], 1'b0, r_ipi[0]};
+                end else begin
+                    $display("t=%8x send ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    r_ipi <= {r_ipi[31:2], 1'b1, r_ipi[0]}; // signal core 1
+                end
+            end
+        end
+`endif
     end
 
     // shortcut to w_data_we because we do not use microcontroller
     wire w_data_we = w_mem_we;
-    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4000 && w_data_we != 0) ?
+    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 || w_offset==28'h4008) && w_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && w_offset==28'h4004/*8*/ && w_data_we != 0) ?
+                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 || w_offset==28'h400c) && w_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_offset[27:23]==4 && w_data_we != 0); // do not write ipi_clear
+    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_offset[27:23]==4 && w_data_we != 0);
 
     /**********************************************************************************************/
     // OUTPUT CHAR
@@ -769,13 +798,12 @@ module m_topsim(CLK, RST_X);
     end
 `endif
 
-//`define RAM_DEBUG 
+`define RAM_DEBUG 
 `ifdef RAM_DEBUG
 reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0;
 always @(posedge CLK)
 begin
-/*
-    if(w_mtime < 40) begin
+    if(w_mtime < 100) begin
 		o_pc0 <= core0.p.r_cpc;
 		o_ir0 <= core0.p.r_ir;
 		o_pc1 <= core1.p.r_cpc;
@@ -791,6 +819,7 @@ begin
                     bus_dram_busy1, bus_dram_busy0
         );
 	end
+/*
     if(core0.p.r_cpc >= 32'h800023b0 && core0.p.r_cpc <= 32'h8000242e && rd_cnt < 400) begin
         rd_cnt <= rd_cnt + 1;
         $write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x pb=%x,%x bus_dram_busy=%x,%x \n",

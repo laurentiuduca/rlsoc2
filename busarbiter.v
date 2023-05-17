@@ -72,13 +72,9 @@ module busarbiter(
                     state <= 1;
                 end
             end else if(state == 1) begin
-                if(!no_req)
-                    state <= 0;
-                else begin
-                    // must signal busy to current core
-                    grant <= (grant + 1) & (`NCORES-1);
-                    state <= 2;
-                end
+                // must signal busy to current core
+                grant <= (grant + 1) & (`NCORES-1);
+                state <= 2;
             end else if(state == 2) begin
                 // grant has just changed so signal busy to the new core
                 state <= 3;
