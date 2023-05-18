@@ -110,6 +110,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg   [1:0] priv           = `PRIV_M;      // Mode
     //reg  [63:0] w_mtime          = 1;            // w_mtime
     reg  [63:0] mtimecmp       = 1;            // w_mtime
+    reg  r_was_clint_we        = 0;
     reg  [31:0] pending_tval   = 0;            //
     reg  [31:0] pending_exception = ~0;        //
 
@@ -630,14 +631,16 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg r_ipi_taken=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
-            if(w_mtime > `ENABLE_TIMER) begin
+            //if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
                     mip <= w_wmip;
                 end
-                else if(mtimecmp < w_mtime) begin
+                else if(r_was_clint_we && (mtimecmp < w_mtime)) begin
+                    //$display("core%1x gets MTIP", mhartid);
                     mip <= mip | `MIP_MTIP;
+                    r_was_clint_we <= 0;
                 end
-            end
+            //end
             if(w_ipi & (1<<mhartid)) begin
                 if(r_ipi_taken == 0) begin
                     $display("core%1x got ipi=%x mie=%x mtvec=%x", mhartid, w_ipi, mie, mtvec);
@@ -661,8 +664,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         end
         if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
+                //$display("core%1x sets mtimecmp=%x", mhartid, w_wmtimecmp);
                 mtimecmp    <= w_wmtimecmp;
                 mip         <= mip & ~`MIP_MTIP;
+                r_was_clint_we <= 1;
             end
         end
 

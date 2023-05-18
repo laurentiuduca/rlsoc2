@@ -191,6 +191,7 @@ module m_topsim(CLK, RST_X);
 
     reg [32-1:0] r_ipi=0;
     assign bus_ipi = r_ipi;
+    reg r_was_clint_we=0;
 
     wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
 
@@ -225,26 +226,6 @@ module m_topsim(CLK, RST_X);
                             (w_offset==28'h4008) ? w_mtimecmp[31:0] :
                             (w_offset==28'h400c) ? w_mtimecmp[63:32] : 0;
         
-`ifdef LAUR_CLINT_IPI_BASE
-        // one core sends ipi, the target clears it
-        if(r_dev == `CLINT_BASE_TADDR && w_offset==28'h0 && w_data_we != 0) begin
-            if(w_data_wdata == 32'h0) begin // clear ipi
-                $display("t=%8x clear ipi w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
-                    w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
-                if(w_grant == 0)
-                    r_ipi <= {r_ipi[31:1], 1'b0};
-                else
-                    r_ipi <= {r_ipi[31:2], 1'b0,r_ipi[0]};
-            end else begin // send ipi
-                $display("t=%8x send ipi w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
-                    w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
-                if(w_grant == 0)
-                    r_ipi <= {r_ipi[31:2], 1'b1, r_ipi[0]}; // signal core 1
-                else
-                    r_ipi <= {r_ipi[31:1], 1'b1}; // signal core 0
-            end
-        end
-`else
         if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
@@ -268,7 +249,18 @@ module m_topsim(CLK, RST_X);
                 end
             end
         end
-`endif
+        if(w_clint_we) begin
+            if(!r_was_clint_we) begin
+                r_was_clint_we <= 1;
+                //$display("w_clint_we gnt=%1x", w_grant);
+            end
+        end else begin
+            if(r_dev == `CLINT_BASE_TADDR && w_data_we != 0 &&
+                (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant != 0) ||
+                 ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant != 1)))
+                $display("clint wrong grant offset");
+            r_was_clint_we <= 0;
+        end
     end
 
     // shortcut to w_data_we because we do not use microcontroller
@@ -277,7 +269,9 @@ module m_topsim(CLK, RST_X);
                                 {w_mtimecmp[63:32], w_data_wdata} :
                                 (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 || w_offset==28'h400c) && w_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_offset[27:23]==4 && w_data_we != 0);
+    assign w_clint_we   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+                          (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0) ||
+                           ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1));
 
     /**********************************************************************************************/
     // OUTPUT CHAR
