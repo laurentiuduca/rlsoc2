@@ -41,8 +41,12 @@ module busarbiter(
 
     reg [7:0] state=0;
     integer i;
-    reg [7:0] cnt=0;
+    reg [7:0] cnt=0, r_max_cnt=10;
     
+//`define USE_SINGLE_CORE
+`ifdef USE_SINGLE_CORE
+    wire a_w_dram_busy = w_dram_busy;
+`else
     wire a_w_dram_busy = (state == 0) ? w_dram_busy :
                          (state == 1) ? 1 : 
                          (state == 2) ? 1 : w_dram_busy;
@@ -81,8 +85,17 @@ module busarbiter(
                 cnt <= 0;
             end else if(state == 3) begin
                 // allow this core to execute its instruction
-                /* verilator lint_off UNSIGNED */
-                if(cnt < 10)
+                `ifdef SIM_MODE
+                    if(grant == 1) begin
+                        // core1 boots linux while core0 is idle
+                        if(w_mtime >= 10000000 && w_mtime <= 990000000)
+                            r_max_cnt <= 10;
+                        else
+                            r_max_cnt <= 10;
+                    end else
+                        r_max_cnt <= 10;
+                `endif
+                if(cnt < r_max_cnt)
                     cnt <= cnt + 1;
                 else
                     state <= 0;
@@ -90,6 +103,7 @@ module busarbiter(
 
         end
     end
+`endif
 
     always @(*) begin
         if(grant == 0) begin

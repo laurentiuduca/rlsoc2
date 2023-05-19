@@ -189,9 +189,10 @@ module m_topsim(CLK, RST_X);
     reg         r_virt_irq_oe_t = 0;
     reg         r_plic_aces_t   = 0;
 
-    reg [32-1:0] r_ipi=0;
+    reg [31:0] r_ipi=0;
     assign bus_ipi = r_ipi;
     reg r_was_clint_we=0;
+    reg [31:0] r_max_displays=0;
 
     wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
 
@@ -226,25 +227,38 @@ module m_topsim(CLK, RST_X);
                             (w_offset==28'h4008) ? w_mtimecmp[31:0] :
                             (w_offset==28'h400c) ? w_mtimecmp[63:32] : 0;
         
+        `define MAX_DISPLAYS    20
         if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
-                    $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
-                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    if(r_max_displays < `MAX_DISPLAYS) begin
+                        $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                            w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                        r_max_displays = r_max_displays + 1;
+                    end
                     r_ipi <= {r_ipi[31:1], 1'b0};
                 end else begin
-                    $display("t=%8x send ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
-                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    if(r_max_displays < `MAX_DISPLAYS) begin
+                        $display("t=%8x send ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                            w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                        r_max_displays = r_max_displays + 1;
+                    end
                     r_ipi <= {r_ipi[31:1], 1'b1}; // signal core 0
                 end
             end else /*if(w_offset == 28'h4)*/ begin
                 if(w_data_wdata == 32'h0) begin
-                    $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
-                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    if(r_max_displays < `MAX_DISPLAYS) begin
+                        $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                            w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                        r_max_displays = r_max_displays + 1;
+                    end
                     r_ipi <= {r_ipi[31:2], 1'b0, r_ipi[0]};
                 end else begin
-                    $display("t=%8x send ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
-                        w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                    if(r_max_displays < `MAX_DISPLAYS) begin
+                        $display("t=%8x send ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                            w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                        r_max_displays = r_max_displays + 1;
+                    end
                     r_ipi <= {r_ipi[31:2], 1'b1, r_ipi[0]}; // signal core 1
                 end
             end
