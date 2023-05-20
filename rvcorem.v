@@ -633,6 +633,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         if(state == `S_IF) begin
             //if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
+                    $display("----rvcorem w_plic_we mip <= %x", w_mip);
                     mip <= w_wmip;
                 end
                 else if(r_was_clint_we && (mtimecmp < w_mtime)) begin
@@ -643,7 +644,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             //end
             if(w_ipi & (1<<mhartid)) begin
                 if(r_ipi_taken == 0) begin
-                    $display("core%1x got ipi=%x mie=%x mtvec=%x", mhartid, w_ipi, mie, mtvec);
+                    $display("core%1x got ipi=%x priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
                     if(priv == `PRIV_M)
                         mip <= mip | `MIP_MSIP;
                     else
