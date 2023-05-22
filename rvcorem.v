@@ -645,10 +645,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             if(w_ipi & (1<<mhartid)) begin
                 if(r_ipi_taken == 0) begin
                     $display("core%1x got ipi=%x priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
-                    if(priv == `PRIV_M)
-                        mip <= mip | `MIP_MSIP;
-                    else
+                    if((w_ipi >> 16) & (1<<mhartid))
                         mip <= mip | `MIP_SSIP;
+                    else
+                        mip <= mip | `MIP_MSIP;
                     r_ipi_taken <= 1;
                 end
             end else begin
