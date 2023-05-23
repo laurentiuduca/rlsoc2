@@ -633,7 +633,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         if(state == `S_IF) begin
             //if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
-                    $display("----rvcorem w_plic_we mip <= %x", w_mip);
+                    $display("----rvcorem w_plic_we mip <= %x state=%x", w_mip, state);
                     mip <= w_wmip;
                 end
                 else if(r_was_clint_we && (mtimecmp < w_mtime)) begin
@@ -642,24 +642,27 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= 0;
                 end
             //end
-            if(w_ipi & (1<<mhartid)) begin
-                if(r_ipi_taken == 0) begin
-                    $display("core%1x got ipi=%x priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
-                    if((w_ipi >> 16) & (1<<mhartid))
-                        mip <= mip | `MIP_SSIP;
-                    else
-                        mip <= mip | `MIP_MSIP;
-                    r_ipi_taken <= 1;
+                else if(w_ipi & (1<<mhartid)) begin
+                    if(r_ipi_taken == 0) begin
+                        if((w_ipi >> 16) & (1<<mhartid)) begin
+                            $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                            mip <= mip | `MIP_SSIP;
+                        end else begin
+                            $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                            mip <= mip | `MIP_MSIP;
+                        end
+                        r_ipi_taken <= 1;
+                    end
+                end else begin
+                    r_ipi_taken <= 0;
+                    if(r_ipi_taken == 1)
+                        $display("core%1x got clear ipi", mhartid);
                 end
-            end else begin
-                r_ipi_taken <= 0;
-                if(r_ipi_taken == 1)
-                    $display("core%1x got clear ipi", mhartid);
-            end
         end
 
         if(state == `S_EX2 || state == `S_WB) begin
             if(w_plic_we) begin
+                $display("----rvcorem w_plic_we mip <= %x state=%x", w_mip, state);
                 mip <= w_wmip;
             end
         end
