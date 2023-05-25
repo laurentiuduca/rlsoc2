@@ -26,6 +26,7 @@ error
 //`define RAM_DEBUG
 
 //`define SKIP_CACHE
+`define IPI_MAX_DISPLAYS 20
 
 `define LINUX
 `define TIMEOUT 64'd30000000001

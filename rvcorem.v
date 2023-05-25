@@ -628,6 +628,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg [31:0] old_insn_addr;
 `endif
 
+    reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
@@ -645,10 +646,16 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 else if(w_ipi & (1<<mhartid)) begin
                     if(r_ipi_taken == 0) begin
                         if((w_ipi >> 16) & (1<<mhartid)) begin
-                            $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                            if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
+                                r_ipi_max_displays <= r_ipi_max_displays + 1;
+                                $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                            end
                             mip <= mip | `MIP_SSIP;
                         end else begin
-                            $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                            if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
+                                r_ipi_max_displays <= r_ipi_max_displays + 1;
+                                $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                            end
                             mip <= mip | `MIP_MSIP;
                         end
                         r_ipi_taken <= 1;
@@ -656,7 +663,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end else begin
                     r_ipi_taken <= 0;
                     if(r_ipi_taken == 1)
-                        $display("core%1x got clear ipi", mhartid);
+                        if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
+                                r_ipi_max_displays <= r_ipi_max_displays + 1;
+                                $display("core%1x got clear ipi", mhartid);
+                        end
                 end
         end
 
