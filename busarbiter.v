@@ -1,3 +1,6 @@
+// author: Laurentiu-Cristian Duca, date: 2023-05-25
+// spdx license identifier MIT
+
 `include "define.vh"
 
 module busarbiter(
@@ -51,11 +54,11 @@ module busarbiter(
                          (state == 1) ? 1 : 
                          (state == 2) ? 1 : w_dram_busy;
 
-    wire [6:0] w_opcode  = w_core_ir[6:0];
-    wire [3:0] w_funct3  = w_core_ir[14:12];
-    wire [12:0] w_funct12 = w_core_ir[31:20];
-    wire w_executing_wfi = ((w_opcode==`OPCODE_SYSTEM__) && (w_funct3 == `FUNCT3_PRIV__) || (w_funct12== `FUNCT12_WFI___));
     wire no_req = w_bus_cpustate == `S_ID;
+    //wire [6:0] w_opcode  = w_core_ir[6:0];
+    //wire [3:0] w_funct3  = w_core_ir[14:12];
+    //wire [12:0] w_funct12 = w_core_ir[31:20];
+    //wire w_executing_wfi = ((w_opcode==`OPCODE_SYSTEM__) && (w_funct3 == `FUNCT3_PRIV__) || (w_funct12== `FUNCT12_WFI___));
     //wire no_req =   ((w_opcode == `OPCODE_OP_IMM__ || w_opcode == `OPCODE_OP______ || w_opcode == `OPCODE_BRANCH__)
     //                //|| (w_opcode == `OPCODE_LOAD____ || w_opcode == `OPCODE_STORE___) 
     //                && ((w_bus_cpustate == `S_ID))) ||
@@ -63,6 +66,7 @@ module busarbiter(
     //wire no_req = !w_dram_busy && w_tx_ready && !w_tlb_busy &&
     //                !w_mem_we && !w_dram_le && !w_dram_we_t && 
     //                !w_plic_aces && !r_plic_aces_t &&
+    //                && !(w_plic_we || w_clint_we) &&
     //                (w_core_ir[6:0] != `OPCODE_AMO_____);
 
     always @(posedge CLK) begin

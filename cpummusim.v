@@ -1,3 +1,6 @@
+// author: Laurentiu-Cristian Duca, date: 2023-05-25
+// spdx license identifier MIT
+
 `include "define.vh"
 
 module m_cpummusim(

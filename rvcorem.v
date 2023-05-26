@@ -1,3 +1,7 @@
+// modified: Laurentiu-Cristian Duca, date: 2023-05-25
+// - ipi support
+// - wfi
+// spdx license identifier MIT
 /* Modified by Laurentiu-Cristian Duca, 2021-12-20
  * - LAUR_DEBUG_AFTER_CSRW_SATP flag 
  * for debuging physical to virtual memory switch

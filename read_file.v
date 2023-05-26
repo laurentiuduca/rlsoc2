@@ -1,3 +1,5 @@
+// author: Laurentiu-Cristian Duca, date: 2023-05-25
+// - KEYBOARD_QUEUE_SIZE
 // Author Laurentiu-Cristian Duca, 2021-12-20.
 // MIT license.
 // It reads the id in the file fid.txt and if it has changed will read
@@ -6,7 +8,8 @@
 `include "define.vh"
 
 `define EOF -1
-`define READ_WAIT_DELAY 50000
+`define READ_WAIT_DELAY 1000000
+//`define DEBUG_READ_FILE
 
 `ifdef laur0
 module test_icarus();
@@ -43,8 +46,8 @@ module read_file (clk, r_consf_en, we, w_mtime, min_time);
 input wire clk, r_consf_en;
 input wire [63:0] w_mtime, min_time;
 output reg we = 0;
-reg [7:0] fifo [0:15];
-//reg [7:0] fifo2 [0:15];
+reg [7:0] fifo [0:`KEYBOARD_QUEUE_SIZE-1];
+//reg [7:0] fifo2 [0:`KEYBOARD_QUEUE_SIZE-1];
 
 // The character received from $fgetc
 integer c=0, oldc=1;
@@ -114,17 +117,24 @@ always @(posedge clk) begin
 		we = 1;
 		line = "";
 		n = $fgets(line, fcmd);
-		$display("fgets n=%d line='%s'", n, line);
+		$display("read_file.v fgets n=%d line='%s'", n, line);
 		for(i = (`LINE_BUFFER_SIZE/8)-n+1; i < (`LINE_BUFFER_SIZE/8)+1; i=i+1) begin
 			if(line[(`LINE_BUFFER_SIZE - i*8)+:8]) begin
+				`ifdef DEBUG_READ_FILE
 				$display("line[%d:%d]=%x='%c'", `LINE_BUFFER_SIZE - i*8 + 7, `LINE_BUFFER_SIZE - i*8, 
 					line[(`LINE_BUFFER_SIZE - i*8)+:8], line[(`LINE_BUFFER_SIZE - i*8)+:8]);
+				`endif
 				fifo[i - ((`LINE_BUFFER_SIZE/8)-n+1)] = line[(`LINE_BUFFER_SIZE - i*8)+:8];
-			end else
-				$display("empty line");
+			end
+			`ifdef DEBUG_READ_FILE
+			else
+				$display("read_file.v empty line");
+			`endif
 		end
+		`ifdef DEBUG_READ_FILE
 		for(i = 0; i < n; i=i+1)
 			$display("fifo[%d]=%x='%c'", i, fifo[i], fifo[i]);
+		`endif
 		//fifo2 = fifo;
 		//for(i = 0; i < n; i++)
                 //        $display("fifo2[%d]=%x='%c'", i, fifo2[i], fifo2[i]);

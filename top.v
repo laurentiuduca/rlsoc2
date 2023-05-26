@@ -1,3 +1,6 @@
+// author: Laurentiu-Cristian Duca, date: 2023-05-25
+// - dual-core support
+// spdx license identifier MIT
 /* Modified by Laurentiu-Cristian Duca, 2021-12-20
  * - memory model similar to dram memory controller with DRAM_SIM
  * or simple memory model
@@ -347,7 +350,6 @@ module m_topsim(CLK, RST_X);
     PLOADER ploader(CLK, RST_X, w_rxd, w_pl_init_addr, w_pl_init_data, w_pl_init_we,
                     w_pl_init_done, w_key_we, w_key_data);
 
-    `define KEYBOARD_QUEUE_SIZE 32
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!

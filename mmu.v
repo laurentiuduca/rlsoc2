@@ -1,3 +1,6 @@
+// author: Laurentiu-Cristian Duca, date: 2023-05-25
+// - removed microcontroller and moved peripheral logic outside
+// spdx license identifier MIT
 /* Modified by Laurentiu-Cristian Duca, 2021-12-20
  * - LAUR_MEM_RB memory read-back flag after BBL write
  * - SIM_MAIN flag for simulation in XSIM

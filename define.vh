@@ -1,3 +1,5 @@
+// modified by: Laurentiu-Cristian Duca, date: 2023-05-25
+// spdx license identifier MIT
 /**************************************************************************************************/
 /**** RVSoC  (Mini Kuroda/RISC-V)                      since 2018-08-07   ArchLab. TokyoTech   ****/
 /**** config file v0.13                                                                        ****/
@@ -26,6 +28,7 @@ error
 //`define RAM_DEBUG
 
 //`define SKIP_CACHE
+`define KEYBOARD_QUEUE_SIZE 32
 `define IPI_MAX_DISPLAYS 20
 
 `define LINUX
@@ -76,7 +79,7 @@ error
         `define ENABLE_TIMER 64'd2000000000  // 80000000 * 25
     `endif
 `else
-    `define ENABLE_TIMER 64'd2900000000
+    `define ENABLE_TIMER 64'd6700000000
 `endif
 
 /**************************************************************************************************/
