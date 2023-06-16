@@ -103,33 +103,35 @@ module busarbiter(
 
     always @(*) begin
         if(grant == 0) begin
-            bus_data_data0  = w_data_data;
-            bus_wmtimecmp0  = w_wmtimecmp;
+            bus_data_data0  <= w_data_data;
+            bus_wmtimecmp0  <= w_wmtimecmp;
             bus_clint_we0 <= w_clint_we;
-            bus_wmip0 <= w_wmip; bus_plic_we0 <= w_plic_we;
-            bus_dram_odata0 = w_dram_odata;
-            bus_dram_busy0  = a_w_dram_busy;
+            bus_wmip0 <= w_wmip; 
+            bus_plic_we0 <= w_plic_we;
+            bus_dram_odata0 <= w_dram_odata;
+            bus_dram_busy0  <= a_w_dram_busy;
             
-            bus_data_data1  = 0;
-            bus_wmtimecmp1  = 0;
+            bus_data_data1  <= 0;
+            bus_wmtimecmp1  <= 0;
             bus_clint_we1 <= 0;
             bus_wmip1 <= 0; bus_plic_we1 <= 0;
-            bus_dram_odata1 = 0;
-            bus_dram_busy1  = 1;            
+            bus_dram_odata1 <= 0;
+            bus_dram_busy1  <= 1;            
         end else begin
-            bus_data_data1  = w_data_data;
-            bus_wmtimecmp1  = w_wmtimecmp;
+            bus_data_data1  <= w_data_data;
+            bus_wmtimecmp1  <= w_wmtimecmp;
             bus_clint_we1 <= w_clint_we;
-            bus_wmip1 <= w_wmip; bus_plic_we1 <= w_plic_we;
-            bus_dram_odata1 = w_dram_odata;
-            bus_dram_busy1  = a_w_dram_busy;
+            bus_wmip1 <= w_wmip; 
+            bus_plic_we1 <= w_plic_we;
+            bus_dram_odata1 <= w_dram_odata;
+            bus_dram_busy1  <= a_w_dram_busy;
             
-            bus_data_data0  = 0;
-            bus_wmtimecmp0  = 0;
+            bus_data_data0  <= 0;
+            bus_wmtimecmp0  <= 0;
             bus_clint_we0 <= 0;
             bus_wmip0 <= 0; bus_plic_we0 <= 0;
-            bus_dram_odata0 = 0;
-            bus_dram_busy0  = 1;
+            bus_dram_odata0 <= 0;
+            bus_dram_busy0  <= 1;
         end
     end
 
