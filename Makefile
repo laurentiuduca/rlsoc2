@@ -10,7 +10,7 @@
 # General
 TOPSOURCE = top.v
 TOPSOURCE-SIM-MAIN = main.v dram.v
-OTHERSOURCE = rvcorem.v memory.v busarbiter.v cpummusim.v memsim.v mmu.v console.v loader.v read_file.v
+OTHERSOURCE = rvcorem.v memory.v busarbiter.v cpummu.v memsim.v mmu.v console.v loader.v read_file.v
 OLDSOURCE = disk.v microc.v debug.v
 
 
