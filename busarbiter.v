@@ -18,24 +18,24 @@ module busarbiter(
     input wire [31:0] bus_core_ir0, input wire [3:0] bus_cpustate0,
     input wire [31:0] bus_mem_paddr0, input wire bus_mem_we0,
     input wire [31:0] bus_data_wdata0, 
-    output reg [31:0] bus_data_data0=0,
+    output reg [31:0] bus_data_data0,
     input [63:0] bus_mtimecmp0, 
-    output reg [63:0] bus_wmtimecmp0=0, output reg bus_clint_we0=0,
+    output reg [63:0] bus_wmtimecmp0, output reg bus_clint_we0,
     input wire [2:0] bus_pw_state0, input wire [1:0] bus_tlb_req0, input wire bus_tlb_busy0,
-    input [31:0] bus_mip0, output reg [31:0] bus_wmip0=0, output reg bus_plic_we0=0,
-    input [31:0] bus_dram_addr0, input [31:0] bus_dram_wdata0, output reg [31:0] bus_dram_odata0=0, input bus_dram_we_t0,
-    output reg bus_dram_busy0=0, input wire [2:0] bus_dram_ctrl0, input bus_dram_le0,
+    input [31:0] bus_mip0, output reg [31:0] bus_wmip0, output reg bus_plic_we0,
+    input [31:0] bus_dram_addr0, input [31:0] bus_dram_wdata0, output reg [31:0] bus_dram_odata0, input bus_dram_we_t0,
+    output reg bus_dram_busy0, input wire [2:0] bus_dram_ctrl0, input bus_dram_le0,
 
     input wire [31:0] bus_core_ir1, input wire [3:0] bus_cpustate1,
     input wire [31:0] bus_mem_paddr1, input wire bus_mem_we1,
     input wire [31:0] bus_data_wdata1, 
-    output reg [31:0] bus_data_data1=0,
+    output reg [31:0] bus_data_data1,
     input [63:0] bus_mtimecmp1, 
-    output reg [63:0] bus_wmtimecmp1=0, output reg bus_clint_we1=0,
+    output reg [63:0] bus_wmtimecmp1, output reg bus_clint_we1,
     input wire [2:0] bus_pw_state1, input wire [1:0] bus_tlb_req1, input wire bus_tlb_busy1,
-    input [31:0] bus_mip1, output reg [31:0] bus_wmip1=0, output reg bus_plic_we1=0,
-    input [31:0] bus_dram_addr1, input [31:0] bus_dram_wdata1, output reg [31:0] bus_dram_odata1=0, input bus_dram_we_t1,
-    output reg bus_dram_busy1=0, input wire [2:0] bus_dram_ctrl1, input bus_dram_le1
+    input [31:0] bus_mip1, output reg [31:0] bus_wmip1, output reg bus_plic_we1,
+    input [31:0] bus_dram_addr1, input [31:0] bus_dram_wdata1, output reg [31:0] bus_dram_odata1, input bus_dram_we_t1,
+    output reg bus_dram_busy1, input wire [2:0] bus_dram_ctrl1, input bus_dram_le1
     );
     /**********************************************************************************************/
     
@@ -114,7 +114,8 @@ module busarbiter(
             bus_data_data1  <= 0;
             bus_wmtimecmp1  <= 0;
             bus_clint_we1 <= 0;
-            bus_wmip1 <= 0; bus_plic_we1 <= 0;
+            bus_wmip1 <= 0; 
+            bus_plic_we1 <= 0;
             bus_dram_odata1 <= 0;
             bus_dram_busy1  <= 1;            
         end else begin
@@ -129,7 +130,8 @@ module busarbiter(
             bus_data_data0  <= 0;
             bus_wmtimecmp0  <= 0;
             bus_clint_we0 <= 0;
-            bus_wmip0 <= 0; bus_plic_we0 <= 0;
+            bus_wmip0 <= 0; 
+            bus_plic_we0 <= 0;
             bus_dram_odata0 <= 0;
             bus_dram_busy0  <= 1;
         end
