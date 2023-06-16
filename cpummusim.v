@@ -3,7 +3,7 @@
 
 `include "define.vh"
 
-module m_cpummusim(
+module m_cpummu(
     input wire CLK, RST_X,
     input wire [31:0] w_hart_id,
     input  wire [31:0] w_ipi,
@@ -70,7 +70,6 @@ module m_cpummusim(
         //-------------------------------------------------------------------------------------------------------//
         .w_mem_paddr(w_mem_paddr),
         .w_mem_we(w_mem_we),
-        .r_pw_state(w_pw_state),
         .w_tlb_busy(w_tlb_busy),
         .w_dram_addr(w_dram_addr),
         .w_dram_wdata(w_dram_wdata),

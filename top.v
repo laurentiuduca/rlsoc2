@@ -38,7 +38,7 @@ module m_topsim(CLK, RST_X);
     input wire CLK, RST_X;
 `endif
 
-    m_cpummusim core0(
+    m_cpummu core0(
         .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
@@ -51,7 +51,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
 
-     m_cpummusim core1(
+     m_cpummu core1(
         .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),

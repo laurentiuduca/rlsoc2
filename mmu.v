@@ -32,7 +32,6 @@ module m_mmu(
     //--------------------------------------------------------------------------------------------//
     output wire [31:0]  w_mem_paddr,
     output wire         w_mem_we,
-    output reg [2:0]    r_pw_state=0,
     output wire         w_tlb_busy,
     output wire [31:0]  w_dram_addr,
     output wire [31:0]  w_dram_wdata,
@@ -49,7 +48,7 @@ module m_mmu(
     reg         page_walk_fail      = 0;
 
     // Page walk state
-    //reg  [2:0]  r_pw_state          = 0;
+    reg  [2:0]  r_pw_state          = 0;
 
     // Page table entry
     reg  [31:0] L1_pte              = 0;
