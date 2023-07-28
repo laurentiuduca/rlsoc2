@@ -20,6 +20,7 @@
 error
 `endif
 `endif
+//`define USE_SINGLE_CORE
 
 `ifdef SIM_MODE
 //`define DRAM_SIM // slower
@@ -79,7 +80,11 @@ error
         `define ENABLE_TIMER 64'd2000000000  // 80000000 * 25
     `endif
 `else
+`ifdef USE_SINGLE_CORE
+    `define ENABLE_TIMER 64'd0610000000
+`else
     `define ENABLE_TIMER 64'd6700000000
+`endif
 `endif
 
 /**************************************************************************************************/

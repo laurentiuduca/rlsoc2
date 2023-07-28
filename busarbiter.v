@@ -46,7 +46,6 @@ module busarbiter(
     integer i;
     reg [7:0] cnt=0, r_max_cnt=1;
     
-//`define USE_SINGLE_CORE
 `ifdef USE_SINGLE_CORE
     wire a_w_dram_busy = w_dram_busy;
 `else
