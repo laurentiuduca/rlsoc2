@@ -21,6 +21,7 @@ error
 `endif
 `endif
 //`define USE_SINGLE_CORE
+// verify dts
 
 `ifdef SIM_MODE
 //`define DRAM_SIM // slower

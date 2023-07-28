@@ -354,7 +354,7 @@ module m_topsim(CLK, RST_X);
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
     reg         r_consf_en          = 0;
-    reg   [7:0] cons_fifo [0:15];
+    reg   [7:0] cons_fifo [0:`KEYBOARD_QUEUE_SIZE-1];
     reg [7:0] r_char_value=0;
 `ifdef SIM_MODE
     wire w_file_we;
@@ -403,7 +403,7 @@ module m_topsim(CLK, RST_X);
 	if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts)
 	    	r_read_a_char <= 1;
         if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts) begin
-                $display("HVC_BASE_ADDR+4 r_consf_cnts %x", r_consf_cnts);
+                //$display("HVC_BASE_ADDR+4 r_consf_cnts %x", r_consf_cnts);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
                 r_consf_head <= r_consf_head + 1;
                 r_consf_cnts <= r_consf_cnts - 1;
