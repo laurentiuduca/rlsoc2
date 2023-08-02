@@ -1,4 +1,4 @@
-cat meminfo
+cat /proc/cpuinfo
 
 #syntax: command<enter>
 # command length must be less or equal to 32 chars

@@ -82,9 +82,9 @@ error
     `endif
 `else
 `ifdef USE_SINGLE_CORE
-    `define ENABLE_TIMER 64'd0610000000
+    `define ENABLE_TIMER 64'd0510000000
 `else
-    `define ENABLE_TIMER 64'd6700000000
+    `define ENABLE_TIMER 64'd1220000000
 `endif
 `endif
 
@@ -152,7 +152,7 @@ error
 /**** Simulation                                                                               ****/
 /**************************************************************************************************/
 `ifdef LINUX
-`define D_START_PC      32'h80000000
+`define D_START_PC      32'h80700000
 `else
 `define D_START_PC      0
 `endif
@@ -208,25 +208,25 @@ error
 /**************************************************************************************************/
 `define MC_MEM_SIZE 8*1024    // 32KB
 `define LINE_BUFFER_SIZE (8*100) // for debugging
-`define D_INITD_ADDR    (32*1024*1024)
+`define D_INITD_ADDR    (6*1024*1024) // (7*1024*1024) //(32*1024*1024)
 
 `ifndef SIM_MODE
 	`define LAUR_MEM_RB // mem read-back after writing it with BBL
 	`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE (64*1024*1024)
+`define BBL_SIZE (8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!
 `define D_SIZE_DEVT 0
 `define BIN_DISK_SIZE 0
 `else
-`define BIN_BBL_SIZE   (30*1024*1024) //(9*1024*1024 /*+ 4*1024*/) // Note!!
+`define BIN_BBL_SIZE   (8*1024*1024) // (7*1024*1024) // (30*1024*1024)
 `define D_SIZE_DEVT (4*1024)
 `define BIN_DISK_SIZE 0 //(16*1024*1024)
 `endif
-`define BIN_SIZE      (`BIN_BBL_SIZE + `D_SIZE_DEVT + `BIN_DISK_SIZE) 
+`define BIN_SIZE       (`BIN_BBL_SIZE + `BIN_DISK_SIZE) // (`BIN_BBL_SIZE + `D_SIZE_DEVT + `BIN_DISK_SIZE) 
 
 /**************************************************************************************************/
 /**** System Configuration                                                                     ****/
