@@ -16,7 +16,7 @@
 `include "define.vh"
 
 /**************************************************************************************************/
-module m_main(
+module m_maintn(
     input wire CLK,
     input  wire        w_rxd,
     output wire        w_txd,
