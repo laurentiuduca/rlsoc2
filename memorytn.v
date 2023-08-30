@@ -14,69 +14,8 @@
 `ifndef SIM_MODE
 /**** DRAM Controller without Cache                                                            ****/
 /**************************************************************************************************/
-module DRAM_conRV#(
-`ifndef ARTYA7
-              parameter DDR2_DQ_WIDTH   = 16,
-              parameter DDR2_DQS_WIDTH  = 2,
-              parameter DDR2_ADDR_WIDTH = 13,
-              parameter DDR2_BA_WIDTH   = 3,
-              parameter DDR2_DM_WIDTH   = 2,
-              parameter APP_ADDR_WIDTH  = 27,
-`else
-              parameter DDR3_DQ_WIDTH   = 16,
-              parameter DDR3_DQS_WIDTH  = 2,
-              parameter DDR3_ADDR_WIDTH = 14,
-              parameter DDR3_BA_WIDTH   = 3,
-              parameter DDR3_DM_WIDTH   = 2,
-              parameter APP_ADDR_WIDTH  = 28,
-`endif
-              parameter APP_CMD_WIDTH   = 3,
-              parameter APP_DATA_WIDTH  = 128,  // Note
-              parameter APP_MASK_WIDTH  = 16)
+module DRAM_conRV
     (
-     // input clk, rst (active-low)
-     input  wire                         mig_clk,
-     input  wire                         mig_rst_x,
-`ifdef ARTYA7
-     input  wire                         ref_clk,
-`endif
-     // memory interface ports
-`ifndef ARTYA7
-     inout  wire [DDR2_DQ_WIDTH-1 : 0]   ddr2_dq,
-     inout  wire [DDR2_DQS_WIDTH-1 : 0]  ddr2_dqs_n,
-     inout  wire [DDR2_DQS_WIDTH-1 : 0]  ddr2_dqs_p,
-     output wire [DDR2_ADDR_WIDTH-1 : 0] ddr2_addr,
-     output wire [DDR2_BA_WIDTH-1 : 0]   ddr2_ba,
-     output wire                         ddr2_ras_n,
-     output wire                         ddr2_cas_n,
-     output wire                         ddr2_we_n,
-     output wire [0:0]                   ddr2_ck_p,
-     output wire [0:0]                   ddr2_ck_n,
-     output wire [0:0]                   ddr2_cke,
-     output wire [0:0]                   ddr2_cs_n,
-     output wire [DDR2_DM_WIDTH-1 : 0]   ddr2_dm,
-     output wire [0:0]                   ddr2_odt,
-`else
-     inout  wire [DDR3_DQ_WIDTH-1 : 0]   ddr3_dq,
-     inout  wire [DDR3_DQS_WIDTH-1 : 0]  ddr3_dqs_n,
-     inout  wire [DDR3_DQS_WIDTH-1 : 0]  ddr3_dqs_p,
-     output wire [DDR3_ADDR_WIDTH-1 : 0] ddr3_addr,
-     output wire [DDR3_BA_WIDTH-1 : 0]   ddr3_ba,
-     output wire                         ddr3_ras_n,
-     output wire                         ddr3_cas_n,
-     output wire                         ddr3_we_n,
-     output wire [0:0]                   ddr3_ck_p,
-     output wire [0:0]                   ddr3_ck_n,
-     output wire                         ddr3_reset_n,
-     output wire [0:0]                   ddr3_cke,
-     output wire [0:0]                   ddr3_cs_n,
-     output wire [DDR3_DM_WIDTH-1 : 0]   ddr3_dm,
-     output wire [0:0]                   ddr3_odt,
-`endif
-
-     // output clk, rst (active-low)
-     output wire                         o_clk,
-     output wire                         o_rst_x,
      // user interface ports
      input  wire                         i_rd_en,
      input  wire                         i_wr_en,
@@ -85,21 +24,38 @@ module DRAM_conRV#(
      output wire                         o_init_calib_complete,
      output wire [31:0]                  o_data,
      output wire                         o_busy,
-     input  wire [2:0]                   i_ctrl);
+     input  wire [2:0]                   i_ctrl
+
+     input clk,
+     input rst_x,
+     input clk_sdram,
+     output o_init_calib_complete,
+
+     output O_sdram_clk,
+     output O_sdram_cke,
+     output O_sdram_cs_n,            // chip select
+     output O_sdram_cas_n,           // columns address select
+     output O_sdram_ras_n,           // row address select
+     output O_sdram_wen_n,           // write enable
+     inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
+     output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
+     output [1:0] O_sdram_ba,        // two banks
+     output [3:0] O_sdram_dqm       // 32/4
+);
 
     reg         r_we    = 0;
     reg         r_rd    = 0;
     wire 	w_busy;
-    wire[127:0] w_dram_odata;
+    wire[31:0] w_dram_odata;
     reg [3:0] r_mask = 0;
     reg   [2:0] r_ctrl  = 0;
     reg [31:0] r_odata = 0;
-    reg [127:0] r_dram_odata1 = 0;
+    reg [31:0] r_dram_odata1 = 0;
     reg [23:0] r_dram_odata2 = 0;
     reg [31:0] r_maddr, r_addr;
 
-    // 16+3 bytes shifted with 0 or 15 bytes.
-    wire[31:0] w_odata = {r_dram_odata2, r_dram_odata1} >> {r_addr[3:0], 3'b0};
+    // 4+3 bytes shifted with 0 .. 3 bytes.
+    wire[31:0] w_odata = {r_dram_odata2, r_dram_odata1} >> {r_addr[1:0], 3'b0};
     assign o_data = (r_ctrl[1:0]==0) ? ((r_ctrl[2]) ? {24'h0, w_odata[7:0]} :
                                          {{24{w_odata[7]}}, w_odata[7:0]}) :
                      (r_ctrl[1:0]==1) ? ((r_ctrl[2]) ? {16'h0, w_odata[15:0]} :
@@ -111,7 +67,7 @@ module DRAM_conRV#(
     assign o_busy = (r_stall | w_busy);
     reg [7:0] state = 0, state_next = 0;
     reg [31:0] r_cnt = 0;
-    always@(posedge o_clk) begin
+    always@(posedge clk) begin
         case(state)
         8'd0: // idle
                 if(i_rd_en && !w_busy) begin
@@ -297,49 +253,22 @@ module DRAM_conRV#(
 	endcase
     end
 
-Gowin_rPLL_nes pll_nes(
-    .clkin(sys_clk),
-    .clkout(clk),          // FREQ main clock
-    .clkoutp(clk_sdram)    // FREQ main clock phase shifted
-);
 
-
-  MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(sys_resetn),
-        .read_a((cfg_rw_i == `MEM_READ_CMD)), 
+    MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(rst_x),
+        .read_a(r_rd), 
         .read_b(1'b0),
-        .write((cfg_rw_i == `MEM_WRITE_CMD)),
+        .write(r_we),
         .refresh(refresh),
-        .addr(addr_i),
-        .din(data_i), .mask(~r_mask),
-        .dout_a(data_o), .dout_b(),
-        .busy(busy_o), .mem_initialized(mem_initialized), .fail(ram_fail), .total_written(),
+        .addr(r_maddr),
+        .din(r_wdata), .mask(~r_mask),
+        .dout_a(w_dram_odata), .dout_b(),
+        .busy(w_busy), .mem_initialized(o_init_calib_complete), .fail(), .total_written(),
 
         .SDRAM_DQ(IO_sdram_dq), .SDRAM_A(O_sdram_addr), .SDRAM_BA(O_sdram_ba), .SDRAM_nCS(O_sdram_cs_n),
         .SDRAM_nWE(O_sdram_wen_n), .SDRAM_nRAS(O_sdram_ras_n), .SDRAM_nCAS(O_sdram_cas_n), 
         .SDRAM_CLK(O_sdram_clk), .SDRAM_CKE(O_sdram_cke), .SDRAM_DQM(O_sdram_dqm)
-);
+    );
 
-`ifdef SKIP_CACHE 
-    DRAM_con_witout_cache dram_con_witout_cache (
-               // input clk, rst (active-low)
-               .mig_clk(mig_clk),
-               .mig_rst_x(mig_rst_x),
-`ifdef ARTYA7
-               .ref_clk(ref_clk),
-`endif
-               // memory interface ports
-               // output clk, rst (active-low)
-               .o_clk(o_clk),
-               .o_rst_x(o_rst_x),
-               // user interface ports
-               .i_rd_en(r_rd),
-               .i_wr_en(r_we),
-	       .o_init_calib_complete(o_init_calib_complete),
-	       .i_addr(r_maddr),
-               .i_data(r_wdata),
-               .o_data(w_dram_odata),
-               .o_busy(w_busy),
-               .i_mask(~r_mask));
 endmodule
 /**************************************************************************************************/
 

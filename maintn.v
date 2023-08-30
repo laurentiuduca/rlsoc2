@@ -23,11 +23,23 @@ module m_main(
     output wire [5:0] w_led,
 	input wire w_btnl,
 	input wire w_btnr
+
+    // SDRAM
+    output O_sdram_clk,
+    output O_sdram_cke,
+    output O_sdram_cs_n,            // chip select
+    output O_sdram_cas_n,           // columns address select
+    output O_sdram_ras_n,           // row address select
+    output O_sdram_wen_n,           // write enable
+    inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
+    output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
+    output [1:0] O_sdram_ba,        // two banks
+    output [3:0] O_sdram_dqm       // 32/4
 );
 
 reg RST_X = 0;
 reg [15:0] rst_cnt = 0;
-always @(posedge clk) begin
+always @(posedge pll_clk) begin
     if(rst_cnt < 255)
       rst_cnt <= rst_cnt + 1;
     else
@@ -35,7 +47,7 @@ always @(posedge clk) begin
 end
 
     m_cpummu core0(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
+        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
@@ -48,7 +60,7 @@ end
     );
 
      m_cpummu core1(
-        .CLK(CLK), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
+        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
@@ -60,7 +72,7 @@ end
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1)
     );   
     
-    busarbiter ba(.CLK(CLK), .RST_X(RST_X), .w_grant(w_grant),
+    busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
@@ -119,7 +131,7 @@ end
     reg [63:0] mtime=0;
     wire [63:0] w_mtime=mtime;
 
-    always@(posedge CLK)
+    always@(posedge pll_clk)
         if(RST_X) mtime <= mtime + 1;
 
     /**********************************************************************************************/
@@ -133,7 +145,7 @@ end
     reg   [31:0] r_mem_paddr= 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         r_dev   <= w_dev;
         r_virt  <= w_virt;
         r_mem_paddr <= w_mem_paddr;
@@ -195,7 +207,7 @@ end
 
     wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
 
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         if(!w_tlb_busy) begin
             //r_plic_we   <= (w_virt_irq_oe || w_plic_aces);
             r_virt_irq_oe_t         <= w_virt_irq_oe;
@@ -209,7 +221,7 @@ end
     assign w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
                             w_mip & ~(`MIP_MEIP | `MIP_SEIP);
 
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         if(w_plic_we)
             $display("----w_plic_we w_grant=%x", w_grant);
 
@@ -300,7 +312,7 @@ end
 
     /**********************************************************************************************/
     // OUTPUT CHAR
-    UartTx UartTx0(CLK, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
+    UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
     wire w_txd;
     reg         r_uart_we = 0;
     reg   [7:0] r_uart_data = 0;
@@ -311,7 +323,7 @@ end
 `endif
     wire w_tx_ready;
     reg          r_finish=0;
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         // optimisation instead of w_mem_wdata put w_data_wdata
         if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR)) begin
             r_uart_we   <= 1;
@@ -330,7 +342,7 @@ end
             r_finish = 1;
         end
     end
-    always@(posedge CLK) if (r_finish) begin
+    always@(posedge pll_clk) if (r_finish) begin
         $write("FINISH!\n");
         $finish();
     end
@@ -342,7 +354,7 @@ end
     wire [31:0]  w_pl_init_data;
     wire         w_pl_init_done;
     wire         w_pl_init_we;
-    PLOADER ploader(CLK, RST_X, w_rxd, w_pl_init_addr, w_pl_init_data, w_pl_init_we,
+    PLOADER ploader(pll_clk, RST_X, w_rxd, w_pl_init_addr, w_pl_init_data, w_pl_init_we,
                     w_pl_init_done, w_key_we, w_key_data);
 
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
@@ -353,7 +365,7 @@ end
     reg [7:0] r_char_value=0;
 `ifdef SIM_MODE
     wire w_file_we;
-    read_file rf(.clk(CLK), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER));
+    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER));
 `endif
 
 `ifdef SIM_MODE
@@ -382,7 +394,7 @@ end
     wire  [7:0] w_key_data;
     reg         r_key_we    = 0;
     reg   [7:0] r_key_data  = 0;
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         r_key_we    <= w_key_we;
         r_key_data  <= w_key_data;
     end
@@ -391,7 +403,7 @@ end
     integer i;
 `endif
     reg r_read_a_char=0;
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         if(r_mem_paddr != (`HVC_BASE_ADDR + 4))
             	r_read_a_char <= 0;
         else 
@@ -438,7 +450,7 @@ end
 `endif
     reg  [31:0]  r_initaddr  = 0;
     reg  [31:0]  r_checksum = 0;
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
 	    r_checksum <= (!RST_X)                      ? 0                             :
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
@@ -466,7 +478,7 @@ end
     reg r_mem_rb_done=0;
 `endif
 `ifndef SIM_MODE
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
         r_init_state <= (!RST_X) ? 0 :
                       (r_init_state == 0)                ? 1 :
                       (r_init_state == 1 & r_zero_done)  ? 2 :
@@ -485,7 +497,7 @@ end
 
     assign w_init_done = (r_init_state == 5);
         
-    always@(posedge CLK) begin	
+    always@(posedge pll_clk) begin	
 	    if(r_init_state < 1)
 		    $display("r_init_state=%d", r_init_state);
         if(w_pl_init_we & (r_init_state == 2))      r_initaddr      <= r_initaddr + 4;
@@ -505,7 +517,7 @@ end
 	reg [31:0] r_rb_data=0, r_verify_checksum=0;
 	assign w_verify_checksum = r_verify_checksum;
 	wire w_checksum_match = (r_verify_checksum == r_checksum);
-    	always@(posedge CLK) begin
+    	always@(posedge pll_clk) begin
 		if(r_init_state != 6) begin
 			r_rb_state <= 0;
 			r_set_dram_le <= 0;
@@ -582,7 +594,7 @@ end
 
     // Zero init
     wire calib_done;
-    always@(posedge CLK) begin
+    always@(posedge pll_clk) begin
 `ifdef SIM_MAIN
 	    r_zero_we <= 0;
 	    r_zero_done <= 1;
@@ -631,11 +643,13 @@ end
 `endif
 
 
-`ifdef SIM_MODE
-    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
-        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
-        .w_mtime(w_mtime[31:0]));
-`else
+
+    Gowin_rPLL_nes pll_nes(
+    .clkin(CLK),
+    .clkout(pll_clk),          // FREQ main clock
+    .clkoutp(clk_sdram)    // FREQ main clock phase shifted
+    );
+
     DRAM_conRV dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
@@ -650,14 +664,22 @@ end
                                .o_busy(w_dram_busy),
                                .i_ctrl(w_dram_ctrl_t),
                                // input clk, rst (active-low)
-                               .mig_clk(mig_clk),
-                               .mig_rst_x(mig_rst_x),
 
-                               // output clk, rst (active-low)
-                               .o_clk(o_clk),
-                               .o_rst_x(o_rst_x),
-                               // other
+                               .clk(pll_clk),
+                               .rst_x(RST_X),
+                               .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done)
+
+                               .O_sdram_clk(O_sdram_clk),
+                               .O_sdram_cke(O_sdram_cke),
+                               .O_sdram_cs_n(O_sdram_cs_n),            // chip select
+                               .O_sdram_cas_n(O_sdram_cas_n),           // columns address select
+                               .O_sdram_ras_n(O_sdram_ras_n),           // row address select
+                               .O_sdram_wen_n(O_sdram_wen_n),           // write enable
+                               .IO_sdram_dq(IO_sdram_dq),       // 32 bit bidirectional data bus
+                               .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
+                               .O_sdram_ba(O_sdram_ba),        // two banks
+                               .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                );
 `endif
 
@@ -666,116 +688,13 @@ end
     // first 4 leds are set in main.v
     wire [15:0] w_led;
 `ifdef LAUR_MEM_RB
-    assign w_led = ({r_rb_state[2:0], w_checksum_match} << 12) | (r_mem_rb_done << 11) | (r_init_state << 8)
-                    | ({w_pl_init_done, r_disk_done, r_bbl_done, r_zero_done} << 4) | r_init_state;
+    assign w_led = //({r_rb_state[2:0], w_checksum_match} << 12) | (r_mem_rb_done << 11) | (r_init_state << 8) |
+                    w_btnl == 0 ? {w_pl_init_done, r_bbl_done, r_zero_done, calib_done} : r_init_state;
 `else
-    assign w_led = /*(w_proc_busy << 12) | (r_mc_mode << 8)*/ 0
-                    | ({w_pl_init_done, r_disk_done, r_bbl_done, r_zero_done} << 4) | r_init_state;
+    assign w_led =  w_btnl == 0 ? {w_pl_init_done, r_bbl_done, r_zero_done, calib_done} : r_init_state;
 `endif
 
     /**********************************************************************************************/
-    // LOAD linux
-    integer j;
-    //integer k;
-    reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
-    reg  [7:0] mem_disk[0:`DISK_SIZE-1];
-    initial begin
-`ifndef VERILATOR
-    #1
-`endif
 
-`ifdef LINUX
-        $write("Load image file: %s\n", `IMAGE_FILE);
-        $readmemh(`IMAGE_FILE, mem_disk);
-        j=`BBL_SIZE;
-
-        for(i=0;i<`DISK_SIZE;i=i+1) begin
-`ifdef DRAM_SIM
-`ifdef SKIP_CACHE
-	    idbmem.idbmem.mem[j]=mem_disk[i];
-`else
-	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
-`endif
-`else
-	    idbmem.idbmem.mem[j]=mem_disk[i];
-`endif // DRAM_SIM
-            j=j+1;
-        end
-`endif // LINUX
-
-        $write("Running %s\n", {`HEX_DIR,`HEXFILE});
-        $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
-        j=0;
-
-        for(i=0;i<`BBL_SIZE;i=i+1) begin
-`ifdef DRAM_SIM
-`ifdef SKIP_CACHE
-        idbmem.idbmem.mem[j]=mem_bbl[i];
-`else
-	    idbmem.cache_ctrl.mi.mem[j]=mem_bbl[i];
-`endif
-`else
-	    idbmem.idbmem.mem[j]=mem_bbl[i];
-`endif // DRAM_SIM
-            j=j+1;
-        end
-        $write("-------------------------------------------------------------------\n");
-    end
-
-/**********************************************************************************************/
-
-/***********************************          write time        *******************************/
-`define LAUR_WRITE_TIME
-`ifdef LAUR_WRITE_TIME
-    reg [63:0] old_w_mtime=0;
-    always @(posedge CLK) begin
-	    if(old_w_mtime != w_mtime) begin
-		    old_w_mtime = w_mtime;
-		    if(w_mtime % 64'd10000000 == 64'd0) begin
-			    $write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
-		    end
-	    end
-    end
-`endif
-
-//`define RAM_DEBUG 
-`ifdef RAM_DEBUG
-reg [31:0] o_pc0=-1, o_ir0=-1, o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0;
-always @(posedge CLK)
-begin
-    if(w_mtime < 100) begin
-		o_pc0 <= core0.p.r_cpc;
-		o_ir0 <= core0.p.r_ir;
-		o_pc1 <= core1.p.r_cpc;
-		o_ir1 <= core1.p.r_ir;
-		$write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x pb=%x,%x bus_dram_busy=%x,%x \n",
-                	w_mtime[31:0], 
-                    core0.p.r_cpc, core0.p.r_ir,
-                    core1.p.r_cpc, core1.p.r_ir,
-                    ba.grant[0], ba.state,
-                    ba.a_w_dram_busy, w_dram_busy, 
-                    w_dram_le, w_dram_we_t, w_mem_we, 
-                    core1.mmu.w_proc_busy, core0.mmu.w_proc_busy,
-                    bus_dram_busy1, bus_dram_busy0
-        );
-	end
-/*
-    if(core0.p.r_cpc >= 32'h800023b0 && core0.p.r_cpc <= 32'h8000242e && rd_cnt < 400) begin
-        rd_cnt <= rd_cnt + 1;
-        $write("t=%08d pc0=%08x ir0=%08x pc1=%08x ir1=%08x grant=%x state=%x a_w_dram_busy=%x w_dram_busy=%x le=%x w=%x mw=%x pb=%x,%x bus_dram_busy=%x,%x \n",
-                	w_mtime[31:0],
-                    core0.p.r_cpc, core0.p.r_ir,
-                    core1.p.r_cpc, core1.p.r_ir,
-                    ba.grant[0], ba.state,
-                    ba.a_w_dram_busy, w_dram_busy, 
-                    w_dram_le, w_dram_we_t, w_mem_we, 
-                    core1.mmu.w_proc_busy, core0.mmu.w_proc_busy,
-                    bus_dram_busy1, bus_dram_busy0
-        );
-    end
-*/
-end
-
-`endif
 endmodule
 
