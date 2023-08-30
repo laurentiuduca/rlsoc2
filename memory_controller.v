@@ -1,7 +1,7 @@
 // nand2mario, 2022.10
 // 
 
-`default_nettype wire
+`default_nettype none
 
 module MemoryController(
     input wire clk,                // Main logic clock
@@ -24,16 +24,16 @@ module MemoryController(
     output reg [19:0] total_written,
 
     // Physical SDRAM interface
-	inout  [31:0] SDRAM_DQ,   // 16 bit bidirectional data bus
-	output [10:0] SDRAM_A,    // 13 bit multiplexed address bus
-	output [1:0] SDRAM_BA,   // 4 banks
-	output SDRAM_nCS,  // a single chip select
-	output SDRAM_nWE,  // write enable
-	output SDRAM_nRAS, // row address select
-	output SDRAM_nCAS, // columns address select
-	output SDRAM_CLK,
-	output SDRAM_CKE,
-    output [3:0] SDRAM_DQM
+	inout  wire [31:0] SDRAM_DQ,   // 16 bit bidirectional data bus
+	output wire [10:0] SDRAM_A,    // 13 bit multiplexed address bus
+	output wire [1:0] SDRAM_BA,   // 4 banks
+	output wire SDRAM_nCS,  // a single chip select
+	output wire SDRAM_nWE,  // write enable
+	output wire SDRAM_nRAS, // row address select
+	output wire SDRAM_nCAS, // columns address select
+	output wire SDRAM_CLK,
+	output wire SDRAM_CKE,
+    output wire [3:0] SDRAM_DQM
 );
 
 reg [22:0] MemAddr;

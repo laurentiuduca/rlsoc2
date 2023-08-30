@@ -2,18 +2,11 @@
  * - implemented a new controller with unaligned ld/sw
  */
 /**************************************************************************************************/
-/**** RVSoC (Mini Kuroda/RISC-V)                       since 2018-08-07   ArchLab. TokyoTech   ****/
-/**** Memory Module v0.02                                                                      ****/
 /**************************************************************************************************/
 `default_nettype none
 /**************************************************************************************************/
 `include "define.vh"
 
-/**** DRAM Main Memory module for implementation                                               ****/
-/**************************************************************************************************/
-`default_nettype wire
-
-/**** DRAM Controller without Cache                                                            ****/
 /**************************************************************************************************/
 module DRAM_conRV
     (
@@ -26,21 +19,21 @@ module DRAM_conRV
      output wire                         o_busy,
      input  wire [2:0]                   i_ctrl,
 
-     input clk,
-     input rst_x,
-     input clk_sdram,
-     output o_init_calib_complete,
+     input wire clk,
+     input wire rst_x,
+     input wire clk_sdram,
+     output wire o_init_calib_complete,
 
-     output O_sdram_clk,
-     output O_sdram_cke,
-     output O_sdram_cs_n,            // chip select
-     output O_sdram_cas_n,           // columns address select
-     output O_sdram_ras_n,           // row address select
-     output O_sdram_wen_n,           // write enable
-     inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
-     output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
-     output [1:0] O_sdram_ba,        // two banks
-     output [3:0] O_sdram_dqm       // 32/4
+     output wire O_sdram_clk,
+     output wire O_sdram_cke,
+     output wire O_sdram_cs_n,            // chip select
+     output wire O_sdram_cas_n,           // columns address select
+     output wire O_sdram_ras_n,           // row address select
+     output wire O_sdram_wen_n,           // write enable
+     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
+     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
+     output wire [1:0] O_sdram_ba,        // two banks
+     output wire [3:0] O_sdram_dqm       // 32/4
 );
 
     reg         r_we    = 0;
@@ -258,7 +251,7 @@ module DRAM_conRV
         .read_a(r_rd), 
         .read_b(1'b0),
         .write(r_we),
-        .refresh(refresh),
+        .refresh(),
         .addr(r_maddr),
         .din(r_wdata), .mask(~r_mask),
         .dout_a(w_dram_odata), .dout_b(),
