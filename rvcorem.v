@@ -293,7 +293,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_rcsr     <= r_rcsr_t;
         r_alu_in2  <= (r_opcode==`OPCODE_OP_IMM__) ? r_imm : w_rrs2;
         r_alu_f7   <= (r_opcode==`OPCODE_OP_IMM__) ?
-                      ((r_funct3==`FUNCT3_ADD___) ? 0 : r_funct7 & 7'h20) : r_funct7;;
+                      ((r_funct3==`FUNCT3_ADD___) ? 0 : r_funct7 & 7'h20) : r_funct7;
     end
     
     /***********************************           EX1          ***********************************/

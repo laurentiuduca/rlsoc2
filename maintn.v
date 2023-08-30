@@ -22,20 +22,29 @@ module m_main(
     output wire        w_txd,
     output wire [5:0] w_led,
 	input wire w_btnl,
-	input wire w_btnr
+	input wire w_btnr,
 
     // SDRAM
-    output O_sdram_clk,
-    output O_sdram_cke,
-    output O_sdram_cs_n,            // chip select
-    output O_sdram_cas_n,           // columns address select
-    output O_sdram_ras_n,           // row address select
-    output O_sdram_wen_n,           // write enable
-    inout [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
-    output [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
-    output [1:0] O_sdram_ba,        // two banks
-    output [3:0] O_sdram_dqm       // 32/4
+    output wire O_sdram_clk,
+    output wire O_sdram_cke,
+    output wire O_sdram_cs_n,            // chip select
+    output wire O_sdram_cas_n,           // columns address select
+    output wire O_sdram_ras_n,           // row address select
+    output wire O_sdram_wen_n,           // write enable
+    inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
+    output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
+    output wire [1:0] O_sdram_ba,        // two banks
+    output wire [3:0] O_sdram_dqm       // 32/4
 );
+
+    wire pll_clk, clk_sdram;
+    Gowin_rPLL_nes pll_nes(
+    .clkin(CLK),
+    .clkout(pll_clk),          // FREQ main clock
+    .clkoutp(clk_sdram)    // FREQ main clock phase shifted
+    );
+
+
 
 reg RST_X = 0;
 reg [15:0] rst_cnt = 0;
@@ -313,7 +322,7 @@ end
     /**********************************************************************************************/
     // OUTPUT CHAR
     UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
-    wire w_txd;
+    //wire w_txd;
     reg         r_uart_we = 0;
     reg   [7:0] r_uart_data = 0;
 `ifdef LAUR_MEM_RB
@@ -515,7 +524,7 @@ end
 `endif
 	reg [7:0] r_rb_state=0, r_rb_cnt=0;
 	reg [31:0] r_rb_data=0, r_verify_checksum=0;
-	assign w_verify_checksum = r_verify_checksum;
+	wire w_verify_checksum = r_verify_checksum;
 	wire w_checksum_match = (r_verify_checksum == r_checksum);
     	always@(posedge pll_clk) begin
 		if(r_init_state != 6) begin
@@ -599,7 +608,7 @@ end
 	    r_zero_we <= 0;
 	    r_zero_done <= 1;
 `else
-`       if(!w_dram_busy & !r_zero_done & calib_done) r_zero_we <= 1;
+        if(!w_dram_busy & !r_zero_done & calib_done) r_zero_we <= 1;
         if(r_zero_we) begin
             r_zero_we    <= 0;
             r_zeroaddr <= r_zeroaddr + 4;
@@ -642,18 +651,24 @@ end
     wire w_wr_en =                  w_zero_we || w_pl_init_we || w_dram_we_t;
 `endif
 
-
-
-    Gowin_rPLL_nes pll_nes(
-    .clkin(CLK),
-    .clkout(pll_clk),          // FREQ main clock
-    .clkoutp(clk_sdram)    // FREQ main clock phase shifted
-    );
+/*
+    // SDRAM
+    wire O_sdram_clk;
+    wire O_sdram_cke;
+    wire O_sdram_cs_n;            // chip select
+    wire O_sdram_cas_n;           // columns address select
+    wire O_sdram_ras_n;           // row address select
+    wire O_sdram_wen_n;           // write enable
+    wire [31:0] IO_sdram_dq;       // 32 bit bidirectional data bus
+    wire [10:0] O_sdram_addr;     // 11 bit multiplexed address bus
+    wire [1:0] O_sdram_ba;        // two banks
+    wire [3:0] O_sdram_dqm;       // 32/4
+*/
 
     DRAM_conRV dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
-                               .i_rd_en(w_dram_le | r_set_dram_le)
+                               .i_rd_en(w_dram_le | r_set_dram_le),
 `else
                                .i_rd_en(w_dram_le),
 `endif
@@ -668,7 +683,7 @@ end
                                .clk(pll_clk),
                                .rst_x(RST_X),
                                .clk_sdram(clk_sdram),
-                               .o_init_calib_complete(calib_done)
+                               .o_init_calib_complete(calib_done),
 
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
@@ -681,12 +696,10 @@ end
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                );
-`endif
 
 
     /*********************************************************************************************/
     // first 4 leds are set in main.v
-    wire [15:0] w_led;
 `ifdef LAUR_MEM_RB
     assign w_led = //({r_rb_state[2:0], w_checksum_match} << 12) | (r_mem_rb_done << 11) | (r_init_state << 8) |
                     w_btnl == 0 ? {w_pl_init_done, r_bbl_done, r_zero_done, calib_done} : r_init_state;

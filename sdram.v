@@ -23,6 +23,7 @@
 // Finally you need a 180-degree phase-shifted clock signal (clk_sdram) for SDRAM. 
 // This can be generated with PLL's clkoutp output.
 //
+`default_nettype wire
 
 module sdram
 #(

@@ -1,19 +1,21 @@
 // nand2mario, 2022.10
 // 
 
+`default_nettype wire
+
 module MemoryController(
-    input clk,                // Main logic clock
-    input clk_sdram,          // 180-degree of clk
-    input resetn,
-    input read_a,             // Set to 1 to read from RAM
-    input read_b,             // Set to 1 to read from RAM
-    input write,              // Set to 1 to write to RAM
-    input refresh,            // Set to 1 to auto-refresh RAM
-    input [22:0] addr,        // Address to read / write
-    input [31:0] din,          // Data to write
-    input [3:0] mask,
-    output [31:0] dout_a,      // Last read data a, available 4 cycles after read_a is set
-    output [31:0] dout_b,      // Last read data b, available 4 cycles after read_b is set
+    input wire clk,                // Main logic clock
+    input wire clk_sdram,          // 180-degree of clk
+    input wire resetn,
+    input wire read_a,             // Set to 1 to read from RAM
+    input wire read_b,             // Set to 1 to read from RAM
+    input wire write,              // Set to 1 to write to RAM
+    input wire refresh,            // Set to 1 to auto-refresh RAM
+    input wire [22:0] addr,        // Address to read / write
+    input wire [31:0] din,          // Data to write
+    input wire [3:0] mask,
+    output wire [31:0] dout_a,      // Last read data a, available 4 cycles after read_a is set
+    output wire [31:0] dout_b,      // Last read data b, available 4 cycles after read_b is set
     output reg busy,          // 1 while an operation is in progress
     output reg mem_initialized,
 

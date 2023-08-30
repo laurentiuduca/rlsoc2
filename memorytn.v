@@ -11,7 +11,8 @@
 
 /**** DRAM Main Memory module for implementation                                               ****/
 /**************************************************************************************************/
-`ifndef SIM_MODE
+`default_nettype wire
+
 /**** DRAM Controller without Cache                                                            ****/
 /**************************************************************************************************/
 module DRAM_conRV
@@ -21,10 +22,9 @@ module DRAM_conRV
      input  wire                         i_wr_en,
      input  wire [31:0]                  i_addr,
      input  wire [31:0]                  i_data,
-     output wire                         o_init_calib_complete,
      output wire [31:0]                  o_data,
      output wire                         o_busy,
-     input  wire [2:0]                   i_ctrl
+     input  wire [2:0]                   i_ctrl,
 
      input clk,
      input rst_x,
