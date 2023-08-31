@@ -222,7 +222,7 @@ error
 `define D_SIZE_DEVT 0
 `define BIN_DISK_SIZE 0
 `else
-`define BIN_BBL_SIZE   (8*1024*1024) // (7*1024*1024) // (30*1024*1024)
+`define BIN_BBL_SIZE   `BBL_SIZE // (30*1024*1024)
 `define D_SIZE_DEVT (4*1024)
 `define BIN_DISK_SIZE 0 //(16*1024*1024)
 `endif
