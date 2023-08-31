@@ -252,7 +252,7 @@ module DRAM_conRV
         .read_a(r_rd), 
         .read_b(1'b0),
         .write(r_we),
-        .refresh(),
+        .refresh(1'b0/* not implemented */),
         .addr(r_maddr),
         .din(r_wdata), .mask(~r_mask),
         .dout_a(w_dram_odata), .dout_b(),
