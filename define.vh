@@ -215,7 +215,7 @@ error
 	//`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE (8*1024*1024) //(64*1024*1024)
+`define BBL_SIZE 8 // (8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!
@@ -249,7 +249,7 @@ error
 `define MEM_BASE_ADDR 32'h80000000
 `define MEM_BASE_TADDR 4'h8
 `ifdef LINUX
-`define MEM_SIZE 1024*1024*128 // 128MB (DRAM_SIZE)
+`define MEM_SIZE 1024*1024*8 // 128MB (DRAM_SIZE)
 `define ARTY_MEM_SIZE 256*1024*1024 // 256MB (DRAM_SIZE)
 `define APP_MODE 0
 `else

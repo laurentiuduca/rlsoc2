@@ -470,7 +470,6 @@ end
     /**************************************************************************************************/
     reg          r_bbl_done   = 0;
     reg          r_disk_done  = 0;
-    reg          r_dtree_done = 0;
 `ifdef LAUR_MEM_RB
     reg  [31:0]  r_initaddr6  = 0;
 `endif
@@ -535,7 +534,6 @@ end
 				if(!r_mem_rb_done)
 					r_rb_state <= 1;
 			end else if(r_rb_state == 1) begin
-				// memory is 0 between (`D_INITD_ADDR + `D_SIZE_DEVT) and `BBL_SIZE
 				if(r_initaddr6 < (`BBL_SIZE + `BIN_DISK_SIZE)) begin
 					if(!w_dram_busy) begin
 						r_set_dram_le <= 1;
@@ -665,6 +663,7 @@ end
     wire [3:0] O_sdram_dqm;       // 32/4
 */
 
+    wire sdram_fail;
     DRAM_conRV dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
@@ -684,6 +683,7 @@ end
                                .rst_x(RST_X),
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done),
+                                .sdram_fail(sdram_fail),
 
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
@@ -699,13 +699,9 @@ end
 
 
     /*********************************************************************************************/
-    // first 4 leds are set in main.v
-`ifdef LAUR_MEM_RB
-    assign w_led = //({r_rb_state[2:0], w_checksum_match} << 12) | (r_mem_rb_done << 11) | (r_init_state << 8) |
-                    w_btnl == 0 ? {w_pl_init_done, r_bbl_done, r_zero_done, calib_done} : r_init_state;
-`else
-    assign w_led =  w_btnl == 0 ? {w_pl_init_done, r_bbl_done, r_zero_done, calib_done} : r_init_state;
-`endif
+    
+    assign w_led =  w_btnl == 0 ? ~ {w_checksum_match, r_mem_rb_done, w_pl_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
+                                  ~ r_init_state;
 
     /**********************************************************************************************/
 

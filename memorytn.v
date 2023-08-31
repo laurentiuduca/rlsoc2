@@ -23,6 +23,7 @@ module DRAM_conRV
      input wire rst_x,
      input wire clk_sdram,
      output wire o_init_calib_complete,
+     output wire sdram_fail,
 
      output wire O_sdram_clk,
      output wire O_sdram_cke,
@@ -255,7 +256,7 @@ module DRAM_conRV
         .addr(r_maddr),
         .din(r_wdata), .mask(~r_mask),
         .dout_a(w_dram_odata), .dout_b(),
-        .busy(w_busy), .mem_initialized(o_init_calib_complete), .fail(), .total_written(),
+        .busy(w_busy), .mem_initialized(o_init_calib_complete), .fail(sdram_fail), .total_written(),
 
         .SDRAM_DQ(IO_sdram_dq), .SDRAM_A(O_sdram_addr), .SDRAM_BA(O_sdram_ba), .SDRAM_nCS(O_sdram_cs_n),
         .SDRAM_nWE(O_sdram_wen_n), .SDRAM_nRAS(O_sdram_ras_n), .SDRAM_nCAS(O_sdram_cas_n), 
