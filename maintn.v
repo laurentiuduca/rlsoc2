@@ -161,7 +161,7 @@ end
     end
 
     /***********************************          OUTPUT        ***********************************/
-    reg  [31:0] r_data_data = 0;
+    reg  [31:0] r_data_data;
     always@(*) begin
         case (r_dev)
             `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
@@ -172,7 +172,8 @@ end
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
                                     r_data_data <= {24'h0, r_char_value};
-                                end
+                                end else
+                                    r_data_data <= 0;
             default           : r_data_data <= w_dram_odata;
         endcase
     end
@@ -200,8 +201,8 @@ end
     wire w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
             ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
 
-    reg  [31:0] r_wmip = 0;
-    reg         r_plic_we = 0;
+    //reg  [31:0] r_wmip = 0;
+    //reg         r_plic_we = 0;
 
     reg  [31:0] r_plic_pending_irq_t    = 0;
     reg  [31:0] r_plic_served_irq_t     = 0;
@@ -212,7 +213,9 @@ end
     reg [31:0] r_ipi=0;
     assign bus_ipi = r_ipi;
     reg r_was_clint_we=0;
+`ifdef SIM_MODE
     reg [31:0] r_max_displays=0;
+`endif
 
     wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
 
@@ -231,8 +234,10 @@ end
                             w_mip & ~(`MIP_MEIP | `MIP_SEIP);
 
     always@(posedge pll_clk) begin
+`ifdef SIM_MODE
         if(w_plic_we)
             $display("----w_plic_we w_grant=%x", w_grant);
+`endif
 
         if(w_plic_aces) begin
             r_plic_odata    <= (w_plic_mask!=0) ? w_plic_mask : 0;
@@ -255,18 +260,22 @@ end
         if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
+`ifdef SIM_MODE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
+`endif
                     r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b0};
                 end else begin
+`ifdef SIM_MODE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x send ipi to core0 w_data_wdata=%x w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_data_wdata, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
+`endif
                      // signal core 0
                     if(w_data_wdata == 2)
                         r_ipi <= {r_ipi[31:17], 1'b1, r_ipi[15:1], 1'b1}; // S-priv
@@ -275,18 +284,22 @@ end
                 end
             end else /*if(w_offset == 28'h4)*/ begin
                 if(w_data_wdata == 32'h0) begin
+`ifdef SIM_MODE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
+`endif
                     r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b0, r_ipi[0]};
                 end else begin
+`ifdef SIM_MODE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x send ipi to core1 w_data_wdata=%x w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_data_wdata, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
+`endif
                      // signal core 1
                     if(w_data_wdata == 2)
                         r_ipi <= {r_ipi[31:18], 1'b1, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // S-priv
@@ -304,7 +317,9 @@ end
             if(r_dev == `CLINT_BASE_TADDR && w_data_we != 0 &&
                 (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant != 0) ||
                  ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant != 1)))
+`ifdef SIM_MODE
                 $display("clint wrong grant offset");
+`endif
             r_was_clint_we <= 0;
         end
     end
@@ -351,10 +366,12 @@ end
             r_finish = 1;
         end
     end
+`ifdef SIM_MODE
     always@(posedge pll_clk) if (r_finish) begin
         $write("FINISH!\n");
         $finish();
     end
+`endif
 
     /**********************************************************************************************/
     /***** Keyboard Input *************************************************************************/
@@ -427,9 +444,15 @@ end
         end
 `ifdef SIM_MODE
 	else if(w_file_we) begin
+`ifdef SIM_MODE
 		$display("\nw_file_we\n");
+`endif
 		if(r_consf_cnts != 0)
+`ifdef SIM_MODE
 			$display("warning: w_file_we and r_consf_cnts = %d with r_consf_en=%d", r_consf_cnts, r_consf_en);
+`else
+			;
+`endif
 		else begin
 			for(i = 0; i < rf.n; i++)
 				cons_fifo[r_consf_tail+i] = rf.fifo[i];
@@ -440,7 +463,9 @@ end
 	end
 `else
         else if(r_key_we) begin
+`ifdef SIM_MODE
             $display("r_key_we  r_consf_cnts %x", r_consf_cnts);
+`endif
             if(r_consf_cnts < `KEYBOARD_QUEUE_SIZE) begin
                 cons_fifo[r_consf_tail] <= r_key_data;
                 r_consf_tail            <= r_consf_tail + 1;
@@ -507,7 +532,9 @@ end
         
     always@(posedge pll_clk) begin	
 	    if(r_init_state < 1)
+`ifdef SIM_MODE
 		    $display("r_init_state=%d", r_init_state);
+`endif
         if(w_pl_init_we & (r_init_state == 2))      r_initaddr      <= r_initaddr + 4;
         if(r_initaddr  >= `BIN_BBL_SIZE)            r_bbl_done      <= 1;
         if(w_pl_init_we & (r_init_state == 4))      r_initaddr2     <= r_initaddr2 + 4;
@@ -555,9 +582,11 @@ end
 					r_verify_checksum <= r_verify_checksum + w_dram_odata;
 					r_rb_data <= w_dram_odata;
 `ifdef LAUR_MEM_RB_ONLY_CHECK
+`ifdef SIM_MODE
 					$display("mem[%x]: %x='%c%c%c%c'", r_initaddr6, w_dram_odata, 
 						 w_dram_odata >> 24, (w_dram_odata >> 16) & 8'hff, 
 						(w_dram_odata >> 8) & 8'hff, w_dram_odata & 8'hff);
+`endif
 					r_rb_state <= 20;
 					r_rb_delay <= 0;
 `else

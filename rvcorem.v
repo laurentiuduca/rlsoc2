@@ -382,10 +382,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 default : begin
                     r_tkn       <= 0;
                     r_jmp_pc    <= 0;
+`ifdef SIM_MODE
                     $write("UNKNOWN OPCODE DETECT!!\n");
                     $write("TC:%08d PC:%08x OPCODE=%7b, ir=%8x hartid=%x\n", w_mtime[31:0], pc, r_opcode, r_ir, mhartid);
                     $write("Simulation Stopped...\n");
                     $finish();
+`endif
                 end
            endcase
         end
@@ -825,13 +827,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if((w_mod & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0 ||
                    ((mstatus & `MSTATUS_MPRV) && (w_mod & `MSTATUS_MPP) != 0)) begin
                     r_tlb_flush <= 1;
-                end
+                end else
+                    r_tlb_flush <= 0;
             end
             else if(r_op_CSR_SSTA) begin
                 if((w_mod & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0 ||
                    ((mstatus & `MSTATUS_MPRV) && (w_mod & `MSTATUS_MPP) != 0)) begin
                     r_tlb_flush <= 1;
-                end
+                end else
+                    r_tlb_flush <= 0;
             end
             else r_tlb_flush <= 0;
         end
@@ -1029,18 +1033,22 @@ module m_alu_im(CLK, RST_X, w_le, w_in1, w_in2, w_funct3, w_funct7, r_rslt, w_bu
                 if(r_rslt == w_div_rslt[31:0]) begin
                 end
                 else begin
+`ifdef SIM_MODE
                     $write("CAUTION! DIV FAIL! %x/%x true:%x unit:%x %x\n",
                             w_in1, w_in2, r_rslt, w_div_rslt[63:32], w_div_rslt[31:0]);
                     $finish();
+`endif
                 end
             end
             if(w_funct3 == `FUNCT3_REM___ || w_funct3 == `FUNCT3_REMU__) begin
                 if(r_rslt == w_div_rslt[63:32]) begin
                 end
                 else begin
+`ifdef SIM_MODE
                     $write("CAUTION! REM FAIL! %x/%x true:%x unit:%x %x\n",
                             w_in1, w_in2, r_rslt, w_div_rslt[63:32], w_div_rslt[31:0]);
                     $finish();
+`endif
                 end
             end
         end
@@ -1222,10 +1230,14 @@ module m_alu_i (w_in1, w_in2, w_funct3, w_funct7, r_rslt);
             `FUNCT3_OR____ : r_rslt = w_in1 | w_in2;
             `FUNCT3_AND___ : r_rslt = w_in1 & w_in2;
             default        : begin
+`ifdef SIM_MODE
                 $write("ILLEGAL INSTRUCTION! in alu_i: w_funct3=%x\n", w_funct3);
+`endif
                 r_rslt = 0;
+`ifdef SIM_MODE
                 if(w_funct3 != 3'hz)
                     $finish();
+`endif
             end
         endcase
     end
@@ -1345,6 +1357,7 @@ module m_decomp(w_ic, r_iw);
             {2'b11, 3'b101}: r_iw=w_ic;
             {2'b11, 3'b110}: r_iw=w_ic;
             {2'b11, 3'b111}: r_iw=w_ic;
+            default        : r_iw=w_ic;
         endcase
     end
 endmodule

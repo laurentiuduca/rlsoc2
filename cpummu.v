@@ -117,5 +117,10 @@ module m_cpummu(
     );
 
     /**********************************************************************************************/
-    always@(posedge CLK) if (w_halt) begin $write("HALT detect! at PC:%x\n", p.pc); $finish(); end
+`ifdef SIM_MODE
+    always@(posedge CLK) if (w_halt) begin 
+	    $write("HALT detect! at PC:%x\n", p.pc); 
+	    $finish(); 
+    end
+`endif
 endmodule

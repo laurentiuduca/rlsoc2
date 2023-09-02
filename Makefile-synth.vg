@@ -1,0 +1,38 @@
+
+BOARD=tangnano20k
+FAMILY=GW2A
+DEVICE=GW2AR-LV18QN88C8/I7
+
+#BOARD=tangnano9k
+#FAMILY=GW1N-9C
+#DEVICE=GW1NR-LV9QN88PC6/I5
+
+VF="busarbiter.v console.v cpummu.v gowin_rpll.v loader.v maintn.v memory_controller.v memorytn.v mmu.v rvcorem.v sdram.v"
+topmodule="m_maintn"
+
+all: counter.fs
+
+# Synthesis
+counter.json:
+	yosys -f verilog -p "read_verilog busarbiter.v console.v cpummu.v gowin_rpll.v loader.v maintn.v memory_controller.v memorytn.v mmu.v rvcorem.v sdram.v; synth_gowin -top ${topmodule} -vout synth.vg"
+
+# Place and Route
+counter_pnr.json: counter.json
+	nextpnr-gowin --json counter.json --freq 27 --write counter_pnr.json --device ${DEVICE} --family ${FAMILY} --cst ${BOARD}.cst
+
+# Generate Bitstream
+counter.fs: counter_pnr.json
+	gowin_pack -d ${FAMILY} -o counter.fs counter_pnr.json
+
+# Program Board
+load: counter.fs
+	# -f flash, programs sram if missing
+	openFPGALoader --cable ft2232 counter.fs -f
+	# openFPGALoader -b tangnano20k counter.fs -f
+
+clean:
+	rm *fs *json -rf
+
+.PHONY: load
+.INTERMEDIATE: counter_pnr.json counter.json
+
