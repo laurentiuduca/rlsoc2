@@ -144,7 +144,7 @@ module m_topsim(CLK, RST_X);
     end
 
     /***********************************          OUTPUT        ***********************************/
-    reg  [31:0] r_data_data = 0;
+    reg  [31:0] r_data_data;
     always@(*) begin
         case (r_dev)
             `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;

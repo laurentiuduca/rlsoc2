@@ -444,15 +444,9 @@ end
         end
 `ifdef SIM_MODE
 	else if(w_file_we) begin
-`ifdef SIM_MODE
 		$display("\nw_file_we\n");
-`endif
 		if(r_consf_cnts != 0)
-`ifdef SIM_MODE
 			$display("warning: w_file_we and r_consf_cnts = %d with r_consf_en=%d", r_consf_cnts, r_consf_en);
-`else
-			;
-`endif
 		else begin
 			for(i = 0; i < rf.n; i++)
 				cons_fifo[r_consf_tail+i] = rf.fifo[i];
@@ -463,9 +457,6 @@ end
 	end
 `else
         else if(r_key_we) begin
-`ifdef SIM_MODE
-            $display("r_key_we  r_consf_cnts %x", r_consf_cnts);
-`endif
             if(r_consf_cnts < `KEYBOARD_QUEUE_SIZE) begin
                 cons_fifo[r_consf_tail] <= r_key_data;
                 r_consf_tail            <= r_consf_tail + 1;

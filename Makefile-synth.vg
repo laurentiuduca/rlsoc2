@@ -14,6 +14,7 @@ all: counter.fs
 
 # Synthesis
 counter.json:
+#	yosys -p "read_verilog top.v; synth_gowin -top top -json counter.json"
 	yosys -f verilog -p "read_verilog busarbiter.v console.v cpummu.v gowin_rpll.v loader.v maintn.v memory_controller.v memorytn.v mmu.v rvcorem.v sdram.v; synth_gowin -top ${topmodule} -vout synth.vg"
 
 # Place and Route
