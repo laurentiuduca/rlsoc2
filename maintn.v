@@ -68,6 +68,7 @@ end
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
 
+`ifndef USE_SINGLE_CORE
      m_cpummu core1(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
@@ -80,7 +81,8 @@ end
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1)
     );   
-    
+`endif
+
     busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
