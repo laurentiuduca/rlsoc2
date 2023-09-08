@@ -1,0 +1,71 @@
+
+#NET "uart_XMIT_dataH" LOC="R11";
+#NET "uart_REC_dataH" LOC="P8";
+
+NET "clk" 	 LOC = "A8";
+
+NET "leds<0>" LOC = "L14";
+NET "leds<1>" LOC = "L13";
+NET "leds<2>" LOC = "M14";
+NET "leds<3>" LOC = "L12";
+NET "leds<4>" LOC = "N14";
+NET "leds<5>" LOC = "M13";
+NET "leds<6>" LOC = "P14";
+NET "leds<7>" LOC = "R16";
+
+NET "btn0" LOC = "J13";
+NET "btn1" LOC = "K12"; #"K14";
+#NET "btn<2>" LOC = "K13";
+#NET "btn<3>" LOC = "K12";
+
+# cram
+NET cram_addr[23] LOC = "C3";
+NET cram_addr[22] LOC = "A3";
+NET cram_addr[21] LOC = "M4";
+NET cram_addr[20] LOC = "D3";
+NET cram_addr[19] LOC = "G5";
+NET cram_addr[18] LOC = "H3";
+NET cram_addr[17] LOC = "G4";
+NET cram_addr[16] LOC = "L4";
+NET cram_addr[15] LOC = "F3";
+NET cram_addr[14] LOC = "M3";
+NET cram_addr[13] LOC = "L5";
+NET cram_addr[12] LOC = "N3";
+NET cram_addr[11] LOC = "F5";
+NET cram_addr[10] LOC = "F4";
+NET cram_addr[9] LOC = "E3";
+NET cram_addr[8] LOC = "G3";
+NET cram_addr[7] LOC = "K4";
+NET cram_addr[6] LOC = "H4";
+NET cram_addr[5] LOC = "K3";
+NET cram_addr[4] LOC = "J4";
+NET cram_addr[3] LOC = "L3";
+NET cram_addr[2] LOC = "K5";
+NET cram_addr[1] LOC = "J3";
+
+NET cram_data[15] LOC = "D2";
+NET cram_data[14] LOC = "E2";
+NET cram_data[13] LOC = "D1";
+NET cram_data[12] LOC = "E1";
+NET cram_data[11] LOC = "F2";
+NET cram_data[10] LOC = "G2";
+NET cram_data[9] LOC = "G1";
+NET cram_data[8] LOC = "H1";
+NET cram_data[7] LOC = "R3";
+NET cram_data[6] LOC = "R1";
+NET cram_data[5] LOC = "P1";
+NET cram_data[4] LOC = "P2";
+NET cram_data[3] LOC = "N1";
+NET cram_data[2] LOC = "N2";
+NET cram_data[1] LOC = "M1";
+NET cram_data[0] LOC = "M2";
+
+NET cram_clk LOC = "C2";
+NET cram_adv LOC="B1"; 
+NET cram_cre LOC="L2";
+NET cram_ce LOC="K1";
+NET cram_oe LOC = "K2";
+NET cram_we LOC = "T3";
+NET cram_lb LOC = "J1";
+NET cram_ub LOC = "J2";
+NET cram_wait LOC = "C1";

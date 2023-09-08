@@ -10,6 +10,12 @@
 `timescale 1ps/1ps
 
 `define NCORES  2
+
+`define NEXYS1
+`ifdef NEXYS1
+`define CRAM_ADDR_SIZE	23
+`define CRAM_DATA_SIZE	16
+`endif
 //`define ARTYA7
 /**************************************************************************************************/
 //`define VERILATOR
@@ -20,7 +26,7 @@
 error
 `endif
 `endif
-//`define USE_SINGLE_CORE
+`define USE_SINGLE_CORE
 // verify dts
 
 `ifdef SIM_MODE
@@ -101,7 +107,7 @@ error
 // speed up a little bit the simulation
 `define SERIAL_WCNT 2
 `else
-`define SERIAL_WCNT 13 // 13 for 104MHz, 8 for 64MHz, 9 for 72MHz
+`define SERIAL_WCNT 12
 `endif
 
 //`define STATE
@@ -215,7 +221,7 @@ error
 	//`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE 8 // (8*1024*1024) //(64*1024*1024)
+`define BBL_SIZE 12 // (8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!
@@ -249,7 +255,7 @@ error
 `define MEM_BASE_ADDR 32'h80000000
 `define MEM_BASE_TADDR 4'h8
 `ifdef LINUX
-`define MEM_SIZE 1024*1024*8 // 128MB (DRAM_SIZE)
+`define MEM_SIZE (8*1024*1024) // 128MB (DRAM_SIZE)
 `define ARTY_MEM_SIZE 256*1024*1024 // 256MB (DRAM_SIZE)
 `define APP_MODE 0
 `else

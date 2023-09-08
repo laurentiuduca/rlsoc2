@@ -19,22 +19,35 @@ module DRAM_conRV
      output wire                         o_busy,
      input  wire [2:0]                   i_ctrl,
 
+
+`ifdef NEXYS1
+    // cram signals
+    output wire [`CRAM_ADDR_SIZE:1] cram_addr,
+    output wire cram_clk,
+    inout wire [`CRAM_DATA_SIZE-1:0] cram_data,
+    output wire cram_adv, 
+    output wire cram_cre, output wire cram_ce, output wire cram_oe,
+    output wire cram_we, output wire cram_lb, output wire cram_ub,
+    inout wire cram_wait,
+`else
+    // SDRAM
+    output wire O_sdram_clk,
+    output wire O_sdram_cke,
+    output wire O_sdram_cs_n,            // chip select
+    output wire O_sdram_cas_n,           // columns address select
+    output wire O_sdram_ras_n,           // row address select
+    output wire O_sdram_wen_n,           // write enable
+    inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
+    output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
+    output wire [1:0] O_sdram_ba,        // two banks
+    output wire [3:0] O_sdram_dqm       // 32/4
+`endif
+
      input wire clk,
      input wire rst_x,
      input wire clk_sdram,
      output wire o_init_calib_complete,
-     output wire sdram_fail,
-
-     output wire O_sdram_clk,
-     output wire O_sdram_cke,
-     output wire O_sdram_cs_n,            // chip select
-     output wire O_sdram_cas_n,           // columns address select
-     output wire O_sdram_ras_n,           // row address select
-     output wire O_sdram_wen_n,           // write enable
-     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
-     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
-     output wire [1:0] O_sdram_ba,        // two banks
-     output wire [3:0] O_sdram_dqm       // 32/4
+     output wire sdram_fail
 );
 
     reg         r_we    = 0;
@@ -62,82 +75,85 @@ module DRAM_conRV
     reg [7:0] state = 0, state_next = 0;
     reg [31:0] r_cnt = 0;
     always@(posedge clk) begin
-        case(state)
-        8'd0: // idle
-                if(i_rd_en && !w_busy) begin
-                        state <= 10;
+    case(state)
+    8'd0: // idle
+		if(i_rd_en && !w_busy) begin
+			state <= 10;
 			state_next <= 30;
 			r_rd <= 1;
-                        r_stall <= 1;
-                        r_addr <= i_addr;
-			r_maddr <= {i_addr[31:4], 4'b0};
-                        r_ctrl <= i_ctrl;
-                end else if(i_wr_en && !w_busy) begin
+         r_stall <= 1;
+         r_addr <= i_addr;
+			r_maddr <= {i_addr[31:2], 2'b0};
+         r_ctrl <= i_ctrl;
+      end else if(i_wr_en && !w_busy) begin
 			state <= 20;
-                        r_stall <= 1;
+         r_stall <= 1;
 			r_addr <= i_addr;
-                        r_maddr <= {i_addr[31:2], 2'b0};
-                        r_wdata_ui <= (i_ctrl[1:0] == 0) ? {24'h0, i_data[7:0]} :
-                                   (i_ctrl[1:0] == 1) ? {16'h0, i_data[15:0]} : i_data;
-                        r_ctrl <= i_ctrl;
-                end
+         r_maddr <= {i_addr[31:2], 2'b0};
+         r_wdata_ui <= (i_ctrl[1:0] == 0) ? {24'h0, i_data[7:0]}  :
+							  (i_ctrl[1:0] == 1) ? {16'h0, i_data[15:0]} : 
+								 									 i_data;
+         r_ctrl <= i_ctrl;
+      end
 	8'd10: begin //mem read
 		if(w_busy) begin
 			r_rd <= 0;
-                	state <= 11;
+         state <= 11;
 		end 
 	end
 	8'd11: begin
-                if(!w_busy) begin
-                        r_dram_odata1 <= w_dram_odata;
-                        if(r_addr[3:0] <= 12) // one read is enough
-                                state <= 100;
-                        else begin
-                                state <= 12;
-                                r_rd <= 1;
-                                //r_maddr <= {r_addr[31:4]+28'b1, 4'b0};
-                                r_maddr <= r_maddr + 16;
-                        end
-                end
+		 if(!w_busy) begin
+			r_dram_odata1 <= w_dram_odata;
+			if((r_addr[1:0] == 0) || 
+				(i_ctrl[1:0] == 0) ||
+				((r_addr[1:0] <= 2) && (i_ctrl[1:0] == 1)))
+				// one read is enough
+				state <= 100;
+			else begin
+				state <= 12;
+				r_rd <= 1;
+				r_maddr <= r_maddr + 4;
+			end
+		 end
         end
 	8'd12: begin 
 		// idem state 10
 		if(w_busy) begin
-                        r_rd <= 0;
-                        state <= 13;
-                end
+           r_rd <= 0;
+           state <= 13;
+      end
 	end
 	8'd13: begin
 		// similar state 11
 		if(!w_busy) begin
-                        //r_dram_odata2 <= w_dram_odata[23:0];
+         //r_dram_odata2 <= w_dram_odata[23:0];
 			r_dram_odata2 <= w_dram_odata;
-                        state <= 100;
-                end
+         state <= 100;
+      end
 	end
 	8'd100: begin 
 		state <= 0;
 		r_stall <= 0;
 	end
 	8'd20: begin // mem_write
-                if(r_ctrl[1:0]==0) begin // SB
+		if(r_ctrl[1:0]==0) begin // SB
 			if(r_addr[1:0] == 0) begin
-                        	r_mask <= 4'b0001;
+           	r_mask <= 4'b0001;
 				r_wdata <= r_wdata_ui;
 			end else if(r_addr[1:0] == 1) begin
 				r_mask <= 4'b0010;
 				r_wdata <= r_wdata_ui << 8;
 			end else if(r_addr[1:0] == 2) begin
-                                r_mask <= 4'b0100;
+            r_mask <= 4'b0100;
 				r_wdata <= r_wdata_ui << 16;
 			end else if(r_addr[1:0] == 3) begin
-                                r_mask <= 4'b1000;
+            r_mask <= 4'b1000;
 				r_wdata <= r_wdata_ui << 24;
 			end
 			r_we <= 1;
 			state <= 21;
 			state_next <= 100;
-                end else if(r_ctrl[1:0]==1) begin // SH
+      end else if(r_ctrl[1:0]==1) begin // SH
 			if(r_addr[1:0] == 0) begin
 				r_mask <= 4'b0011;
 				r_wdata <= r_wdata_ui;
@@ -151,26 +167,26 @@ module DRAM_conRV
 				state <= 21;
 				state_next <= 100;
 			end else if (r_addr[1:0] == 2) begin
-                                r_mask <= 4'b1100;
-                                r_we <= 1;
-                                r_wdata <= r_wdata_ui << 16;
-                                state <= 21;
-                                state_next <= 100;
+            r_mask <= 4'b1100;
+            r_we <= 1;
+            r_wdata <= r_wdata_ui << 16;
+            state <= 21;
+            state_next <= 100;
 			end else if (r_addr[1:0] == 3) begin
 				// write in two cycles.
-                                r_mask <= 4'b1000;
-                                r_wdata <= r_wdata_ui << 24;
-                                r_we <= 1;
-                                state <= 21;
-                                state_next <= 31;
+            r_mask <= 4'b1000;
+            r_wdata <= r_wdata_ui << 24;
+				r_we <= 1;
+            state <= 21;
+            state_next <= 31;
 			end
-                end else if(r_ctrl[1:0]==2) begin // SW
+     end else if(r_ctrl[1:0]==2) begin // SW
 			if(r_addr[1:0] == 0) begin
 				r_mask <= 4'b1111;
 				r_wdata <= r_wdata_ui;
 				r_we <= 1;
-                                state <= 21;
-                                state_next <= 100;
+            state <= 21;
+            state_next <= 100;
 			end else if(r_addr[1:0] == 1) begin
 				// write in two cycles.
 				r_mask <= 4'b1110;
@@ -181,21 +197,21 @@ module DRAM_conRV
 			end else if(r_addr[1:0] == 2) begin
 				// write in two cycles.
 				r_mask <= 4'b1100;
-                                r_wdata <= r_wdata_ui << 16;
-                                r_we <= 1;
-                                state <= 21;
-                                state_next <= 41;
+            r_wdata <= r_wdata_ui << 16;
+            r_we <= 1;
+            state <= 21;
+            state_next <= 41;
 			end else if(r_addr[1:0] == 3) begin
 				// write in two cycles.
 				r_mask <= 4'b1000;
-                                r_wdata <= r_wdata_ui << 24;
-                                r_we <= 1;
-                                state <= 21;
-                                state_next <= 42;
+            r_wdata <= r_wdata_ui << 24;
+            r_we <= 1;
+            state <= 21;
+            state_next <= 42;
 			end
-                end
-                state <= 21;
-		r_we <= 1;
+     end
+         state <= 21;
+		   r_we <= 1;
 	end
 	8'd21: begin
 		if(w_busy) begin
@@ -208,46 +224,60 @@ module DRAM_conRV
 			state <= state_next;
 		end
 	end
-        8'd31: begin
-                // SH with (r_addr[1:0] == 3) second write
-                r_mask <= 4'b0001;
-		r_maddr <= r_maddr + 4;
-		r_wdata <= r_wdata_ui >> 8;
-                r_we <= 1;
-                state <= 21;
-                state_next <= 100;
-        end
+   8'd31: begin
+       // SH with (r_addr[1:0] == 3) second write
+       r_mask <= 4'b0001;
+	    r_maddr <= r_maddr + 4;
+		 r_wdata <= r_wdata_ui >> 8;
+       r_we <= 1;
+       state <= 21;
+       state_next <= 100;
+   end
 	8'd40: begin
 		// SW with (r_addr[1:0] == 1) second write
 		r_mask <= 4'b0001;
 		r_maddr <= r_maddr + 4;
 		r_wdata <= r_wdata_ui >> 24;
 		r_we <= 1;
-                state <= 21;
-                state_next <= 100;
+      state <= 21;
+      state_next <= 100;
 	end
 	8'd41: begin
 		// SW with (r_addr[1:0] == 2) second write
 		r_mask <= 4'b0011;
 		r_maddr <= r_maddr + 4;
-                r_wdata <= r_wdata_ui >> 16;
-                r_we <= 1;
-                state <= 21;
-                state_next <= 100;
+      r_wdata <= r_wdata_ui >> 16;
+      r_we <= 1;
+      state <= 21;
+      state_next <= 100;
 	end
-        8'd42: begin
-                // SW with (r_addr[1:0] == 3) second write
+   8'd42: begin
+      // SW with (r_addr[1:0] == 3) second write
 		r_mask <= 4'b0111;
 		r_maddr <= r_maddr + 4;
-                r_wdata <= r_wdata_ui >> 8;
-                r_we <= 1;
-                state <= 21;
-                state_next <= 100;
+      r_wdata <= r_wdata_ui >> 8;
+      r_we <= 1;
+      state <= 21;
+      state_next <= 100;
 	end
 	endcase
-    end
+	end
 
-
+`ifdef NEXYS1
+	cram mem1(
+      // cram signals
+      .cram_addr(cram_addr), .cram_clk(cram_clk), .cram_data(cram_data),
+      .cram_adv(cram_adv), .cram_cre(cram_cre), .cram_ce(cram_ce), .cram_oe(cram_oe),
+      .cram_we(cram_we), .cram_lb(cram_lb), .cram_ub(cram_ub), .cram_wait(cram_wait),
+      //
+      .clk(clk), //.resetn(rst_x),
+      .read_a(r_rd), .write(r_we),
+		.addr(r_maddr), .din(r_wdata), .mask(~r_mask), .dout_a(w_dram_odata),
+		.busy(w_busy) //.mem_initialized(o_init_calib_complete), .fail(sdram_fail), .total_written(),
+   );
+	assign o_init_calib_complete=1;
+	assign sdram_fail=0;
+`else
     MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(rst_x),
         .read_a(r_rd), 
         .read_b(1'b0),
@@ -262,6 +292,7 @@ module DRAM_conRV
         .SDRAM_nWE(O_sdram_wen_n), .SDRAM_nRAS(O_sdram_ras_n), .SDRAM_nCAS(O_sdram_cas_n), 
         .SDRAM_CLK(O_sdram_clk), .SDRAM_CKE(O_sdram_cke), .SDRAM_DQM(O_sdram_dqm)
     );
+`endif
 
 endmodule
 /**************************************************************************************************/

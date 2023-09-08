@@ -20,11 +20,25 @@ module m_maintn(
     input wire CLK,
     input  wire        w_rxd,
     output wire        w_txd,
+`ifdef NEXYS1
+	 output wire [7:0] w_led,
+`else
     output wire [5:0] w_led,
+`endif
 	input wire w_btnl,
 	input wire w_btnr,
 
-    // SDRAM
+`ifdef NEXYS1
+    // cram signals
+    output wire [`CRAM_ADDR_SIZE:1] cram_addr,
+    output wire cram_clk,
+    inout wire [`CRAM_DATA_SIZE-1:0] cram_data,
+    output wire cram_adv, 
+    output wire cram_cre, output wire cram_ce, output wire cram_oe,
+    output wire cram_we, output wire cram_lb, output wire cram_ub,
+    inout wire cram_wait
+`else
+    // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
     output wire O_sdram_cs_n,            // chip select
@@ -35,83 +49,29 @@ module m_maintn(
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm       // 32/4
+`endif
 );
 
     wire pll_clk, clk_sdram;
+`ifdef NEXYS1
+	 assign pll_clk = CLK;
+`else
     Gowin_rPLL_nes pll_nes(
     .clkin(CLK),
     .clkout(pll_clk),          // FREQ main clock
     .clkoutp(clk_sdram)    // FREQ main clock phase shifted
     );
-
-
-
-reg RST_X = 0;
-reg [15:0] rst_cnt = 0;
-always @(posedge pll_clk) begin
-    if(rst_cnt < 255)
-      rst_cnt <= rst_cnt + 1;
-    else
-      RST_X <= 1;
-end
-
-    m_cpummu core0(
-        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
-        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
-        .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
-        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp0), .w_wmtimecmp(bus_wmtimecmp0), .w_clint_we(bus_clint_we0),
-        .w_pw_state(bus_pw_state0), 
-        .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
-        .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
-        .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
-        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
-    );
-
-`ifndef USE_SINGLE_CORE
-     m_cpummu core1(
-        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
-        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
-        .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
-        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp1), .w_wmtimecmp(bus_wmtimecmp1), .w_clint_we(bus_clint_we1),
-        .w_pw_state(bus_pw_state1), 
-        .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
-        .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
-        .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
-        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1)
-    );   
 `endif
 
-    busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
-        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
-        .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
-        .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
-        .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_aces(w_plic_aces), .r_plic_aces_t(r_plic_aces_t), .w_plic_we(w_plic_we),
-        .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
-        .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
-
-        .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
-        .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
-        .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
-        .bus_mtimecmp0(bus_mtimecmp0), .bus_wmtimecmp0(bus_wmtimecmp0), .bus_clint_we0(bus_clint_we0),
-        .bus_pw_state0(bus_pw_state0), .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
-        .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
-        .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
-        .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
-
-        .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
-        .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
-        .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
-        .bus_mtimecmp1(bus_mtimecmp1), .bus_wmtimecmp1(bus_wmtimecmp1), .bus_clint_we1(bus_clint_we1),
-        .bus_pw_state1(bus_pw_state1), .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
-        .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
-        .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
-        .bus_dram_busy1(bus_dram_busy1), .bus_dram_ctrl1(bus_dram_ctrl1), .bus_dram_le1(bus_dram_le1)
-    );
-
+reg RST_X = 0;
+reg [7:0] rst_cnt = 0;
+always @(posedge pll_clk) begin
+    if(rst_cnt < 25) begin
+      rst_cnt <= rst_cnt + 1;
+		RST_X <= 0;
+	 end else
+      RST_X <= 1;
+end
     /**********************************************************************************************/
     // bus interface
     wire w_init_done;
@@ -141,6 +101,89 @@ end
 
     reg [63:0] mtime=0;
     wire [63:0] w_mtime=mtime;
+
+    wire w_tx_ready;
+	 wire w_plic_aces;
+	 reg         r_plic_aces_t   = 0;
+    reg  [31:0] r_plic_odata        = 0;
+    reg  [31:0] r_clint_odata       = 0;
+
+	 reg   [clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
+	 reg [7:0] r_char_value=0;
+	 
+	 wire w_data_we = w_mem_we;
+	 reg         r_uart_we = 0;
+    reg   [7:0] r_uart_data = 0;
+    wire        w_key_we;
+    wire  [7:0] w_key_data;
+
+function integer clog2;
+  input integer value;
+  begin  
+    value = value-1;
+    for (clog2=0; value>0; clog2=clog2+1)
+      value = value>>1;
+  end  
+endfunction
+	 
+
+    m_cpummu core0(
+        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
+        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
+        .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
+        .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
+        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp0), .w_wmtimecmp(bus_wmtimecmp0), .w_clint_we(bus_clint_we0),
+        .w_pw_state(bus_pw_state0), 
+        .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
+        .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
+        .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
+        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
+    );
+
+`ifndef USE_SINGLE_CORE
+     m_cpummu core1(
+        .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
+        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
+        .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
+        .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
+        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp1), .w_wmtimecmp(bus_wmtimecmp1), .w_clint_we(bus_clint_we1),
+        .w_pw_state(bus_pw_state1), 
+        .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
+        .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
+        .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
+        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1)
+    );   
+`endif
+
+
+    busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
+        .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
+        .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
+        .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
+        .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
+        .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_aces(w_plic_aces), .r_plic_aces_t(r_plic_aces_t), .w_plic_we(w_plic_we),
+        .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
+        .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
+
+        .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
+        .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
+        .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
+        .bus_mtimecmp0(bus_mtimecmp0), .bus_wmtimecmp0(bus_wmtimecmp0), .bus_clint_we0(bus_clint_we0),
+        .bus_pw_state0(bus_pw_state0), .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
+        .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
+        .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
+        .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
+
+        .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
+        .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
+        .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
+        .bus_mtimecmp1(bus_mtimecmp1), .bus_wmtimecmp1(bus_wmtimecmp1), .bus_clint_we1(bus_clint_we1),
+        .bus_pw_state1(bus_pw_state1), .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
+        .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
+        .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
+        .bus_dram_busy1(bus_dram_busy1), .bus_dram_ctrl1(bus_dram_ctrl1), .bus_dram_le1(bus_dram_le1)
+    );
 
     always@(posedge pll_clk)
         if(RST_X) mtime <= mtime + 1;
@@ -190,9 +233,7 @@ end
     // PLIC
     reg  [31:0] plic_served_irq     = 0;
     reg  [31:0] plic_pending_irq    = 0;
-    reg  [31:0] r_plic_odata        = 0;
     // CLINT
-    reg  [31:0] r_clint_odata       = 0;
 
     wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
     wire [31:0] w_plic_mask             =   w_plic_pending_irq_nxt & ~plic_served_irq;
@@ -200,7 +241,7 @@ end
                                             (w_isread) ? plic_served_irq | w_plic_mask :
                                             plic_served_irq & ~(1 << (w_data_wdata-1));
 
-    wire w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
+    assign w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
             ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
 
     //reg  [31:0] r_wmip = 0;
@@ -210,7 +251,6 @@ end
     reg  [31:0] r_plic_served_irq_t     = 0;
 
     reg         r_virt_irq_oe_t = 0;
-    reg         r_plic_aces_t   = 0;
 
     reg [31:0] r_ipi=0;
     assign bus_ipi = r_ipi;
@@ -327,7 +367,6 @@ end
     end
 
     // shortcut to w_data_we because we do not use microcontroller
-    wire w_data_we = w_mem_we;
     assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 || w_offset==28'h4008) && w_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
                                 (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 || w_offset==28'h400c) && w_data_we != 0) ?
@@ -340,14 +379,12 @@ end
     // OUTPUT CHAR
     UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
     //wire w_txd;
-    reg         r_uart_we = 0;
-    reg   [7:0] r_uart_data = 0;
+
 `ifdef LAUR_MEM_RB
     // xsim requires declaration before use
     reg r_rb_uart_we=0;
     reg [7:0] r_rb_uart_data;
 `endif
-    wire w_tx_ready;
     reg          r_finish=0;
     always@(posedge pll_clk) begin
         // optimisation instead of w_mem_wdata put w_data_wdata
@@ -385,12 +422,12 @@ end
     PLOADER ploader(pll_clk, RST_X, w_rxd, w_pl_init_addr, w_pl_init_data, w_pl_init_we,
                     w_pl_init_done, w_key_we, w_key_data);
 
-    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
-    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
-    reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
+    reg   [clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
+    reg   [clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
+    
     reg         r_consf_en          = 0;
     reg   [7:0] cons_fifo [0:`KEYBOARD_QUEUE_SIZE-1];
-    reg [7:0] r_char_value=0;
+    
 `ifdef SIM_MODE
     wire w_file_we;
     read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER));
@@ -418,8 +455,6 @@ end
     end
 `endif
 
-    wire        w_key_we;
-    wire  [7:0] w_key_data;
     reg         r_key_we    = 0;
     reg   [7:0] r_key_data  = 0;
     always@(posedge pll_clk) begin
@@ -505,7 +540,7 @@ end
 `endif
 `ifndef SIM_MODE
     always@(posedge pll_clk) begin
-        r_init_state <= (!RST_X) ? 0 :
+        r_init_state <= (!RST_X) ? 1 :
                       (r_init_state == 0)                ? 1 :
                       (r_init_state == 1 & r_zero_done)  ? 2 :
                       (r_init_state == 2 & r_bbl_done)   ? 4 :
@@ -517,15 +552,15 @@ end
 `endif
                       r_init_state;
     end
-`endif
+`endif // SIM_MODE
 
     wire [2:0] w_init_state = r_init_state;
 
     assign w_init_done = (r_init_state == 5);
         
     always@(posedge pll_clk) begin	
-	    if(r_init_state < 1)
 `ifdef SIM_MODE
+	    if(r_init_state < 1)
 		    $display("r_init_state=%d", r_init_state);
 `endif
         if(w_pl_init_we & (r_init_state == 2))      r_initaddr      <= r_initaddr + 4;
@@ -599,7 +634,7 @@ end
 `endif
 			end else if(r_rb_state == 3) begin // send 32 bit data
 				if(w_tx_ready)
-				       if(r_rb_cnt < 4) begin
+				   if(r_rb_cnt < 4) begin
 						r_rb_cnt <= r_rb_cnt + 1;
 						r_rb_uart_data <= r_rb_data[7:0];
 						r_rb_data <= {8'h0, r_rb_data[31:8]};
@@ -628,8 +663,9 @@ end
 	    r_zero_we <= 0;
 	    r_zero_done <= 1;
 `else
-        if(!w_dram_busy & !r_zero_done & calib_done) r_zero_we <= 1;
-        if(r_zero_we) begin
+        if(!w_dram_busy && !r_zero_done && calib_done) 
+				r_zero_we <= 1;
+		  else if(w_dram_busy && r_zero_we) begin
             r_zero_we    <= 0;
             r_zeroaddr <= r_zeroaddr + 4;
         end
@@ -705,8 +741,14 @@ end
                                .rst_x(RST_X),
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done),
-                                .sdram_fail(sdram_fail),
+                               .sdram_fail(sdram_fail),
 
+`ifdef NEXYS1
+										 // cram signals
+										 .cram_addr(cram_addr), .cram_clk(cram_clk), .cram_data(cram_data),
+										 .cram_adv(cram_adv), .cram_cre(cram_cre), .cram_ce(cram_ce), .cram_oe(cram_oe),
+										 .cram_we(cram_we), .cram_lb(cram_lb), .cram_ub(cram_ub), .cram_wait(cram_wait)
+`else
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
                                .O_sdram_cs_n(O_sdram_cs_n),            // chip select
@@ -717,14 +759,20 @@ end
                                .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
+`endif
                                );
 
 
     /*********************************************************************************************/
-    
+ 
+`ifdef NEXYS1
+    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? {1'b0, RST_X, w_checksum_match, r_mem_rb_done, 
+											  w_pl_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
+																	{r_initaddr[3:0], 1'b0, r_init_state};						  
+`else
     assign w_led =  w_btnl == 0 ? ~ {w_checksum_match, r_mem_rb_done, w_pl_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                                   ~ r_init_state;
-
+`endif
     /**********************************************************************************************/
 
 endmodule
