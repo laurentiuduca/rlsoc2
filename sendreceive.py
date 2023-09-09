@@ -3,8 +3,7 @@ import serial
 from pathlib import Path
 
 def sendreceive():
-    global portName, baudRate, verify
-    size=8*1024*1024;
+    global portName, baudRate, verify, fileName, size
 
     print('\a')
     print('port='+portName+' baudrate='+str(baudRate))
@@ -14,7 +13,7 @@ def sendreceive():
         ser.close()
     ser.open()
 
-    data = Path('../binary/initmem.bin').read_bytes()
+    data = Path(fileName).read_bytes()
     print(type(data))
     #i = int.from_bytes(data[:4], byteorder='little', signed=False)
     print("Sending ..");
@@ -43,16 +42,18 @@ def sendreceive():
     print('\a')
 
 # main
-if(len(sys.argv) != 4) :
+if(len(sys.argv) != 6) :
     print("Too few arguments: "+str(len(sys.argv)-1)+
-        "\nSintax is:\n\tpython3 sendreceive.py <portName> <baudrate> <verify>\n"+
-        "Examples: \n\tpython3 sendreceive.py /dev/ttyUSB0 1000000 1\n"+
-        " \tpython3 sendreceive.py /dev/ttyUSB1 1000000 0\n")
+        "\nSintax is:\n\tpython3 sendreceive.py <portName> <baudrate> <verify> <filename> <size>\n"+
+        "Examples: \n\tpython3 sendreceive.py /dev/ttyUSB0 1000000 1 ../binary/initmem.bin 8388608\n"+
+        " \tpython3 sendreceive.py /dev/ttyUSB1 1000000 0 file.txt 16\n")
     sys.exit()
     
 portName = str(sys.argv[1])
 baudRate = int(sys.argv[2])
 verify = int(sys.argv[3])
+fileName = str(sys.argv[4])
+size = str(sys.argv[5])
 sendreceive()
 """
 
