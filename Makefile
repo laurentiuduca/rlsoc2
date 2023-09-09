@@ -47,7 +47,7 @@ clean:
 	rm -f simple.vvp *.vcd *.out result.txt simv ucli.key vcs-result.txt log.txt diff.txt final_mem.txt log.txt.gz trace.txt simple.vvp
 	rm -rf simv.daidir csrc
 	rm -rf obj_dir
-	rm -rf synth.vg
+	rm -rf synth.vg impl serialout.txt
 
 logclean:
 	rm -f log_*.txt diff_*.txt

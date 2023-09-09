@@ -126,7 +126,7 @@ function integer clog2;
   end  
 endfunction
 	 
-
+`ifdef laur0
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
@@ -139,6 +139,7 @@ endfunction
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
+`endif
 
 `ifndef USE_SINGLE_CORE
      m_cpummu core1(

@@ -40,7 +40,7 @@ module DRAM_conRV
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm       // 32/4
+    output wire [3:0] O_sdram_dqm,       // 32/4
 `endif
 
      input wire clk,
