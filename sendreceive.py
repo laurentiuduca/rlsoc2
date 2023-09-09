@@ -3,8 +3,7 @@ import serial
 from pathlib import Path
 
 def sendreceive():
-    portName="/dev/ttyUSB0";
-    baudRate=1000000;
+    global portName, baudRate, verify
     size=8*1024*1024;
 
     print('\a')
@@ -51,7 +50,7 @@ if(len(sys.argv) != 4) :
         " \tpython3 sendreceive.py /dev/ttyUSB1 1000000 0\n")
     sys.exit()
     
-portName = sys.argv[1]
+portName = str(sys.argv[1])
 baudRate = int(sys.argv[2])
 verify = int(sys.argv[3])
 sendreceive()
