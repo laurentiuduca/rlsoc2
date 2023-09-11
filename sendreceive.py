@@ -53,7 +53,7 @@ portName = str(sys.argv[1])
 baudRate = int(sys.argv[2])
 verify = int(sys.argv[3])
 fileName = str(sys.argv[4])
-size = str(sys.argv[5])
+size = int(sys.argv[5])
 sendreceive()
 """
 
