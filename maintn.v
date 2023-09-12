@@ -770,7 +770,7 @@ end
     /*********************************************************************************************/
     reg [31:0] rdbg=0;
     always @ (posedge pll_clk) begin
-        if(w_sd_init_we && (r_init_state == 3) && (r_initaddr3 == 0))
+        if(w_sd_init_we && (r_init_state == 3) && (r_initaddr3 == (`BBL_SIZE - 4)))
             rdbg <= w_sd_init_data;
     end
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 

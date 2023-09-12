@@ -39,7 +39,15 @@ module PLOADER (CLK, RST_X, RXD, ADDR, DATA, WE, DONE, KEY_WE, KEY_DATA);
 
     always @(posedge CLK) begin
         if(!RST_X) begin
-            {ADDR, DATA, WE, waddr, DONE} <= 0;
+            ADDR <= 0;
+            DATA <= 0;
+            WE <= 0;
+            waddr <= 0;
+            `ifdef BYPASS_PLOADER
+                DONE <= 1;
+            `else 
+                DONE <= 0;
+            `endif
         end else begin
             if(DONE==0 && SER_EN) begin
                 ADDR  <= waddr;

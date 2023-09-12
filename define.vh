@@ -109,6 +109,7 @@ error
 `define SERIAL_WCNT 2
 `else
 `define SERIAL_WCNT (`FREQ / 115200)
+`define BYPASS_PLOADER
 `endif
 
 
@@ -223,7 +224,7 @@ error
 	//`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE 4 //(8*1024*1024) //(64*1024*1024)
+`define BBL_SIZE 12 //(8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!
