@@ -106,7 +106,7 @@ end
     wire        w_key_we;
     wire  [7:0] w_key_data;
 
-//`ifdef laur0
+`ifdef laur0
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
@@ -119,7 +119,7 @@ end
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
-//`endif
+`endif
 
 `ifndef USE_SINGLE_CORE
      m_cpummu core1(
@@ -397,7 +397,8 @@ end
 
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
-    sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+    sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
+        .init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
 
@@ -767,9 +768,14 @@ end
 
 
     /*********************************************************************************************/
- 
-    assign w_led =  w_btnl == 0 ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
-                                  ~ r_init_state;
+    reg [31:0] rdbg=0;
+    always @ (posedge pll_clk) begin
+        if(w_sd_init_we && (r_init_state == 3) && (r_initaddr3 == 0))
+            rdbg <= w_sd_init_data;
+    end
+    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
+                    (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[3:0]: ~ rdbg[7:4];
+                    //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
     /**********************************************************************************************/
 
 endmodule

@@ -103,12 +103,14 @@ error
 
 `define CACHE_SIZE (128*1024)
 
+`define FREQ 27_000_000
 `ifdef SIM_MAIN
 // speed up a little bit the simulation
 `define SERIAL_WCNT 2
 `else
-`define SERIAL_WCNT (27_000_000 / 115200)
+`define SERIAL_WCNT (`FREQ / 115200)
 `endif
+
 
 //`define STATE
 //`define PC_TRACE
@@ -221,7 +223,7 @@ error
 	//`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE 4300 //(8*1024*1024) //(64*1024*1024)
+`define BBL_SIZE 4 //(8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!

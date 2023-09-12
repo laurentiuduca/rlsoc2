@@ -1,6 +1,8 @@
 // nand2mario, 2022.10
 // 
 
+`include "define.vh"
+
 `default_nettype none
 
 module MemoryController(
@@ -48,11 +50,9 @@ wire MemBusy, MemDataReady;
 assign dout_a = (cycles == 3'd4 && r_read_a) ? MemDout : da;
 assign dout_b = (cycles == 3'd4 && r_read_b) ? MemDout : db;
 
-localparam FREQ=27_000_000;
-
 // SDRAM driver
 sdram #(
-    .FREQ(FREQ)
+    .FREQ(`FREQ)
 ) u_sdram (
     .clk(clk), .clk_sdram(clk_sdram), .resetn(resetn),
 	.addr(busy ? MemAddr : addr), .rd(busy ? MemRD : (read_a || read_b)), 

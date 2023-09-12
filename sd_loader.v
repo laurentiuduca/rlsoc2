@@ -1,13 +1,6 @@
 // modified by Laurentiu-Cristian Duca, 2023-09-12
 // adapted from https://github.com/WangXuan95/FPGA-SDcard-Reader
 //--------------------------------------------------------------------------------------------------------
-// Module  : fpga_top
-// Type    : synthesizable, FPGA's top, IP's example design
-// Standard: Verilog 2001 (IEEE1364-2001)
-// Function: an example of sd_reader, read a sector (512B) from SDcard and send its content to UART
-//           this example runs on Digilent Nexys4-DDR board (Xilinx Artix-7),
-//           see http://www.digilent.com.cn/products/product-nexys-4-ddr-artix-7-fpga-trainer-board.html
-//--------------------------------------------------------------------------------------------------------
 
 `include "define.vh"
 
@@ -15,6 +8,7 @@ module sd_loader (
     input  wire         clk27mhz,
     // rstn active-low, You can re-read SDcard by pushing the reset button.
     input  wire         resetn,
+    input  wire [2:0]   init_state,
     // when sdcard_pwr_n = 0, SDcard power on
     output wire         sdcard_pwr_n,
     // signals connect to SD bus
@@ -35,7 +29,7 @@ assign {sddat1, sddat2, sddat3} = 3'b111;    // Must set sddat1~3 to 1 to avoid 
 
 reg [31:0] waddr=0;
 wire       rdone;
-reg        rstart = 1'b1;
+reg        rstart = 0;
 reg [31:0] rsector = 0;
 
 wire       outen;
@@ -47,21 +41,24 @@ wire [7:0] outbyte;
             WE <= 0;
             waddr <= 0;
             DONE <= 0;
-            rstart <= 1;
+            rstart <= 0;
             rsector <= 0;
         end else begin
-            if(rdone)
+            if(init_state == 3)
+                rstart <= 1;
+            else
+                rstart <= 0;
+            if(rdone ) begin
                 rsector <= rsector + 1;
-            if(DONE==0 && outen) begin
+            end
+            if(DONE==0 && outen && init_state == 3) begin
                 DATA  <= {outbyte, DATA[31:8]};
                 WE    <= (waddr[1:0]==3);
                 waddr <= waddr + 1;
             end else begin
                 WE <= 0;
-                if(waddr>=`BIN_SIZE) begin
+                if(waddr>=`BIN_SIZE)
                     DONE <= 1;
-                    rstart <= 0;
-                end
             end
         end
     end
