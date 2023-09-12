@@ -36,7 +36,7 @@ assign {sddat1, sddat2, sddat3} = 3'b111;    // Must set sddat1~3 to 1 to avoid 
 reg [31:0] waddr=0;
 wire       rdone;
 reg        rstart = 1'b1;
-reg        rsector = 0;
+reg [31:0] rsector = 0;
 
 wire       outen;
 wire [7:0] outbyte;
@@ -50,12 +50,12 @@ wire [7:0] outbyte;
             rstart <= 1;
             rsector <= 0;
         end else begin
+            if(rdone)
+                rsector <= rsector + 1;
             if(DONE==0 && outen) begin
                 DATA  <= {outbyte, DATA[31:8]};
                 WE    <= (waddr[1:0]==3);
                 waddr <= waddr + 1;
-                if(rdone)
-                    rsector <= rsector + 1;
             end else begin
                 WE <= 0;
                 if(waddr>=`BIN_SIZE) begin

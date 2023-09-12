@@ -221,7 +221,7 @@ error
 	//`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE 12 // (8*1024*1024) //(64*1024*1024)
+`define BBL_SIZE 4300 //(8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!

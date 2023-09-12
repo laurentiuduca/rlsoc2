@@ -20,11 +20,7 @@ module m_maintn(
     input wire CLK,
     input  wire        w_rxd,
     output wire        w_txd,
-`ifdef NEXYS1
-	 output wire [7:0] w_led,
-`else
     output wire [5:0] w_led,
-`endif
 	input wire w_btnl,
 	input wire w_btnr,
 
@@ -50,15 +46,11 @@ module m_maintn(
     );
 
     wire pll_clk, clk_sdram;
-`ifdef NEXYS1
-	 assign pll_clk = CLK;
-`else
     Gowin_rPLL_nes pll_nes(
     .clkin(CLK),
     .clkout(pll_clk),          // FREQ main clock
     .clkoutp(clk_sdram)    // FREQ main clock phase shifted
     );
-`endif
 
 reg RST_X = 0;
 reg [7:0] rst_cnt = 0;
@@ -105,7 +97,7 @@ end
     reg  [31:0] r_plic_odata        = 0;
     reg  [31:0] r_clint_odata       = 0;
 
-	 reg   [clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
+	 reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
 	 reg [7:0] r_char_value=0;
 	 
 	 wire w_data_we = w_mem_we;
@@ -114,16 +106,7 @@ end
     wire        w_key_we;
     wire  [7:0] w_key_data;
 
-function integer clog2;
-  input integer value;
-  begin  
-    value = value-1;
-    for (clog2=0; value>0; clog2=clog2+1)
-      value = value>>1;
-  end  
-endfunction
-	 
-`ifdef laur0
+//`ifdef laur0
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
@@ -136,7 +119,7 @@ endfunction
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
-`endif
+//`endif
 
 `ifndef USE_SINGLE_CORE
      m_cpummu core1(
@@ -428,8 +411,8 @@ endfunction
     PLOADER ploader(pll_clk, RST_X, w_rxd, w_pl_init_addr, w_pl_init_data, w_pl_init_we,
                     w_pl_init_done, w_key_we, w_key_data);
 
-    reg   [clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
-    reg   [clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
+    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
+    reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
     
     reg         r_consf_en          = 0;
     reg   [7:0] cons_fifo [0:`KEYBOARD_QUEUE_SIZE-1];
@@ -524,9 +507,15 @@ endfunction
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
     end
-
     wire w_checksum = r_checksum;
 
+    reg  [31:0]  r_sd_checksum = 0;
+    always@(posedge pll_clk) begin
+	    r_sd_checksum <= (!RST_X)                      ? 0                             :
+                      (!w_init_done & w_sd_init_we) ? r_sd_checksum + w_sd_init_data   :
+		               r_sd_checksum;
+    end
+    wire w_sd_checksum = r_sd_checksum;
     /**************************************************************************************************/
     reg          r_bbl_done   = 0;
     reg          r_bblsd_done = 0;
@@ -591,6 +580,7 @@ endfunction
 	reg [31:0] r_rb_data=0, r_verify_checksum=0;
 	wire w_verify_checksum = r_verify_checksum;
 	wire w_checksum_match = (r_verify_checksum == r_checksum);
+    wire w_sd_checksum_match = (r_verify_checksum == r_sd_checksum);
     	always@(posedge pll_clk) begin
 		if(r_init_state != 6) begin
 			r_rb_state <= 0;
@@ -778,7 +768,7 @@ endfunction
 
     /*********************************************************************************************/
  
-    assign w_led =  w_btnl == 0 ? ~ {w_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
+    assign w_led =  w_btnl == 0 ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                                   ~ r_init_state;
     /**********************************************************************************************/
 
