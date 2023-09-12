@@ -715,9 +715,9 @@ endfunction
 
 `ifdef LAUR_MEM_RB
     wire w_wr_en =                 (r_init_state == 6) ? 0 :
-				                    w_zero_we || w_pl_init_we || w_dram_we_t;
+				                    w_zero_we || w_pl_init_we || w_sd_init_we || w_dram_we_t;
 `else
-    wire w_wr_en =                  w_zero_we || w_pl_init_we || w_dram_we_t;
+    wire w_wr_en =                  w_zero_we || w_pl_init_we || w_sd_init_we || w_dram_we_t;
 `endif
 
 /*
