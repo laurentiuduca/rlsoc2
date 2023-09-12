@@ -107,11 +107,7 @@ error
 // speed up a little bit the simulation
 `define SERIAL_WCNT 2
 `else
-`ifdef NEXYS1
-`define SERIAL_WCNT 12
-`else
-`define SERIAL_WCNT (27_000_000 / 1000000)
-`endif
+`define SERIAL_WCNT (27_000_000 / 115200)
 `endif
 
 //`define STATE
@@ -225,7 +221,7 @@ error
 	//`define LAUR_MEM_RB_ONLY_CHECK
 `endif
 
-`define BBL_SIZE (8*1024*1024) //(64*1024*1024)
+`define BBL_SIZE 12 // (8*1024*1024) //(64*1024*1024)
 
 `ifdef SIM_MAIN
 `define BIN_BBL_SIZE   32 // Note!!

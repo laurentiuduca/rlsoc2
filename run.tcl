@@ -13,6 +13,11 @@ add_file memorytn.v
 add_file mmu.v
 add_file rvcorem.v
 add_file sdram.v
+
+add_file sd_loader.v
+add_file sd_reader.v
+add_file sdcmd_ctrl.v
+
 add_file rlsoc.cst
 
 set_option -top_module m_maintn

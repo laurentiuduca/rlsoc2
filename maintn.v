@@ -28,16 +28,6 @@ module m_maintn(
 	input wire w_btnl,
 	input wire w_btnr,
 
-`ifdef NEXYS1
-    // cram signals
-    output wire [`CRAM_ADDR_SIZE:1] cram_addr,
-    output wire cram_clk,
-    inout wire [`CRAM_DATA_SIZE-1:0] cram_data,
-    output wire cram_adv, 
-    output wire cram_cre, output wire cram_ce, output wire cram_oe,
-    output wire cram_we, output wire cram_lb, output wire cram_ub,
-    inout wire cram_wait
-`else
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -48,9 +38,16 @@ module m_maintn(
     inout wire [31:0] IO_sdram_dq,       // 32 bit bidirectional data bus
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
-    output wire [3:0] O_sdram_dqm       // 32/4
-`endif
-);
+    output wire [3:0] O_sdram_dqm,       // 32/4
+
+    // when sdcard_pwr_n = 0, SDcard power on
+    output wire         sdcard_pwr_n,
+    // signals connect to SD bus
+    output wire         sdclk,
+    inout  wire         sdcmd,
+    input  wire         sddat0,
+    output wire         sddat1, sddat2, sddat3
+    );
 
     wire pll_clk, clk_sdram;
 `ifdef NEXYS1
@@ -414,6 +411,14 @@ endfunction
 `endif
 
     /**********************************************************************************************/
+
+    wire [31:0] w_sd_init_data;
+    wire w_sd_init_we, w_sd_init_done;
+    sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
+        .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
+
+
     /***** Keyboard Input *************************************************************************/
 
     wire [31:0]  w_pl_init_addr;
@@ -511,7 +516,8 @@ endfunction
 `else
     reg  [2:0] r_init_state = 0;
 `endif
-    reg  [31:0]  r_initaddr  = 0;
+    reg  [31:0]  r_initaddr   = 0;
+    reg  [31:0]  r_initaddr3  = 0;
     reg  [31:0]  r_checksum = 0;
     always@(posedge pll_clk) begin
 	    r_checksum <= (!RST_X)                      ? 0                             :
@@ -523,6 +529,7 @@ endfunction
 
     /**************************************************************************************************/
     reg          r_bbl_done   = 0;
+    reg          r_bblsd_done = 0;
     reg          r_disk_done  = 0;
 `ifdef LAUR_MEM_RB
     reg  [31:0]  r_initaddr6  = 0;
@@ -543,8 +550,9 @@ endfunction
     always@(posedge pll_clk) begin
         r_init_state <= (!RST_X) ? 1 :
                       (r_init_state == 0)                ? 1 :
-                      (r_init_state == 1 & r_zero_done)  ? 2 :
+                      (r_init_state == 1 & r_zero_done)  ? 3 : // sd instead of pl
                       (r_init_state == 2 & r_bbl_done)   ? 4 :
+                      (r_init_state == 3 & r_bblsd_done) ? 4 :
 `ifdef LAUR_MEM_RB
                       (r_init_state == 4 & r_disk_done)  ? 6 :
                       (r_init_state == 6 & r_mem_rb_done)  ? 5 :
@@ -566,6 +574,8 @@ endfunction
 `endif
         if(w_pl_init_we & (r_init_state == 2))      r_initaddr      <= r_initaddr + 4;
         if(r_initaddr  >= `BIN_BBL_SIZE)            r_bbl_done      <= 1;
+        if(w_sd_init_we & (r_init_state == 3))      r_initaddr3      <= r_initaddr3 + 4;
+        if(r_initaddr3  >= `BIN_BBL_SIZE)           r_bblsd_done      <= 1;
         if(w_pl_init_we & (r_init_state == 4))      r_initaddr2     <= r_initaddr2 + 4;
         if(r_initaddr2 >= `BBL_SIZE + `BIN_DISK_SIZE)      r_disk_done     <= 1;
 
@@ -690,13 +700,15 @@ endfunction
     wire [31:0]  w_dram_addr_t2 =
                     (r_init_state == 1) ? r_zeroaddr     : 
                     (r_init_state == 2) ? r_initaddr     :
+                    (r_init_state == 3) ? r_initaddr3    :
 `ifdef LAUR_MEM_RB
 		            (r_init_state == 6) ? r_initaddr6    :
 `endif
                     (r_init_state == 4) ? r_initaddr2    : w_dram_addr_t;
     
-    wire [31:0]  w_dram_wdata_t   =   (r_init_state == 1) ? 32'b0 :
-                                    (r_init_state == 5) ? w_dram_wdata : w_pl_init_data;
+    wire [31:0]  w_dram_wdata_t   = (r_init_state == 1) ? 32'b0 :
+                                    (r_init_state == 5) ? w_dram_wdata : 
+                                    (r_init_state == 3) ? w_sd_init_data : w_pl_init_data;
 
     wire [2:0]   w_dram_ctrl_t  = (!w_init_done) ? `FUNCT3_SW____ : w_dram_ctrl;
     /**********************************************************************************************/
@@ -766,14 +778,8 @@ endfunction
 
     /*********************************************************************************************/
  
-`ifdef NEXYS1
-    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? {1'b0, RST_X, w_checksum_match, r_mem_rb_done, 
-											  w_pl_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
-																	{r_initaddr[3:0], 1'b0, r_init_state};						  
-`else
-    assign w_led =  w_btnl == 0 ? ~ {w_checksum_match, r_mem_rb_done, w_pl_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
+    assign w_led =  w_btnl == 0 ? ~ {w_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                                   ~ r_init_state;
-`endif
     /**********************************************************************************************/
 
 endmodule
