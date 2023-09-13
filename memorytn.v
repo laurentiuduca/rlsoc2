@@ -62,11 +62,11 @@ module DRAM_conRV
     reg r_stall = 0;
     assign o_busy = (r_stall | w_busy);
     reg [7:0] state = 0, state_next = 0;
-    reg [31:0] r_cnt = 0;
-    always@(posedge clk) begin
-    case(state)
-    8'd0: // idle
-		if(i_rd_en && !w_busy) begin
+    reg [31:0] r_refreshcnt = 0;
+    reg r_refresh = 0;
+
+task prepare_read;
+begin
 			state <= 10;
 			state_next <= 30;
 			r_rd <= 1;
@@ -74,7 +74,12 @@ module DRAM_conRV
          r_addr <= i_addr;
 			r_maddr <= {i_addr[31:2], 2'b0};
          r_ctrl <= i_ctrl;
-      end else if(i_wr_en && !w_busy) begin
+         r_refreshcnt <= r_refreshcnt + 1;
+end
+endtask 
+
+task prepare_write;
+begin
 			state <= 20;
          r_stall <= 1;
 			r_addr <= i_addr;
@@ -83,7 +88,42 @@ module DRAM_conRV
 							  (i_ctrl[1:0] == 1) ? {16'h0, i_data[15:0]} : 
 								 									 i_data;
          r_ctrl <= i_ctrl;
+         r_refreshcnt <= r_refreshcnt + 1;
+end
+endtask 
+
+    always@(posedge clk) begin
+    case(state)
+    8'd0: // idle
+		if(i_rd_en && !w_busy) begin
+         prepare_read;
+      end else if(i_wr_en && !w_busy) begin
+         prepare_write;
+      end else if((r_refreshcnt > 1000) && !i_rd_en && !i_wr_en && !w_busy) begin
+         // ram refresh
+         state <= 50;
+         r_refresh <= 1;
+         r_stall <= 1;
+         r_refreshcnt <= 0;
       end
+   8'd50: begin
+		if(w_busy) begin
+         r_refresh <= 0;
+         state <= 51;
+      end
+   end
+   8'd51: begin 
+      // r_stall is 1.
+      if(!w_busy) begin   
+         if(i_rd_en) begin
+            prepare_read;
+         end else if(i_wr_en) begin
+            prepare_write;
+         end else
+            r_stall <= 0;
+            state <= 0;
+      end
+   end
 	8'd10: begin //mem read
 		if(w_busy) begin
 			r_rd <= 0;
@@ -256,7 +296,7 @@ module DRAM_conRV
         .read_a(r_rd), 
         .read_b(1'b0),
         .write(r_we),
-        .refresh(1'b0/* not implemented */),
+        .refresh(r_refresh),
         .addr(r_maddr),
         .din(r_wdata), .mask(~r_mask),
         .dout_a(w_dram_odata), .dout_b(),
