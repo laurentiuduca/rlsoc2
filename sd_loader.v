@@ -38,6 +38,11 @@ wire       outen;
 wire [7:0] outbyte;
 
 reg [7:0] state=0;
+`ifdef DRAM_REFRESH_LOGIC
+reg dram_logic = 1;
+`else
+reg dram_logic = 0;
+`endif
 
     always @(posedge clk27mhz) begin
         if(!resetn) begin
@@ -54,7 +59,7 @@ reg [7:0] state=0;
             if(state == 0) begin
                 if (DONE==0) begin
                     if(rdone)
-                        if(((rsector - last_refresh_sector) > 10) && !w_dram_busy) begin
+                        if(((rsector - last_refresh_sector) > 10) && !w_dram_busy && dram_logic) begin
                             // ram refresh
                             r_refreshcmd <= 1;
                             rstart <= 0;

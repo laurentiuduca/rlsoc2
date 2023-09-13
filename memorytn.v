@@ -101,7 +101,9 @@ endtask
          prepare_read;
       end else if(i_wr_en && !w_busy) begin
          prepare_write;
-      end else if((((r_refreshcnt > 1000) && (sys_init_state == 5)) || refresh_cmd)
+      end 
+`ifdef DRAM_REFRESH_LOGIC
+      else if((((r_refreshcnt > 1000) && (sys_init_state == 5)) || refresh_cmd)
          && !i_rd_en && !i_wr_en && !w_busy) begin
          // ram refresh
          state <= 50;
@@ -127,6 +129,7 @@ endtask
             state <= 0;
       end
    end
+   `endif
 	8'd10: begin //mem read
 		if(w_busy) begin
 			r_rd <= 0;
