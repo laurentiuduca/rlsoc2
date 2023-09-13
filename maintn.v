@@ -397,8 +397,10 @@ end
 
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
+    wire w_refresh_cmd;
     sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
         .init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .w_dram_busy(w_dram_busy), .r_refreshcmd(w_refresh_cmd),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
 
@@ -521,6 +523,7 @@ end
     reg          r_bbl_done   = 0;
     reg          r_bblsd_done = 0;
     reg          r_disk_done  = 0;
+    wire         w_refresh_cmd;
 `ifdef LAUR_MEM_RB
     reg  [31:0]  r_initaddr6  = 0;
 `endif
@@ -739,6 +742,8 @@ end
                                .o_data(w_dram_odata),
                                .o_busy(w_dram_busy),
                                .i_ctrl(w_dram_ctrl_t),
+                               .sys_init_state(r_init_state),
+                               .refresh_cmd(w_refresh_cmd),
                                // input clk, rst (active-low)
 
                                .clk(pll_clk),

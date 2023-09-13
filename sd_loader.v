@@ -9,6 +9,8 @@ module sd_loader (
     // rstn active-low, You can re-read SDcard by pushing the reset button.
     input  wire         resetn,
     input  wire [2:0]   init_state,
+    input  wire         w_dram_busy,
+    output reg          r_refreshcmd,
     // when sdcard_pwr_n = 0, SDcard power on
     output wire         sdcard_pwr_n,
     // signals connect to SD bus
@@ -30,10 +32,12 @@ assign {sddat1, sddat2, sddat3} = 3'b111;    // Must set sddat1~3 to 1 to avoid 
 reg [31:0] waddr=0;
 wire       rdone;
 reg        rstart = 0;
-reg [31:0] rsector = 0;
+reg [31:0] rsector = 0, last_refresh_sector=0;
 
 wire       outen;
 wire [7:0] outbyte;
+
+reg [7:0] state=0;
 
     always @(posedge clk27mhz) begin
         if(!resetn) begin
@@ -43,22 +47,57 @@ wire [7:0] outbyte;
             DONE <= 0;
             rstart <= 0;
             rsector <= 0;
+            state <= 0;
+            last_refresh_sector <= 0;
+            r_refreshcmd <= 0;
         end else begin
-            if(init_state == 3)
-                rstart <= 1;
-            else
-                rstart <= 0;
-            if(rdone ) begin
-                rsector <= rsector + 1;
-            end
-            if(DONE==0 && outen && init_state == 3) begin
-                DATA  <= {outbyte, DATA[31:8]};
-                WE    <= (waddr[1:0]==3);
-                waddr <= waddr + 1;
-            end else begin
+            if(state == 0) begin
+                if (DONE==0) begin
+                    if(rdone)
+                        if(((rsector - last_refresh_sector) > 10) && !w_dram_busy) begin
+                            // ram refresh
+                            r_refreshcmd <= 1;
+                            rstart <= 0;
+                            state <= 1;
+                            last_refresh_sector <= rsector;
+                        end else begin
+                            r_refreshcmd <= 0;
+                            if(init_state == 3) begin
+                                rsector <= rsector + 1;
+                                rstart <= 1;
+                            end else
+                                rstart <= 0;
+                        end
+                    else begin
+                        if(init_state == 3)
+                            rstart <= 1;
+                        else
+                            rstart <= 0;
+                    end
+                end else
+                    rstart <= 0;
+                    
+                if(DONE==0 && outen && init_state == 3) begin
+                    DATA  <= {outbyte, DATA[31:8]};
+                    WE    <= (waddr[1:0]==3);
+                    waddr <= waddr + 1;
+                end else begin
+                    WE <= 0;
+                    if(waddr>=`BIN_SIZE)
+                        DONE <= 1;
+                end
+            end else if (state == 1) begin
                 WE <= 0;
-                if(waddr>=`BIN_SIZE)
-                    DONE <= 1;
+                if(w_dram_busy) begin
+                    state <= 2;
+                    r_refreshcmd <= 0;
+                end
+            end else if (state == 2) begin
+                if(!w_dram_busy) begin
+                    rsector <= rsector + 1;
+                    rstart <= 1;
+                    state <= 0;
+                end
             end
         end
     end
