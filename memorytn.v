@@ -20,16 +20,6 @@ module DRAM_conRV
      input  wire [2:0]                   i_ctrl,
 
 
-`ifdef NEXYS1
-    // cram signals
-    output wire [`CRAM_ADDR_SIZE:1] cram_addr,
-    output wire cram_clk,
-    inout wire [`CRAM_DATA_SIZE-1:0] cram_data,
-    output wire cram_adv, 
-    output wire cram_cre, output wire cram_ce, output wire cram_oe,
-    output wire cram_we, output wire cram_lb, output wire cram_ub,
-    inout wire cram_wait,
-`else
     // SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -41,7 +31,6 @@ module DRAM_conRV
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm,       // 32/4
-`endif
 
      input wire clk,
      input wire rst_x,
@@ -263,21 +252,6 @@ module DRAM_conRV
 	endcase
 	end
 
-`ifdef NEXYS1
-	cram mem1(
-      // cram signals
-      .cram_addr(cram_addr), .cram_clk(cram_clk), .cram_data(cram_data),
-      .cram_adv(cram_adv), .cram_cre(cram_cre), .cram_ce(cram_ce), .cram_oe(cram_oe),
-      .cram_we(cram_we), .cram_lb(cram_lb), .cram_ub(cram_ub), .cram_wait(cram_wait),
-      //
-      .clk(clk), //.resetn(rst_x),
-      .read_a(r_rd), .write(r_we),
-		.addr(r_maddr), .din(r_wdata), .mask(~r_mask), .dout_a(w_dram_odata),
-		.busy(w_busy) //.mem_initialized(o_init_calib_complete), .fail(sdram_fail), .total_written(),
-   );
-	assign o_init_calib_complete=1;
-	assign sdram_fail=0;
-`else
     MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(rst_x),
         .read_a(r_rd), 
         .read_b(1'b0),
@@ -292,7 +266,6 @@ module DRAM_conRV
         .SDRAM_nWE(O_sdram_wen_n), .SDRAM_nRAS(O_sdram_ras_n), .SDRAM_nCAS(O_sdram_cas_n), 
         .SDRAM_CLK(O_sdram_clk), .SDRAM_CKE(O_sdram_cke), .SDRAM_DQM(O_sdram_dqm)
     );
-`endif
 
 endmodule
 /**************************************************************************************************/

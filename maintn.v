@@ -513,7 +513,7 @@ end
     reg  [31:0]  r_sd_checksum = 0;
     always@(posedge pll_clk) begin
 	    r_sd_checksum <= (!RST_X)                      ? 0                             :
-                      (!w_init_done & w_sd_init_we) ? r_sd_checksum + w_sd_init_data   :
+                      ((r_init_state == 3) & w_sd_init_we) ? r_sd_checksum + w_sd_init_data   :
 		               r_sd_checksum;
     end
     wire w_sd_checksum = r_sd_checksum;
@@ -747,12 +747,6 @@ end
                                .o_init_calib_complete(calib_done),
                                .sdram_fail(sdram_fail),
 
-`ifdef NEXYS1
-										 // cram signals
-										 .cram_addr(cram_addr), .cram_clk(cram_clk), .cram_data(cram_data),
-										 .cram_adv(cram_adv), .cram_cre(cram_cre), .cram_ce(cram_ce), .cram_oe(cram_oe),
-										 .cram_we(cram_we), .cram_lb(cram_lb), .cram_ub(cram_ub), .cram_wait(cram_wait)
-`else
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
                                .O_sdram_cs_n(O_sdram_cs_n),            // chip select
@@ -763,15 +757,14 @@ end
                                .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
-`endif
                                );
 
 
     /*********************************************************************************************/
     reg [31:0] rdbg=0;
     always @ (posedge pll_clk) begin
-        if(w_sd_init_we && (r_init_state == 3) && (r_initaddr3 == (`BBL_SIZE - 4)))
-            rdbg <= w_sd_init_data;
+        if(w_sd_init_we && w_dram_busy)
+            rdbg <= 1;
     end
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                     (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[3:0]: ~ rdbg[7:4];
