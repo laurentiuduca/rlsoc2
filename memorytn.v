@@ -18,6 +18,7 @@ module DRAM_conRV
      output wire [31:0]                  o_data,
      output wire                         o_busy,
      input  wire [2:0]                   i_ctrl,
+     input  wire [2:0]                   sys_init_state,
 
 
     // SDRAM
@@ -99,7 +100,7 @@ endtask
          prepare_read;
       end else if(i_wr_en && !w_busy) begin
          prepare_write;
-      end else if((r_refreshcnt > 1000) && !i_rd_en && !i_wr_en && !w_busy) begin
+      end else if((r_refreshcnt > 1000) && !i_rd_en && !i_wr_en && !w_busy && (sys_init_state == 5)) begin
          // ram refresh
          state <= 50;
          r_refresh <= 1;
