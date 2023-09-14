@@ -783,7 +783,7 @@ end
     /*********************************************************************************************/
     reg [31:0] rdbg=0;
     always @ (posedge pll_clk) begin
-        if(w_sd_init_we && w_dram_busy)
+        if(w_sd_init_we && r_sd_state != 0)
             rdbg <= 1;
     end
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
