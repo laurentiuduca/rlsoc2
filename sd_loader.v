@@ -59,12 +59,11 @@ reg dram_logic = 0;
             if(state == 0) begin
                 if (DONE==0) begin
                     if(rdone)
-                        if(((rsector - last_refresh_sector) > 10) && !w_dram_busy && dram_logic) begin
-                            // ram refresh
-                            r_refreshcmd <= 1;
-                            rstart <= 0;
-                            state <= 1;
-                            last_refresh_sector <= rsector;
+                        if(((rsector - last_refresh_sector) > 5) && dram_logic) begin
+                                // ram refresh
+                                rstart <= 0;
+                                state <= 10;
+                                last_refresh_sector <= rsector;
                         end else begin
                             r_refreshcmd <= 0;
                             if(init_state == 3) begin
@@ -91,17 +90,20 @@ reg dram_logic = 0;
                     if(waddr>=`BIN_SIZE)
                         DONE <= 1;
                 end
+            end else if(state == 10) begin
+                if(!w_dram_busy ) begin
+                    r_refreshcmd <= 1;
+                    state <= 1;
+                end
             end else if (state == 1) begin
-                WE <= 0;
                 if(w_dram_busy) begin
                     state <= 2;
                     r_refreshcmd <= 0;
                 end
             end else if (state == 2) begin
                 if(!w_dram_busy) begin
-                    rsector <= rsector + 1;
-                    rstart <= 1;
                     state <= 0;
+                    rsector <= rsector + 1;
                 end
             end
         end

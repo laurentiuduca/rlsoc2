@@ -129,7 +129,7 @@ endtask
             state <= 0;
       end
    end
-   `endif
+`endif
 	8'd10: begin //mem read
 		if(w_busy) begin
 			r_rd <= 0;
