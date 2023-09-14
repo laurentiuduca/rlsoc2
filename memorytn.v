@@ -18,9 +18,6 @@ module DRAM_conRV
      output wire [31:0]                  o_data,
      output wire                         o_busy,
      input  wire [2:0]                   i_ctrl,
-     input  wire [2:0]                   sys_init_state,
-     input  wire                         refresh_cmd,
-
 
     // SDRAM
     output wire O_sdram_clk,
@@ -76,7 +73,6 @@ begin
          r_addr <= i_addr;
 			r_maddr <= {i_addr[31:2], 2'b0};
          r_ctrl <= i_ctrl;
-         r_refreshcnt <= r_refreshcnt + 1;
 end
 endtask 
 
@@ -90,7 +86,6 @@ begin
 							  (i_ctrl[1:0] == 1) ? {16'h0, i_data[15:0]} : 
 								 									 i_data;
          r_ctrl <= i_ctrl;
-         r_refreshcnt <= r_refreshcnt + 1;
 end
 endtask 
 
@@ -99,28 +94,32 @@ begin
          state <= 50;
          r_refresh <= 1;
          r_stall <= 1;
-         r_refreshcnt <= 0;
 end
 endtask 
+`define REFRESH_CNT 400 // 15us
+always @(posedge clk) begin
+   if(r_refreshcnt < `REFRESH_CNT) 
+      r_refreshcnt <= r_refreshcnt + 1;
+   else
+      if(state == 8'd51) // refresh done
+         r_refreshcnt <= 0;
+end
 
     always@(posedge clk) begin
     case(state)
     8'd0: // idle
 `ifdef DRAM_REFRESH_LOGIC
-      if(refresh_cmd && !w_busy)
+      if((r_refreshcnt > `REFRESH_CNT) && !w_busy) begin
+         // ram refresh
          prepare_refresh;
+      end else
 `endif
-		else if(i_rd_en && !w_busy) begin
+		if(i_rd_en && !w_busy) begin
          prepare_read;
       end else if(i_wr_en && !w_busy) begin
          prepare_write;
       end 
 `ifdef DRAM_REFRESH_LOGIC
-      else if((((r_refreshcnt > 1000) && (sys_init_state == 5)))
-         && !i_rd_en && !i_wr_en && !w_busy) begin
-         // ram refresh
-         prepare_refresh;
-      end
    8'd50: begin
 		if(w_busy) begin
          r_refresh <= 0;
