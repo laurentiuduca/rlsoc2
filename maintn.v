@@ -397,10 +397,10 @@ end
 
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
-    wire w_refresh_cmd;
+    wire w_refreshcmd;
     sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
         .init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
-        .w_dram_busy(w_dram_busy), .r_refreshcmd(w_refresh_cmd),
+        .w_dram_busy(w_dram_busy), .w_dram_le(w_dram_le), .w_dram_we(w_wr_en), .r_refreshcmd(w_refreshcmd),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
 
@@ -523,7 +523,6 @@ end
     reg          r_bbl_done   = 0;
     reg          r_bblsd_done = 0;
     reg          r_disk_done  = 0;
-    wire         w_refresh_cmd;
 `ifdef LAUR_MEM_RB
     reg  [31:0]  r_initaddr6  = 0;
 `endif
@@ -567,8 +566,8 @@ end
 `endif
         if(w_pl_init_we & (r_init_state == 2))      r_initaddr      <= r_initaddr + 4;
         if(r_initaddr  >= `BIN_BBL_SIZE)            r_bbl_done      <= 1;
-        if(w_sd_init_we & (r_init_state == 3))      r_initaddr3      <= r_initaddr3 + 4;
-        if(r_initaddr3  >= `BIN_BBL_SIZE)           r_bblsd_done      <= 1;
+        //if(w_sd_init_we & (r_init_state == 3))      r_initaddr3      <= r_initaddr3 + 4;
+        //if(r_initaddr3  >= `BIN_BBL_SIZE)           r_bblsd_done      <= 1;
         if(w_pl_init_we & (r_init_state == 4))      r_initaddr2     <= r_initaddr2 + 4;
         if(r_initaddr2 >= `BBL_SIZE + `BIN_DISK_SIZE)      r_disk_done     <= 1;
 
@@ -702,31 +701,17 @@ end
     
     wire [31:0]  w_dram_wdata_t   = (r_init_state == 1) ? 32'b0 :
                                     (r_init_state == 5) ? w_dram_wdata : 
-                                    (r_init_state == 3) ? w_sd_init_data : w_pl_init_data;
+                                    (r_init_state == 3) ? r_sd_init_data : w_pl_init_data;
 
     wire [2:0]   w_dram_ctrl_t  = (!w_init_done) ? `FUNCT3_SW____ : w_dram_ctrl;
     /**********************************************************************************************/
 
 `ifdef LAUR_MEM_RB
     wire w_wr_en =                 (r_init_state == 6) ? 0 :
-				                    w_zero_we || w_pl_init_we || w_sd_init_we || w_dram_we_t;
+				                    w_zero_we || w_pl_init_we || r_sd_init_we || w_dram_we_t;
 `else
-    wire w_wr_en =                  w_zero_we || w_pl_init_we || w_sd_init_we || w_dram_we_t;
+    wire w_wr_en =                  w_zero_we || w_pl_init_we || r_sd_init_we || w_dram_we_t;
 `endif
-
-/*
-    // SDRAM
-    wire O_sdram_clk;
-    wire O_sdram_cke;
-    wire O_sdram_cs_n;            // chip select
-    wire O_sdram_cas_n;           // columns address select
-    wire O_sdram_ras_n;           // row address select
-    wire O_sdram_wen_n;           // write enable
-    wire [31:0] IO_sdram_dq;       // 32 bit bidirectional data bus
-    wire [10:0] O_sdram_addr;     // 11 bit multiplexed address bus
-    wire [1:0] O_sdram_ba;        // two banks
-    wire [3:0] O_sdram_dqm;       // 32/4
-*/
 
     wire sdram_fail;
     DRAM_conRV dram_con (
@@ -743,7 +728,7 @@ end
                                .o_busy(w_dram_busy),
                                .i_ctrl(w_dram_ctrl_t),
                                .sys_init_state(r_init_state),
-                               .refresh_cmd(w_refresh_cmd),
+                               .refresh_cmd(w_refreshcmd),
                                // input clk, rst (active-low)
 
                                .clk(pll_clk),
@@ -763,6 +748,36 @@ end
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                );
+
+    /*********************************************************************************************/
+
+    // sd state machine for copying sd to dram
+    reg [7:0] r_sd_state=0;
+    reg r_sd_init_we=0;
+    reg [31:0] r_sd_init_data=0;
+
+    always @ (posedge pll_clk) begin
+        if(r_init_state == 3) begin
+            if(r_sd_state == 0) begin
+                if(w_sd_init_we) begin
+                    r_sd_init_we <= w_sd_init_we;
+                    r_sd_init_data <= w_sd_init_data;
+                    r_sd_state <= 1;
+                end
+            end else if(r_sd_state == 1) begin
+                if(w_dram_busy)
+                    r_sd_state <= 2;
+            end else if(r_sd_state == 2) begin
+                if(!w_dram_busy) begin
+                    r_initaddr3 <= r_initaddr3 + 4;
+                    r_sd_init_we <= 0;
+                    r_sd_state <= 0;
+                end
+            end
+        end
+        if (r_initaddr3 >= `BIN_BBL_SIZE)
+            r_bblsd_done <= 1;
+    end
 
 
     /*********************************************************************************************/

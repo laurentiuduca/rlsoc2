@@ -10,6 +10,8 @@ module sd_loader (
     input  wire         resetn,
     input  wire [2:0]   init_state,
     input  wire         w_dram_busy,
+    input  wire         w_dram_le,
+    input  wire         w_dram_we,
     output reg          r_refreshcmd,
     // when sdcard_pwr_n = 0, SDcard power on
     output wire         sdcard_pwr_n,
@@ -46,10 +48,6 @@ reg dram_logic = 0;
 
     always @(posedge clk27mhz) begin
         if(!resetn) begin
-            DATA <= 0;
-            WE <= 0;
-            waddr <= 0;
-            DONE <= 0;
             rstart <= 0;
             rsector <= 0;
             state <= 0;
@@ -80,18 +78,8 @@ reg dram_logic = 0;
                     end
                 end else
                     rstart <= 0;
-                    
-                if(DONE==0 && outen && init_state == 3) begin
-                    DATA  <= {outbyte, DATA[31:8]};
-                    WE    <= (waddr[1:0]==3);
-                    waddr <= waddr + 1;
-                end else begin
-                    WE <= 0;
-                    if(waddr>=`BIN_SIZE)
-                        DONE <= 1;
-                end
             end else if(state == 10) begin
-                if(!w_dram_busy ) begin
+                if(!w_dram_busy && !w_dram_le && !w_dram_we) begin
                     r_refreshcmd <= 1;
                     state <= 1;
                 end
@@ -108,6 +96,25 @@ reg dram_logic = 0;
             end
         end
     end
+
+always @(posedge clk27mhz) begin
+    if(!resetn) begin
+            DATA <= 0;
+            WE <= 0;
+            waddr <= 0;
+            DONE <= 0;
+    end else begin
+                if(DONE==0 && outen && init_state == 3) begin
+                    DATA  <= {outbyte, DATA[31:8]};
+                    WE    <= (waddr[1:0]==3);
+                    waddr <= waddr + 1;
+                end else begin
+                    WE <= 0;
+                    if(waddr>=`BIN_SIZE)
+                        DONE <= 1;
+                end
+    end
+end
 
 wire [3:0] card_stat;
 wire [1:0] card_type;

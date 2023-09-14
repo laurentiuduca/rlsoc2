@@ -94,22 +94,32 @@ begin
 end
 endtask 
 
+task prepare_refresh;
+begin
+         state <= 50;
+         r_refresh <= 1;
+         r_stall <= 1;
+         r_refreshcnt <= 0;
+end
+endtask 
+
     always@(posedge clk) begin
     case(state)
     8'd0: // idle
-		if(i_rd_en && !w_busy) begin
+`ifdef DRAM_REFRESH_LOGIC
+      if(refresh_cmd && !w_busy)
+         prepare_refresh;
+`endif
+		else if(i_rd_en && !w_busy) begin
          prepare_read;
       end else if(i_wr_en && !w_busy) begin
          prepare_write;
       end 
 `ifdef DRAM_REFRESH_LOGIC
-      else if((((r_refreshcnt > 1000) && (sys_init_state == 5)) || refresh_cmd)
+      else if((((r_refreshcnt > 1000) && (sys_init_state == 5)))
          && !i_rd_en && !i_wr_en && !w_busy) begin
          // ram refresh
-         state <= 50;
-         r_refresh <= 1;
-         r_stall <= 1;
-         r_refreshcnt <= 0;
+         prepare_refresh;
       end
    8'd50: begin
 		if(w_busy) begin
