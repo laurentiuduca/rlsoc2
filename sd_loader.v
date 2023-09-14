@@ -63,7 +63,7 @@ reg [9:0] i=0;
                     rstart <= 0;
             end else if(state == 20) begin
                 if(w_ctrl_state == 0)
-                    if(i < `SD_SECTOR_SIZE) begin
+                    if((i < `SD_SECTOR_SIZE) && (i*rsector+(waddr&(`SD_SECTOR_SIZE-1)) < `BIN_SIZE)) begin
                         DATA <= {mem[i+3], mem[i+2], mem[i+1], mem[i]};
                         WE <= 1;
                         i <= i + 4;

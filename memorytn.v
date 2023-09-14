@@ -61,7 +61,6 @@ module DRAM_conRV
     reg r_stall = 0;
     assign o_busy = (r_stall | w_busy);
     reg [7:0] state = 0, state_next = 0;
-    reg [31:0] r_refreshcnt = 0;
     reg r_refresh = 0;
 
 task prepare_read;
@@ -89,21 +88,26 @@ begin
 end
 endtask 
 
-task prepare_refresh;
-begin
-         state <= 50;
-         r_refresh <= 1;
-         r_stall <= 1;
-end
-endtask 
-`define REFRESH_CNT 400 // 15us
-always @(posedge clk) begin
-   if(r_refreshcnt < `REFRESH_CNT) 
-      r_refreshcnt <= r_refreshcnt + 1;
-   else
-      if(state == 8'd51) // refresh done
-         r_refreshcnt <= 0;
-end
+`ifdef DRAM_REFRESH_LOGIC
+   reg [31:0] r_refreshcnt = 0;
+
+   task prepare_refresh;
+   begin
+            state <= 50;
+            r_refresh <= 1;
+            r_stall <= 1;
+   end
+   endtask 
+
+   `define REFRESH_CNT 400 // 15us
+   always @(posedge clk) begin
+      if(r_refreshcnt < `REFRESH_CNT) 
+         r_refreshcnt <= r_refreshcnt + 1;
+      else
+         if(state == 8'd51) // refresh done
+            r_refreshcnt <= 0;
+   end
+`endif
 
     always@(posedge clk) begin
     case(state)

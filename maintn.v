@@ -410,24 +410,23 @@ end
     reg [31:0] r_sd_init_data=0;
 
     always @ (posedge pll_clk) begin
-        if(r_init_state == 3) begin
             if(r_sd_state == 0) begin
-                if(w_sd_init_we) begin
+                if(w_sd_init_we && !w_dram_busy) begin
                     r_sd_init_we <= 1;
                     r_sd_init_data <= w_sd_init_data;
                     r_sd_state <= 1;
                 end
             end else if(r_sd_state == 1) begin
-                if(w_dram_busy)
+                if(w_dram_busy) begin
+                    r_sd_init_we <= 0;
                     r_sd_state <= 2;
+                end
             end else if(r_sd_state == 2) begin
                 if(!w_dram_busy) begin
                     r_initaddr3 <= r_initaddr3 + 4;
-                    r_sd_init_we <= 0;
                     r_sd_state <= 0;
                 end
             end
-        end
         if (r_initaddr3 >= `BIN_BBL_SIZE)
             r_bblsd_done <= 1;
     end
