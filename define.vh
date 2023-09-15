@@ -222,7 +222,7 @@ error
 `ifndef SIM_MODE
 	`define LAUR_MEM_RB // mem read-back after writing it with BBL
 	//`define LAUR_MEM_RB_ONLY_CHECK
-    //`define DRAM_REFRESH_LOGIC
+    `define DRAM_REFRESH_LOGIC
 `endif
 
 `define BBL_SIZE 4300 //(8*1024*1024) //(64*1024*1024)

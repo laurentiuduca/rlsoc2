@@ -63,10 +63,8 @@ module DRAM_conRV
     reg [7:0] state = 0, state_next = 0;
     reg r_refresh = 0;
 
-task prepare_read;
+task prepare_read_base;
 begin
-			state <= 10;
-			state_next <= 30;
 			r_rd <= 1;
          r_stall <= 1;
          r_addr <= i_addr;
@@ -74,11 +72,22 @@ begin
          r_ctrl <= i_ctrl;
 end
 endtask 
-
-task prepare_write;
+task prepare_read_end;
 begin
-			state <= 20;
+			state <= 10;
          r_stall <= 1;
+end
+endtask 
+task prepare_read;
+begin
+         prepare_read_base;
+         prepare_read_end;
+
+end
+endtask 
+
+task prepare_write_base;
+begin
 			r_addr <= i_addr;
          r_maddr <= {i_addr[31:2], 2'b0};
          r_wdata_ui <= (i_ctrl[1:0] == 0) ? {24'h0, i_data[7:0]}  :
@@ -86,11 +95,24 @@ begin
 								 									 i_data;
          r_ctrl <= i_ctrl;
 end
+endtask
+task prepare_write_end;
+begin
+			state <= 20;
+         r_stall <= 1;
+end
+endtask 
+task prepare_write;
+begin
+         prepare_write_base;
+         prepare_write_end;
+end
 endtask 
 
 `ifdef DRAM_REFRESH_LOGIC
    reg [31:0] r_refreshcnt = 0;
-
+   reg read_request=0, write_request=0;
+   
    task prepare_refresh;
    begin
             state <= 50;
@@ -99,32 +121,36 @@ endtask
    end
    endtask 
 
-   `define REFRESH_CNT 400 // 15us
+   `define REFRESH_CNT 300 // 15us = 405 periods
    always @(posedge clk) begin
-      if(r_refreshcnt < `REFRESH_CNT) 
-         r_refreshcnt <= r_refreshcnt + 1;
+      if(state == 8'd52)
+         r_refreshcnt <= 0;
       else
-         if(state == 8'd51) // refresh done
-            r_refreshcnt <= 0;
+         r_refreshcnt <= r_refreshcnt + 1;
    end
 `endif
 
     always@(posedge clk) begin
     case(state)
     8'd0: // idle
-`ifdef DRAM_REFRESH_LOGIC
-      if((r_refreshcnt > `REFRESH_CNT) && !w_busy) begin
-         // ram refresh
-         prepare_refresh;
-      end else
-`endif
 		if(i_rd_en && !w_busy) begin
          prepare_read;
       end else if(i_wr_en && !w_busy) begin
          prepare_write;
       end 
 `ifdef DRAM_REFRESH_LOGIC
+      else if((r_refreshcnt > `REFRESH_CNT) && !w_busy) begin
+         // ram refresh
+         prepare_refresh;
+      end
    8'd50: begin
+      if(i_rd_en) begin
+         prepare_read_base;
+         read_request <= 1;
+      end else if(i_wr_en) begin
+         prepare_write_base;
+         write_request <= 1;
+      end
 		if(w_busy) begin
          r_refresh <= 0;
          state <= 51;
@@ -132,14 +158,17 @@ endtask
    end
    8'd51: begin 
       // r_stall is 1.
-      if(!w_busy) begin   
-         if(i_rd_en) begin
-            prepare_read;
-         end else if(i_wr_en) begin
-            prepare_write;
-         end else
+      if(!w_busy) begin
+         if(read_request) begin
+            read_request <= 0;
+            prepare_read_end;
+         end else if(write_request) begin
+            write_request <= 0;
+            prepare_write_end;
+         end else begin
             r_stall <= 0;
             state <= 0;
+         end
       end
    end
 `endif
