@@ -49,6 +49,7 @@ reg [9:0] i=0;
             DATA <= 0;
             WE <= 0;
             DONE <= 0;
+            i <= 0;
         end else begin
             if(state == 0) begin
                 if (DONE==0) begin
@@ -63,7 +64,7 @@ reg [9:0] i=0;
                     rstart <= 0;
             end else if(state == 20) begin
                 if(w_ctrl_state == 0)
-                    if((i < `SD_SECTOR_SIZE) && (i*rsector+(waddr&(`SD_SECTOR_SIZE-1)) < `BIN_SIZE)) begin
+                    if((i < `SD_SECTOR_SIZE) && ((rsector << $clog2(`SD_SECTOR_SIZE))+i) < `BIN_SIZE) begin
                         DATA <= {mem[i+3], mem[i+2], mem[i+1], mem[i]};
                         WE <= 1;
                         i <= i + 4;

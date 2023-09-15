@@ -393,45 +393,6 @@ end
     end
 `endif
 
-    /**********************************************************************************************/
-
-    wire [31:0] w_sd_init_data;
-    wire w_sd_init_we, w_sd_init_done;
-    sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
-        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
-        .w_ctrl_state(r_sd_state),
-        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
-        .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
-
-
-    // sd state machine for copying sd to dram
-    reg [7:0] r_sd_state=0;
-    reg r_sd_init_we=0;
-    reg [31:0] r_sd_init_data=0;
-
-    always @ (posedge pll_clk) begin
-            if(r_sd_state == 0) begin
-                if(w_sd_init_we && !w_dram_busy) begin
-                    r_sd_init_we <= 1;
-                    r_sd_init_data <= w_sd_init_data;
-                    r_sd_state <= 1;
-                end
-            end else if(r_sd_state == 1) begin
-                if(w_dram_busy) begin
-                    r_sd_init_we <= 0;
-                    r_sd_state <= 2;
-                end
-            end else if(r_sd_state == 2) begin
-                if(!w_dram_busy) begin
-                    r_initaddr3 <= r_initaddr3 + 4;
-                    r_sd_state <= 0;
-                end
-            end
-        if (r_initaddr3 >= `BIN_BBL_SIZE)
-            r_bblsd_done <= 1;
-    end
-
-
     /***** Keyboard Input *************************************************************************/
 
     wire [31:0]  w_pl_init_addr;
@@ -522,6 +483,45 @@ end
         end
 `endif
     end
+    /**********************************************************************************************/
+
+    wire [31:0] w_sd_init_data;
+    wire w_sd_init_we, w_sd_init_done;
+    sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .w_ctrl_state(r_sd_state),
+        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
+        .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
+
+
+    // sd state machine for copying sd to dram
+    reg [7:0] r_sd_state=0;
+    reg r_sd_init_we=0;
+    reg [31:0] r_sd_init_data=0;
+
+    always @ (posedge pll_clk) begin
+            if(r_sd_state == 0) begin
+                if(w_sd_init_we && !w_dram_busy) begin
+                    r_sd_init_we <= 1;
+                    r_sd_init_data <= w_sd_init_data;
+                    r_sd_state <= 1;
+                    r_sd_checksum <= r_sd_checksum + w_sd_init_data;
+                end
+            end else if(r_sd_state == 1) begin
+                if(w_dram_busy) begin
+                    r_sd_init_we <= 0;
+                    r_sd_state <= 2;
+                end
+            end else if(r_sd_state == 2) begin
+                if(!w_dram_busy) begin
+                    r_initaddr3 <= r_initaddr3 + 4;
+                    r_sd_state <= 0;
+                end
+            end
+        if (r_initaddr3 >= `BIN_BBL_SIZE)
+            r_bblsd_done <= 1;
+    end
+
 
     /**********************************************************************************************/
 `ifdef SIM_MODE
@@ -531,20 +531,13 @@ end
 `endif
     reg  [31:0]  r_initaddr   = 0;
     reg  [31:0]  r_initaddr3  = 0;
-    reg  [31:0]  r_checksum = 0;
+    reg  [31:0]  r_checksum = 0, r_sd_checksum=0;
     always@(posedge pll_clk) begin
 	    r_checksum <= (!RST_X)                      ? 0                             :
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
     end
     wire w_checksum = r_checksum;
-
-    reg  [31:0]  r_sd_checksum = 0;
-    always@(posedge pll_clk) begin
-	    r_sd_checksum <= (!RST_X)                      ? 0                             :
-                      ((r_init_state == 3) & w_sd_init_we) ? r_sd_checksum + w_sd_init_data   :
-		               r_sd_checksum;
-    end
     wire w_sd_checksum = r_sd_checksum;
     /**************************************************************************************************/
     reg          r_bbl_done   = 0;
