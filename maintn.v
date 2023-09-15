@@ -106,7 +106,7 @@ end
     wire        w_key_we;
     wire  [7:0] w_key_data;
 
-`ifdef laur0
+//`ifdef laur0
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
@@ -119,7 +119,7 @@ end
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
     );
-`endif
+//`endif
 
 `ifndef USE_SINGLE_CORE
      m_cpummu core1(
@@ -734,6 +734,7 @@ end
 `endif
 
     wire sdram_fail;
+    wire [7:0] w_mem_state;
     DRAM_conRV dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
@@ -747,6 +748,8 @@ end
                                .o_data(w_dram_odata),
                                .o_busy(w_dram_busy),
                                .i_ctrl(w_dram_ctrl_t),
+                               .state(w_mem_state),
+                               .sys_state(r_init_state),
 
                                .clk(pll_clk),
                                .rst_x(RST_X),
@@ -768,12 +771,18 @@ end
 
     /*********************************************************************************************/
     reg [31:0] rdbg=0;
+    reg r1st=0, w1st=0;
     always @ (posedge pll_clk) begin
-        if(w_sd_init_we && r_sd_state != 0)
-            rdbg <= 1;
+        if(w_mem_state == 50)
+            if (w_dram_le && !r1st) begin
+                r1st <= 1;
+                rdbg[5:0] <= {r_init_state, 3'd1};
+            end else if (w_wr_en) begin
+                rdbg[11:6] <= {r_init_state, 3'd2};
+            end
     end
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
-                    (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[3:0]: ~ rdbg[7:4];
+                    (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[5:0]: ~ rdbg[11:6];
                     //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
     /**********************************************************************************************/
 

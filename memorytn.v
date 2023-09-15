@@ -18,6 +18,8 @@ module DRAM_conRV
      output wire [31:0]                  o_data,
      output wire                         o_busy,
      input  wire [2:0]                   i_ctrl,
+     output reg  [7:0]                   state,
+     input  wire [2:0]                   sys_state,
 
     // SDRAM
     output wire O_sdram_clk,
@@ -60,7 +62,7 @@ module DRAM_conRV
 
     reg r_stall = 0;
     assign o_busy = (r_stall | w_busy);
-    reg [7:0] state = 0, state_next = 0;
+    reg [7:0] state_next = 0;
     reg r_refresh = 0;
 
 task prepare_read_base;
@@ -111,7 +113,9 @@ endtask
 
 `ifdef DRAM_REFRESH_LOGIC
    reg [31:0] r_refreshcnt = 0;
-   reg read_request=0, write_request=0;
+   reg read_request=0;
+   reg write_request=0;
+   reg first_read=0, first_write=0;
    
    task prepare_refresh;
    begin
@@ -123,7 +127,7 @@ endtask
 
    `define REFRESH_CNT 300 // 15us = 405 periods
    always @(posedge clk) begin
-      if(state == 8'd52)
+      if(state == 8'd51)
          r_refreshcnt <= 0;
       else
          r_refreshcnt <= r_refreshcnt + 1;
@@ -131,6 +135,14 @@ endtask
 `endif
 
     always@(posedge clk) begin
+    if(~rst_x) begin
+`ifdef DRAM_REFRESH_LOGIC
+      read_request <= 0;
+      write_request <= 0;
+`endif
+      state <= 0;
+      state_next <= 0;
+    end else
     case(state)
     8'd0: // idle
 		if(i_rd_en && !w_busy) begin
@@ -144,12 +156,14 @@ endtask
          prepare_refresh;
       end
    8'd50: begin
-      if(i_rd_en) begin
+      if(first_read == 0 && i_rd_en) begin
          prepare_read_base;
          read_request <= 1;
-      end else if(i_wr_en) begin
+         first_read <= 1;
+      end else if(first_write == 0 && i_wr_en) begin
          prepare_write_base;
          write_request <= 1;
+         first_write <= 1;
       end
 		if(w_busy) begin
          r_refresh <= 0;
@@ -161,9 +175,11 @@ endtask
       if(!w_busy) begin
          if(read_request) begin
             read_request <= 0;
+            first_read <= 0;
             prepare_read_end;
          end else if(write_request) begin
             write_request <= 0;
+            first_write <= 0;
             prepare_write_end;
          end else begin
             r_stall <= 0;
