@@ -38,8 +38,8 @@ wire [7:0] outbyte;
 
 `define SD_SECTOR_SIZE 512
 reg [7:0] state=0;
-reg [7:0] mem[0:`SD_SECTOR_SIZE - 1]; // sector size
-reg [9:0] i=0;
+reg [7:0] mem[0:`SD_SECTOR_SIZE - 1];
+reg [$clog2(`SD_SECTOR_SIZE):0] i=0;
 
     always @(posedge clk27mhz) begin
         if(!resetn) begin
