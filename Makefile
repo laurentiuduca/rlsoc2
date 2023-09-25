@@ -10,7 +10,7 @@
 # General
 TOPSOURCE = top.v
 TOPSOURCE-SIM-MAIN = main.v dram.v
-OTHERSOURCE = rvcorem.v memory.v busarbiter.v cpummu.v memsim.v mmu.v console.v loader.v read_file.v
+OTHERSOURCE = rvcorem.v busarbiter.v cpummu.v memsim.v mmu.v loader.v read_file.v
 OLDSOURCE = disk.v microc.v debug.v
 
 
@@ -46,7 +46,7 @@ all: vcs
 clean:
 	rm -f simple.vvp *.vcd *.out result.txt simv ucli.key vcs-result.txt log.txt diff.txt final_mem.txt log.txt.gz trace.txt simple.vvp
 	rm -rf simv.daidir csrc
-	rm -rf obj_dir sim.cpp
+	rm -rf obj_dir
 	rm -rf synth.vg impl serialout.txt
 
 logclean:
