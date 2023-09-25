@@ -54,7 +54,7 @@ endmodule
 module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
-                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state);
+                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -87,7 +87,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     /***** registers and CPU architecture state ***************************************************/
     output reg   [3:0] state   = 0;            // State for Multi cycle Processor
-    reg  [31:0] pc             = `D_START_PC;  // Program Counter
+    output reg  [31:0] pc             = `D_START_PC;  // Program Counter
 
     reg  [31:0] mstatus        = 0;            ///// CSRs
     reg  [31:0] mtvec          = 0;            //
@@ -124,7 +124,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg  [31:0] r_ir_org       = 0;            // IF: NOTE! not used
 
     reg         r_cinsn        = 0;            // CV: set if the fetched insn is a compressed one
-    reg  [31:0] r_ir           = 0;            // CV: 32-bit fetched insn
+    output reg  [31:0] r_ir    = 0;            // CV: 32-bit fetched insn
     reg  [15:0] r_ir16         = 0;
     reg         r_ir16_v       = 0;
 

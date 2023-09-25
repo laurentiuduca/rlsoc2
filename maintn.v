@@ -42,7 +42,12 @@ module m_maintn(
     output wire         sdclk,
     inout  wire         sdcmd,
     input  wire         sddat0,
-    output wire         sddat1, sddat2, sddat3
+    output wire         sddat1, sddat2, sddat3,
+
+    // display
+    output wire MAX7219_CLK,
+    output wire MAX7219_DATA,
+    output wire MAX7219_LOAD
     );
 
     wire pll_clk, clk_sdram;
@@ -84,6 +89,7 @@ end
     wire w_dram_busy, bus_dram_busy0, bus_dram_busy1;
     wire [2:0]   w_dram_ctrl, bus_dram_ctrl0, bus_dram_ctrl1;
     wire w_dram_le, bus_dram_le0, bus_dram_le1;
+    wire [31:0] w_pc0, w_pc1, w_ir0, w_ir1;
 
     wire [31:0] w_grant;
     wire [31:0] bus_ipi;
@@ -117,7 +123,7 @@ end
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
-        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0)
+        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0)
     );
 //`endif
 
@@ -132,7 +138,7 @@ end
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
-        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1)
+        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), w_ir(w_ir1)
     );   
 `endif
 
@@ -770,6 +776,17 @@ end
                                );
 
     /*********************************************************************************************/
+    // debug
+    max7219 max7219(.clk(pll_clk), .clkdiv(clkdiv), .reset_n(RST_X), .data_vector(data_vector),
+            .clk_out(MAX7219_CLK),
+            .data_out(MAX7219_DATA),
+            .load_out(MAX7219_LOAD)
+        );
+    wire clkdiv;
+    wire [31:0] data_vector;
+    clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
+    assign data_vector = w_btnl == 0 ? w_pc0 : w_ir0;
+
     reg [31:0] rdbg=0;
     reg r1st=0, w1st=0;
     always @ (posedge pll_clk) begin

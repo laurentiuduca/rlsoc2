@@ -31,7 +31,9 @@ module m_cpummu(
     input wire w_dram_busy,
     output wire [2:0]   w_dram_ctrl,
     output wire         w_dram_le,
-    input wire        w_init_done
+    input wire        w_init_done,
+    output wire [31:0] w_pc,
+    output wire [31:0] w_ir
     );
 
     wire w_halt;
@@ -113,7 +115,9 @@ module m_cpummu(
         .w_core_ir      (w_core_ir),
         .w_core_odata   (),
         .w_init_stage   (),
-        .state(w_state)
+        .state(w_state),
+        .pc(w_pc),
+        .r_ir(w_ir)
     );
 
     /**********************************************************************************************/
