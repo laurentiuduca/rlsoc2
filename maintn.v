@@ -543,8 +543,8 @@ end
                       (!w_init_done & w_pl_init_we) ? r_checksum + w_pl_init_data   :
 		               r_checksum;
     end
-    wire w_checksum = r_checksum;
-    wire w_sd_checksum = r_sd_checksum;
+    wire [31:0] w_checksum = r_checksum;
+    wire [31:0] w_sd_checksum = r_sd_checksum;
     /**************************************************************************************************/
     reg          r_bbl_done   = 0;
     reg          r_bblsd_done = 0;
@@ -607,7 +607,7 @@ end
 `endif
 	reg [7:0] r_rb_state=0, r_rb_cnt=0;
 	reg [31:0] r_rb_data=0, r_verify_checksum=0;
-	wire w_verify_checksum = r_verify_checksum;
+	wire [31:0] w_verify_checksum = r_verify_checksum;
 	wire w_checksum_match = (r_verify_checksum == r_checksum);
     wire w_sd_checksum_match = (r_verify_checksum == r_sd_checksum);
     	always@(posedge pll_clk) begin

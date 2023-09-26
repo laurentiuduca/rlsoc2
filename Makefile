@@ -75,6 +75,9 @@ run-i:
 	vvp simple.vvp
 run:
 	./simv
+gwsynth:
+	gw_sh run.tcl
+
 
 # run2: simv
 # 	./simv
