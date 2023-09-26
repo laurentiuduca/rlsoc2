@@ -138,7 +138,7 @@ end
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
-        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), w_ir(w_ir1)
+        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1)
     );   
 `endif
 
@@ -785,18 +785,19 @@ end
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = w_btnl == 0 ? w_pc0 : w_ir0;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? r_dbg: w_ir0;
 
     reg [31:0] rdbg=0;
-    reg r1st=0, w1st=0;
+    reg raux=0;
     always @ (posedge pll_clk) begin
-        if(w_mem_state == 50)
-            if (w_dram_le && !r1st) begin
-                r1st <= 1;
-                rdbg[5:0] <= {r_init_state, 3'd1};
-            end else if (w_wr_en) begin
-                rdbg[11:6] <= {r_init_state, 3'd2};
+        if(r_init_state == 5 && !raux) begin //w_dram_addr==`D_START_PC) begin
+            if(w_dram_busy)
+                rdbg[0] <= 1;
+            else if (rdbg[0]) begin
+                rdbg <= w_dram_odata;
+                raux <= 1;
             end
+        end
     end
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                     (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[5:0]: ~ rdbg[11:6];
