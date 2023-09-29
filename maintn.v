@@ -777,8 +777,6 @@ end
 
     /*********************************************************************************************/
     // debug
-    reg [31:0] rdbg=0;
-    reg raux=0;
     max7219 max7219(.clk(pll_clk), .clkdiv(clkdiv), .reset_n(RST_X), .data_vector(data_vector),
             .clk_out(MAX7219_CLK),
             .data_out(MAX7219_DATA),
@@ -787,8 +785,10 @@ end
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? r_dbg: w_ir0;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? rdbg: w_ir0;
 
+    reg [31:0] rdbg=0;
+    reg raux=0;
     always @ (posedge pll_clk) begin
         if(r_init_state == 5 && !raux) begin //w_dram_addr==`D_START_PC) begin
             if(w_dram_busy)
