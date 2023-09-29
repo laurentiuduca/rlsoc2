@@ -33,12 +33,14 @@ module m_cpummu(
     output wire         w_dram_le,
     input wire        w_init_done,
     output wire [31:0] w_pc,
-    output wire [31:0] w_ir
+    output wire [31:0] w_ir,
+    output wire [31:0] w_ir_org,
+    output wire [31:0] w_insn_data
     );
 
     wire w_halt;
 
-    wire [31:0] w_insn_data, w_insn_addr;
+    wire [31:0] w_insn_addr;
     wire [31:0] w_data_addr;
     wire        w_data_we;
     wire [2:0]  w_data_ctrl;
@@ -117,7 +119,8 @@ module m_cpummu(
         .w_init_stage   (),
         .state(w_state),
         .pc(w_pc),
-        .r_ir(w_ir)
+        .r_ir(w_ir),
+        .w_ir_org(w_ir_org)
     );
 
     /**********************************************************************************************/

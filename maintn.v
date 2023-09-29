@@ -89,7 +89,7 @@ end
     wire w_dram_busy, bus_dram_busy0, bus_dram_busy1;
     wire [2:0]   w_dram_ctrl, bus_dram_ctrl0, bus_dram_ctrl1;
     wire w_dram_le, bus_dram_le0, bus_dram_le1;
-    wire [31:0] w_pc0, w_pc1, w_ir0, w_ir1;
+    wire [31:0] w_pc0, w_pc1, w_ir0, w_ir1, w_ir_org0, w_ir_org1, w_insn_data0;
 
     wire [31:0] w_grant;
     wire [31:0] bus_ipi;
@@ -123,7 +123,8 @@ end
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
-        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0)
+        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), 
+        .w_pc(w_pc0), .w_ir(w_ir0), .w_ir_org(w_ir_org0), .w_insn_data(w_insn_data0)
     );
 //`endif
 
@@ -785,7 +786,7 @@ end
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? rdbg: w_ir0;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? rdbg: w_dram_odata;
 
     reg [31:0] rdbg=0;
     reg raux=0;

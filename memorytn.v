@@ -67,8 +67,6 @@ module DRAM_conRV
 
 task prepare_read_base;
 begin
-			r_rd <= 1;
-         r_stall <= 1;
          r_addr <= i_addr;
 			r_maddr <= {i_addr[31:2], 2'b0};
          r_ctrl <= i_ctrl;
@@ -78,6 +76,7 @@ task prepare_read_end;
 begin
 			state <= 10;
          r_stall <= 1;
+         r_rd <= 1;
 end
 endtask 
 task prepare_read;
@@ -198,8 +197,8 @@ endtask
 		 if(!w_busy) begin
 			r_dram_odata1 <= w_dram_odata;
 			if((r_addr[1:0] == 0) || 
-				(i_ctrl[1:0] == 0) ||
-				((r_addr[1:0] <= 2) && (i_ctrl[1:0] == 1)))
+				(r_ctrl[1:0] == 0) || // lb
+				((r_addr[1:0] <= 2) && (r_ctrl[1:0] == 1))) // lh
 				// one read is enough
 				state <= 100;
 			else begin
