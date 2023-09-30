@@ -18,7 +18,6 @@ module DRAM_conRV
      output wire [31:0]                  o_data,
      output wire                         o_busy,
      input  wire [2:0]                   i_ctrl,
-     output reg  [7:0]                   state,
      input  wire [2:0]                   sys_state,
      input  wire [3:0]                   w_bus_cpustate,
 
@@ -66,7 +65,7 @@ module DRAM_conRV
 
     reg r_stall = 0;
     assign o_busy = (r_stall | w_busy);
-    reg [7:0] state_next = 0;
+    reg [7:0] state_next = 0, state = 0;
     reg r_refresh = 0;
 
 task prepare_read_base;

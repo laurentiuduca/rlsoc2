@@ -8,7 +8,8 @@
 ##### Make File v0.01                                                                          #####
 ####################################################################################################
 # General
-TOPSOURCE = top.v
+#TOPSOURCE = top.v
+TOPSOURCE = maintn.v
 TOPSOURCE-SIM-MAIN = main.v dram.v
 OTHERSOURCE = rvcorem.v busarbiter.v cpummu.v memsim.v mmu.v loader.v read_file.v
 OLDSOURCE = disk.v microc.v debug.v

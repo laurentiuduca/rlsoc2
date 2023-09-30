@@ -17,7 +17,6 @@ module m_cpummu(
     output wire [63:0] w_mtimecmp,
     input wire [63:0] w_wmtimecmp,
     input wire        w_clint_we,
-    output wire [2:0] w_pw_state,
     output wire [1:0]  w_tlb_req,
     output wire        w_tlb_busy,
     output wire [31:0] w_mip,

@@ -16,6 +16,8 @@
 `include "define.vh"
 
 /**************************************************************************************************/
+
+`ifndef SIM_MODE
 module m_maintn(
     input wire CLK,
     input  wire        w_rxd,
@@ -66,6 +68,15 @@ always @(posedge pll_clk) begin
 	 end else
       RST_X <= 1;
 end
+
+`else
+module m_topsim(CLK, RST_X);
+    input wire CLK, RST_X;
+    wire pll_clk = CLK;
+    wire w_txd;
+    wire w_rxd;
+`endif
+
     /**********************************************************************************************/
     // bus interface
     wire w_init_done;
@@ -78,7 +89,6 @@ end
     wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
     wire [63:0] w_mtimecmp, w_wmtimecmp, bus_mtimecmp0, bus_wmtimecmp0, bus_mtimecmp1, bus_wmtimecmp1;
     wire w_clint_we, bus_clint_we0, bus_clint_we1;
-    wire [2:0]  w_pw_state, bus_pw_state0, bus_pw_state1;
     wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
     wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
     wire [31:0] w_mip, w_wmip, bus_mip0, bus_wmip0, bus_mip1, bus_wmip1;
@@ -120,7 +130,6 @@ end
         .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
         .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp0), .w_wmtimecmp(bus_wmtimecmp0), .w_clint_we(bus_clint_we0),
-        .w_pw_state(bus_pw_state0), 
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
@@ -135,7 +144,6 @@ end
         .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
         .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp1), .w_wmtimecmp(bus_wmtimecmp1), .w_clint_we(bus_clint_we1),
-        .w_pw_state(bus_pw_state1), 
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
@@ -158,7 +166,7 @@ end
         .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
         .bus_mtimecmp0(bus_mtimecmp0), .bus_wmtimecmp0(bus_wmtimecmp0), .bus_clint_we0(bus_clint_we0),
-        .bus_pw_state0(bus_pw_state0), .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
+        .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
         .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
         .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
         .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
@@ -167,7 +175,7 @@ end
         .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
         .bus_mtimecmp1(bus_mtimecmp1), .bus_wmtimecmp1(bus_wmtimecmp1), .bus_clint_we1(bus_clint_we1),
-        .bus_pw_state1(bus_pw_state1), .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
+        .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
         .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
         .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
         .bus_dram_busy1(bus_dram_busy1), .bus_dram_ctrl1(bus_dram_ctrl1), .bus_dram_le1(bus_dram_le1)
@@ -291,20 +299,24 @@ end
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
 `ifdef SIM_MODE
+`ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
 `endif
+`endif
                     r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b0};
                 end else begin
 `ifdef SIM_MODE
+`ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x send ipi to core0 w_data_wdata=%x w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_data_wdata, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
+`endif
 `endif
                      // signal core 0
                     if(w_data_wdata == 2)
@@ -315,20 +327,24 @@ end
             end else /*if(w_offset == 28'h4)*/ begin
                 if(w_data_wdata == 32'h0) begin
 `ifdef SIM_MODE
+`ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
 `endif
+`endif
                     r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b0, r_ipi[0]};
                 end else begin
 `ifdef SIM_MODE
+`ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x send ipi to core1 w_data_wdata=%x w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_data_wdata, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
+`endif
 `endif
                      // signal core 1
                     if(w_data_wdata == 2)
@@ -491,7 +507,10 @@ end
 `endif
     end
     /**********************************************************************************************/
+    reg r_sd_init_we=0;
+    reg [31:0] r_sd_init_data=0;
 
+`ifndef SIM_MODE
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
     sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
@@ -503,8 +522,6 @@ end
 
     // sd state machine for copying sd to dram
     reg [7:0] r_sd_state=0;
-    reg r_sd_init_we=0;
-    reg [31:0] r_sd_init_data=0;
 
     always @ (posedge pll_clk) begin
             if(r_sd_state == 0) begin
@@ -528,7 +545,7 @@ end
         if (r_initaddr3 >= `BIN_BBL_SIZE)
             r_bblsd_done <= 1;
     end
-
+`endif
 
     /**********************************************************************************************/
 `ifdef SIM_MODE
@@ -740,8 +757,12 @@ end
     wire w_wr_en =                  w_zero_we || w_pl_init_we || r_sd_init_we || w_dram_we_t;
 `endif
 
+`ifdef SIM_MODE
+    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
+        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
+        .w_mtime(w_mtime[31:0]));
+`else
     wire sdram_fail;
-    wire [7:0] w_mem_state;
     wire w_late_refresh;
     DRAM_conRV dram_con (
                                // user interface ports
@@ -756,7 +777,6 @@ end
                                .o_data(w_dram_odata),
                                .o_busy(w_dram_busy),
                                .i_ctrl(w_dram_ctrl_t),
-                               .state(w_mem_state),
                                .sys_state(r_init_state),
                                .w_bus_cpustate(w_bus_cpustate),
 
@@ -780,8 +800,76 @@ end
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                );
+`endif // SIM_MODE
+    /**********************************************************************************************/
+`ifdef SIM_MODE
+    // LOAD linux
+    integer j;
+    //integer k;
+    reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
+    reg  [7:0] mem_disk[0:`DISK_SIZE-1];
+    initial begin
+`ifndef VERILATOR
+    #1
+`endif
 
+`ifdef LINUX
+        $write("Load image file: %s\n", `IMAGE_FILE);
+        $readmemh(`IMAGE_FILE, mem_disk);
+        j=`BBL_SIZE;
+
+        for(i=0;i<`DISK_SIZE;i=i+1) begin
+`ifdef DRAM_SIM
+`ifdef SKIP_CACHE
+	    idbmem.idbmem.mem[j]=mem_disk[i];
+`else
+	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
+`endif
+`else
+	    idbmem.idbmem.mem[j]=mem_disk[i];
+`endif // DRAM_SIM
+            j=j+1;
+        end
+`endif // LINUX
+
+        $write("Running %s\n", {`HEX_DIR,`HEXFILE});
+        $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
+        j=0;
+
+        for(i=0;i<`BBL_SIZE;i=i+1) begin
+`ifdef DRAM_SIM
+`ifdef SKIP_CACHE
+        idbmem.idbmem.mem[j]=mem_bbl[i];
+`else
+	    idbmem.cache_ctrl.mi.mem[j]=mem_bbl[i];
+`endif
+`else
+	    idbmem.idbmem.mem[j]=mem_bbl[i];
+`endif // DRAM_SIM
+            j=j+1;
+        end
+        $write("-------------------------------------------------------------------\n");
+    end
+
+/**********************************************************************************************/
+
+/***********************************          write time        *******************************/
+`define LAUR_WRITE_TIME
+`ifdef LAUR_WRITE_TIME
+    reg [63:0] old_w_mtime=0;
+    always @(posedge CLK) begin
+	    if(old_w_mtime != w_mtime) begin
+		    old_w_mtime = w_mtime;
+		    if(w_mtime % 64'd10000000 == 64'd0) begin
+			    $write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
+		    end
+	    end
+    end
+`endif
+
+`endif // SIM_MODE
     /*********************************************************************************************/
+`ifndef SIM_MODE
     // debug
     max7219 max7219(.clk(pll_clk), .clkdiv(clkdiv), .reset_n(RST_X), .data_vector(data_vector),
             .clk_out(MAX7219_CLK),
@@ -808,6 +896,7 @@ end
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_late_refresh, w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                     (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[5:0]: ~ rdbg[11:6];
                     //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
+`endif
     /**********************************************************************************************/
 
 endmodule
