@@ -71,6 +71,7 @@ end
     wire w_init_done;
     wire [31:0] bus_core_ir_0, bus_core_ir_1;
     wire [3:0] bus_cpustate0, bus_cpustate1;
+    wire [3:0] w_bus_cpustate = w_grant == 0 ? bus_cpustate0 : bus_cpustate1;
     wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
     wire w_mem_we, bus_mem_we0, bus_mem_we1;
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
@@ -741,6 +742,7 @@ end
 
     wire sdram_fail;
     wire [7:0] w_mem_state;
+    wire w_late_refresh;
     DRAM_conRV dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
@@ -756,12 +758,14 @@ end
                                .i_ctrl(w_dram_ctrl_t),
                                .state(w_mem_state),
                                .sys_state(r_init_state),
+                               .w_bus_cpustate(w_bus_cpustate),
 
                                .clk(pll_clk),
                                .rst_x(RST_X),
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done),
                                .sdram_fail(sdram_fail),
+                               .r_late_refresh(w_late_refresh)
 
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
@@ -799,7 +803,7 @@ end
             end
         end
     end
-    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
+    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_late_refresh, w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                     (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[5:0]: ~ rdbg[11:6];
                     //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
     /**********************************************************************************************/

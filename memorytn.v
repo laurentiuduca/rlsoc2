@@ -20,6 +20,7 @@ module DRAM_conRV
      input  wire [2:0]                   i_ctrl,
      output reg  [7:0]                   state,
      input  wire [2:0]                   sys_state,
+     input  wire [3:0]                   w_bus_cpustate,
 
     // SDRAM
     output wire O_sdram_clk,
@@ -37,7 +38,8 @@ module DRAM_conRV
      input wire rst_x,
      input wire clk_sdram,
      output wire o_init_calib_complete,
-     output wire sdram_fail
+     output wire sdram_fail,
+     output reg r_late_refresh,
 );
 
     reg         r_we    = 0;
@@ -124,7 +126,8 @@ endtask
    end
    endtask 
 
-   `define REFRESH_CNT 300 // 15us = 405 periods
+   `define REFRESH_CNT 300 // 15us = 405 periods at 27MHz
+   `define REFRESH_CNT_MAX 405
    always @(posedge clk) begin
       if(state == 8'd51)
          r_refreshcnt <= 0;
@@ -138,6 +141,7 @@ endtask
 `ifdef DRAM_REFRESH_LOGIC
       read_request <= 0;
       write_request <= 0;
+      r_late_refresh <= 0;
 `endif
       state <= 0;
       state_next <= 0;
@@ -150,9 +154,13 @@ endtask
          prepare_write;
       end 
 `ifdef DRAM_REFRESH_LOGIC
-      else if((r_refreshcnt > `REFRESH_CNT) && !w_busy) begin
+      else if((r_refreshcnt > `REFRESH_CNT) && 
+               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID)) 
+               && !w_busy) begin
          // ram refresh
          prepare_refresh;
+         if(r_refresh > `REFRESH_CNT_MAX)
+            r_late_refresh <= 1;
       end
    8'd50: begin
       if(first_read == 0 && i_rd_en) begin

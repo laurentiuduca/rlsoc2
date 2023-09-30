@@ -19,7 +19,7 @@
 //`define ARTYA7
 /**************************************************************************************************/
 //`define VERILATOR
-`define SIM_MODE
+//`define SIM_MODE
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE
