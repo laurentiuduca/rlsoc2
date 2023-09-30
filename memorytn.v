@@ -39,7 +39,9 @@ module DRAM_conRV
      input wire clk_sdram,
      output wire o_init_calib_complete,
      output wire sdram_fail,
-     output reg r_late_refresh,
+     `ifdef DRAM_REFRESH_LOGIC
+     output reg r_late_refresh
+     `endif
 );
 
     reg         r_we    = 0;
@@ -116,7 +118,6 @@ endtask
    reg [31:0] r_refreshcnt = 0;
    reg read_request=0;
    reg write_request=0;
-   reg first_read=0, first_write=0;
    
    task prepare_refresh;
    begin
@@ -163,14 +164,12 @@ endtask
             r_late_refresh <= 1;
       end
    8'd50: begin
-      if(first_read == 0 && i_rd_en) begin
+      if(read_request == 0 && i_rd_en) begin
          prepare_read_base;
          read_request <= 1;
-         first_read <= 1;
-      end else if(first_write == 0 && i_wr_en) begin
+      end else if(write_request == 0 && i_wr_en) begin
          prepare_write_base;
          write_request <= 1;
-         first_write <= 1;
       end
 		if(w_busy) begin
          r_refresh <= 0;
@@ -182,11 +181,9 @@ endtask
       if(!w_busy) begin
          if(read_request) begin
             read_request <= 0;
-            first_read <= 0;
             prepare_read_end;
          end else if(write_request) begin
             write_request <= 0;
-            first_write <= 0;
             prepare_write_end;
          end else begin
             r_stall <= 0;

@@ -765,7 +765,9 @@ end
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done),
                                .sdram_fail(sdram_fail),
-                               .r_late_refresh(w_late_refresh)
+                               `ifdef DRAM_REFRESH_LOGIC
+                               .r_late_refresh(w_late_refresh),
+                               `endif
 
                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
