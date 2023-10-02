@@ -368,8 +368,8 @@ endtask
 //    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
 //        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
 //        .w_mtime(w_mtime[31:0]));
-    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
-        .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_ctrl(r_ctrl), .w_stall(w_busy), 
+    m_sdram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
+        .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_mask(r_mask), .w_stall(w_busy), 
         .w_mtime(w_mtime[31:0]),
         `ifdef DRAM_REFRESH_LOGIC
         .w_refresh(r_refresh)
