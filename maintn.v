@@ -75,6 +75,10 @@ module m_topsim(CLK, RST_X);
     wire pll_clk = CLK;
     wire w_txd;
     wire w_rxd;
+    wire clk_sdram;
+    wire MAX7219_CLK;
+    wire MAX7219_DATA;
+    wire MAX7219_LOAD;
 `endif
 
     /**********************************************************************************************/
@@ -757,11 +761,11 @@ module m_topsim(CLK, RST_X);
     wire w_wr_en =                  w_zero_we || w_pl_init_we || r_sd_init_we || w_dram_we_t;
 `endif
 
-`ifdef SIM_MODE
-    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
-        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
-        .w_mtime(w_mtime[31:0]));
-`else
+//`ifdef SIM_MODE
+//    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
+//        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
+//        .w_mtime(w_mtime[31:0]));
+//`else
     wire sdram_fail;
     wire w_late_refresh;
     DRAM_conRV dram_con (
@@ -771,7 +775,11 @@ module m_topsim(CLK, RST_X);
 `else
                                .i_rd_en(w_dram_le),
 `endif
+                                `ifdef SIM_MODE
+                               .i_wr_en(w_dram_we_t),
+                                `else
                                .i_wr_en(w_wr_en),
+                               `endif
                                .i_addr(w_dram_addr_t2),
                                .i_data(w_dram_wdata_t),
                                .o_data(w_dram_odata),
@@ -789,7 +797,10 @@ module m_topsim(CLK, RST_X);
                                .r_late_refresh(w_late_refresh),
                                `endif
 
-                               .O_sdram_clk(O_sdram_clk),
+                                `ifdef SIM_MODE
+                                .w_mtime(w_mtime)
+                                `else
+                                .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
                                .O_sdram_cs_n(O_sdram_cs_n),            // chip select
                                .O_sdram_cas_n(O_sdram_cas_n),           // columns address select
@@ -799,61 +810,13 @@ module m_topsim(CLK, RST_X);
                                .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
+                               `endif
                                );
-`endif // SIM_MODE
+//`endif // SIM_MODE
     /**********************************************************************************************/
-`ifdef SIM_MODE
-    // LOAD linux
-    integer j;
-    //integer k;
-    reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
-    reg  [7:0] mem_disk[0:`DISK_SIZE-1];
-    initial begin
-`ifndef VERILATOR
-    #1
-`endif
-
-`ifdef LINUX
-        $write("Load image file: %s\n", `IMAGE_FILE);
-        $readmemh(`IMAGE_FILE, mem_disk);
-        j=`BBL_SIZE;
-
-        for(i=0;i<`DISK_SIZE;i=i+1) begin
-`ifdef DRAM_SIM
-`ifdef SKIP_CACHE
-	    idbmem.idbmem.mem[j]=mem_disk[i];
-`else
-	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
-`endif
-`else
-	    idbmem.idbmem.mem[j]=mem_disk[i];
-`endif // DRAM_SIM
-            j=j+1;
-        end
-`endif // LINUX
-
-        $write("Running %s\n", {`HEX_DIR,`HEXFILE});
-        $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
-        j=0;
-
-        for(i=0;i<`BBL_SIZE;i=i+1) begin
-`ifdef DRAM_SIM
-`ifdef SKIP_CACHE
-        idbmem.idbmem.mem[j]=mem_bbl[i];
-`else
-	    idbmem.cache_ctrl.mi.mem[j]=mem_bbl[i];
-`endif
-`else
-	    idbmem.idbmem.mem[j]=mem_bbl[i];
-`endif // DRAM_SIM
-            j=j+1;
-        end
-        $write("-------------------------------------------------------------------\n");
-    end
-
-/**********************************************************************************************/
 
 /***********************************          write time        *******************************/
+`ifdef SIM_MODE
 `define LAUR_WRITE_TIME
 `ifdef LAUR_WRITE_TIME
     reg [63:0] old_w_mtime=0;

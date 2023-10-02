@@ -20,6 +20,7 @@
 /**************************************************************************************************/
 //`define VERILATOR
 `define SIM_MODE
+//`define DRAM_REFRESH_LOGIC
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE
@@ -222,7 +223,6 @@ error
 `ifndef SIM_MODE
 	`define LAUR_MEM_RB // mem read-back after writing it with BBL
 	`define LAUR_MEM_RB_ONLY_CHECK
-    `define DRAM_REFRESH_LOGIC
 `endif
 
 `define BBL_SIZE (8*1024*1024) //(64*1024*1024)

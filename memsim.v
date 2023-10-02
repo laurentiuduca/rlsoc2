@@ -484,7 +484,7 @@ endmodule
 /**** Byte unit BRAM Main Memory module with LATENCY for simulation (1-port)                   ****/
 /**************************************************************************************************/
 module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
-            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall);
+            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_refresh);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
     output wire [`XLEN-1:0] w_odata;
@@ -492,7 +492,8 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
     input  wire [`XLEN-1:0] w_wdata;
     input  wire       [2:0] w_ctrl;
     output wire             w_stall;
-
+    input  wire             w_refresh;
+    
     reg   [2:0] r_ctrl  = 0;
     reg  [31:0] r_cnt   = 0;
 
@@ -528,6 +529,9 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                         r_wdata <= (w_ctrl[1:0] == 0) ? {24'h0, w_wdata[7:0]} :
                                    (w_ctrl[1:0] == 1) ? {16'h0, w_wdata[15:0]} : w_wdata;
                         r_ctrl <= w_ctrl;
+                end else if(w_refresh) begin
+                        state <= 3;
+                        r_stall <= 1;
                 end
         8'd1: begin // mem read
 		r_odata <= {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]};
@@ -565,6 +569,11 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
 		state <= 0;
                 r_stall <= 0;
 	end
+        8'd3: begin
+                // refresh done
+                state <= 0;
+                r_stall <= 0;
+        end
         endcase
     end
 endmodule
@@ -572,7 +581,7 @@ endmodule
 /**** BRAM Wrapper for simulation (1-port)                                                     ****/
 /**************************************************************************************************/
 module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
-            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
+            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime, w_refresh);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
     output wire [`XLEN-1:0] w_odata;
@@ -581,10 +590,12 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
     input  wire       [2:0] w_ctrl;
     output wire             w_stall;
     input  wire      [31:0] w_mtime;
+    input  wire             w_refresh;
 
     m_bu_mem#(MEM_SIZE) idbmem(CLK, w_addr, w_odata,
-                                w_we, w_le, w_wdata, w_ctrl, w_stall);
+                                w_we, w_le, w_wdata, w_ctrl, w_stall, w_refresh);
 
 endmodule
+
 `endif // DRAM_SIM
 

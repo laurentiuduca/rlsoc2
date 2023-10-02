@@ -21,6 +21,10 @@ module DRAM_conRV
      input  wire [2:0]                   sys_state,
      input  wire [3:0]                   w_bus_cpustate,
 
+
+   `ifdef SIM_MODE
+      input [31:0] w_mtime,
+   `else
     // SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -32,15 +36,16 @@ module DRAM_conRV
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm,       // 32/4
+    `endif
 
+     `ifdef DRAM_REFRESH_LOGIC
+     output reg r_late_refresh,
+     `endif
      input wire clk,
      input wire rst_x,
      input wire clk_sdram,
      output wire o_init_calib_complete,
-     output wire sdram_fail,
-     `ifdef DRAM_REFRESH_LOGIC
-     output reg r_late_refresh
-     `endif
+     output wire sdram_fail
 );
 
     reg         r_we    = 0;
@@ -155,8 +160,8 @@ endtask
       end 
 `ifdef DRAM_REFRESH_LOGIC
       else if((r_refreshcnt > `REFRESH_CNT) && 
-               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID)) 
-               && !w_busy) begin
+               //((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID)) &&
+               !w_busy) begin
          // ram refresh
          prepare_refresh;
          if(r_refresh > `REFRESH_CNT_MAX)
@@ -359,6 +364,21 @@ endtask
 	endcase
 	end
 
+`ifdef SIM_MODE
+//    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
+//        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
+//        .w_mtime(w_mtime[31:0]));
+    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
+        .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_ctrl(r_ctrl), .w_stall(w_busy), 
+        .w_mtime(w_mtime[31:0]),
+        `ifdef DRAM_REFRESH_LOGIC
+        .w_refresh(r_refresh)
+        `else
+        .w_refresh(0)
+        `endif
+        );
+
+`else
     MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(rst_x),
         .read_a(r_rd), 
         .read_b(1'b0),
@@ -373,7 +393,59 @@ endtask
         .SDRAM_nWE(O_sdram_wen_n), .SDRAM_nRAS(O_sdram_ras_n), .SDRAM_nCAS(O_sdram_cas_n), 
         .SDRAM_CLK(O_sdram_clk), .SDRAM_CKE(O_sdram_cke), .SDRAM_DQM(O_sdram_dqm)
     );
+`endif
 
+/**********************************************************************************************/
+
+`ifdef SIM_MODE
+    // LOAD linux
+    integer i, j;
+    //integer k;
+    reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
+    reg  [7:0] mem_disk[0:`DISK_SIZE-1];
+    initial begin
+`ifndef VERILATOR
+    #1
+`endif
+
+`ifdef LINUX
+        $write("Load image file: %s\n", `IMAGE_FILE);
+        $readmemh(`IMAGE_FILE, mem_disk);
+        j=`BBL_SIZE;
+
+        for(i=0;i<`DISK_SIZE;i=i+1) begin
+`ifdef DRAM_SIM
+`ifdef SKIP_CACHE
+	    idbmem.idbmem.mem[j]=mem_disk[i];
+`else
+	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
+`endif
+`else
+	    idbmem.idbmem.mem[j]=mem_disk[i];
+`endif // DRAM_SIM
+            j=j+1;
+        end
+`endif // LINUX
+
+        $write("Running %s\n", {`HEX_DIR,`HEXFILE});
+        $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
+        j=0;
+
+        for(i=0;i<`BBL_SIZE;i=i+1) begin
+`ifdef DRAM_SIM
+`ifdef SKIP_CACHE
+        idbmem.idbmem.mem[j]=mem_bbl[i];
+`else
+	    idbmem.cache_ctrl.mi.mem[j]=mem_bbl[i];
+`endif
+`else
+	    idbmem.idbmem.mem[j]=mem_bbl[i];
+`endif // DRAM_SIM
+            j=j+1;
+        end
+        $write("-------------------------------------------------------------------\n");
+    end
+`endif
 endmodule
 /**************************************************************************************************/
 
