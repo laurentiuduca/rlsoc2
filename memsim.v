@@ -484,7 +484,7 @@ endmodule
 /**** Byte unit BRAM Main Memory module with LATENCY for simulation (1-port)                   ****/
 /**************************************************************************************************/
 module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
-            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall);
+            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
     output wire [`XLEN-1:0] w_odata;
@@ -492,6 +492,7 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
     input  wire [`XLEN-1:0] w_wdata;
     input  wire       [2:0] w_ctrl;
     output wire             w_stall;
+    input  wire [31:0]      w_mtime;
     
     reg   [2:0] r_ctrl  = 0;
     reg  [31:0] r_cnt   = 0;
@@ -564,6 +565,11 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
 		//state <= 11; // 10
 		state <= 0;
                 r_stall <= 0;
+                `ifdef RAM_DEBUG
+                if(w_mtime < `mtsm)
+                        $display ("%08d: write mem[%x]<=%x with ctrl=%b", w_mtime, r_maddr, r_wdata, r_ctrl);
+                `endif
+
 	end
         endcase
     end
@@ -583,7 +589,7 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
     input  wire      [31:0] w_mtime;
 
     m_bu_mem#(MEM_SIZE) idbmem(CLK, w_addr, w_odata,
-                                w_we, w_le, w_wdata, w_ctrl, w_stall);
+                                w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
 
 endmodule
 
@@ -591,7 +597,7 @@ endmodule
 /**** sdRAM Main Memory module
 /**************************************************************************************************/
 module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
-            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_refresh);
+            (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
     input  wire             CLK;
     input  wire [`XLEN-1:0] w_addr;
     output wire [`XLEN-1:0] w_odata;
@@ -599,6 +605,7 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
     input  wire [`XLEN-1:0] w_wdata;
     input  wire       [3:0] w_mask;
     output wire             w_stall;
+    input  wire [31:0]      w_mtime;
     input  wire             w_refresh;
     
     reg   [3:0] r_mask  = 0;
@@ -624,18 +631,27 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                         state <= 1;
                         r_stall <= 1;
                         r_maddr <= w_addr;
+                        if(w_addr[1:0])
+                                $display("unaligned read: w_addr=%x", w_addr);
                 end else if(w_we) begin
                         state <= 2;
                         r_stall <= 1;
                         r_maddr <= w_addr;
                         r_wdata <= w_wdata;
                         r_mask <= w_mask;
+                        if(w_addr[1:0])
+                                $display("unaligned write: w_addr=%x", w_addr);
                 end else if(w_refresh) begin
+                        $display("mem refresh");
                         state <= 3;
                         r_stall <= 1;
                 end
         8'd1: begin // mem read
 		r_odata <= {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]};
+                `ifdef RAM_DEBUG
+                //if(w_mtime < `mtsm)
+                        //$display ("%08d: read mem[%x]=>%x", w_mtime, r_maddr, {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]});
+                `endif
 		//state <= 11; // 10
 		//r_cnt <= 0;
 		state <= 0;
@@ -662,6 +678,10 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                         mem[r_maddr+2] <= r_wdata[23:16];
                 else if(r_mask[3])
                         mem[r_maddr+3] <= r_wdata[31:24];
+                `ifdef RAM_DEBUG
+                if(w_mtime < `mtsm)
+                        $display ("%08d: write mem[%x]<=%x with mask=%b", w_mtime, r_maddr, r_wdata, r_mask);
+                `endif
 		//r_cnt <= 0;
 		//state <= 11; // 10
 		state <= 0;
@@ -691,7 +711,7 @@ module m_sdram_sim#(parameter MEM_SIZE = `MEM_SIZE)
     input  wire             w_refresh;
 
     m_sbu_mem#(MEM_SIZE) idbmem(CLK, w_addr, w_odata,
-                                w_we, w_le, w_wdata, w_mask, w_stall, w_refresh);
+                                w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
 
 endmodule
 

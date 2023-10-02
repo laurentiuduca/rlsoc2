@@ -768,6 +768,7 @@ module m_topsim(CLK, RST_X);
 //`else
     wire sdram_fail;
     wire w_late_refresh;
+    wire [7:0] w_mem_state;
     DRAM_conRV dram_con (
                                // user interface ports
 `ifdef LAUR_MEM_RB
@@ -787,6 +788,7 @@ module m_topsim(CLK, RST_X);
                                .i_ctrl(w_dram_ctrl_t),
                                .sys_state(r_init_state),
                                .w_bus_cpustate(w_bus_cpustate),
+                               .mem_state(w_mem_state),
 
                                .clk(pll_clk),
                                .rst_x(RST_X),
@@ -861,6 +863,33 @@ module m_topsim(CLK, RST_X);
                     //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
 `endif
     /**********************************************************************************************/
+ 
+`ifdef RAM_DEBUG
+reg [31:0] o_pc0=-1, o_ir0=-1, old_time=-1, rd_cnt=0, o_w_dram_odata=0;
+reg rle=0, rwe=0, rob=0;
+always @(posedge CLK)
+begin
+    if(w_mtime < `mtsm) begin
+        if(w_pc0 <= 32'h807024ec && (o_pc0 != w_pc0 || o_ir0 != w_ir0 || o_w_dram_odata != w_dram_odata || 
+            rle != w_dram_le || rwe != w_dram_we_t || rob != w_dram_busy)) 
+        begin 
+            o_pc0 <= w_pc0;
+            o_ir0 <= w_ir0;
+            o_w_dram_odata <= w_dram_odata;
+            rle <= w_dram_le;
+            rwe <= w_dram_we_t;
+            rob <= w_dram_busy;
+		$write("t=%08d busy=%x ms=%x pc0=%08x ir0=%08x w_dram_addr_t2=%x le=%x w=%x mw=%x w_dram_odata=%x\n\n",
+                	w_mtime[31:0], w_dram_busy, w_mem_state,
+                    w_pc0, w_ir0, w_dram_addr_t2,
+                    //core0.p.r_cpc, core0.p.r_ir,
+                    w_dram_le, w_dram_we_t, w_mem_we, w_dram_odata
+                    
+        );
+        end
+	end
+end
+`endif // RAM_DEBUG
 
 endmodule
 

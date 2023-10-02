@@ -21,6 +21,8 @@
 //`define VERILATOR
 `define SIM_MODE
 //`define DRAM_REFRESH_LOGIC
+`define RAM_DEBUG
+`define mtsm 1000
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE

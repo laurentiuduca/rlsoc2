@@ -20,6 +20,7 @@ module DRAM_conRV
      input  wire [2:0]                   i_ctrl,
      input  wire [2:0]                   sys_state,
      input  wire [3:0]                   w_bus_cpustate,
+     output wire [7:0]                   mem_state,
 
 
    `ifdef SIM_MODE
@@ -71,7 +72,9 @@ module DRAM_conRV
     reg r_stall = 0;
     assign o_busy = (r_stall | w_busy);
     reg [7:0] state_next = 0, state = 0;
+    assign mem_state = state;
     reg r_refresh = 0;
+    reg [1:0] action = 0;
 
 task prepare_read_base;
 begin
@@ -85,6 +88,7 @@ begin
 			state <= 10;
          r_stall <= 1;
          r_rd <= 1;
+         action <= 0;
 end
 endtask 
 task prepare_read;
@@ -109,6 +113,7 @@ task prepare_write_end;
 begin
 			state <= 20;
          r_stall <= 1;
+         action <= 1;
 end
 endtask 
 task prepare_write;
@@ -128,6 +133,7 @@ endtask
             state <= 50;
             r_refresh <= 1;
             r_stall <= 1;
+            action <= 6; // 2
    end
    endtask 
 
@@ -195,28 +201,51 @@ endtask
          end
       end
    end
-`endif
+`endif // DRAM_REFRESH_LOGIC
 	8'd10: begin //mem read
 		if(w_busy) begin
 			r_rd <= 0;
          state <= 11;
-		end 
+         `ifdef RAM_DEBUG
+               if(w_mtime < `mtsm)
+                  $display ("%08d: go to s11", w_mtime);
+         `endif
+		end else begin
+         `ifdef RAM_DEBUG
+               if(w_mtime < `mtsm)
+                  $display ("%08d: s10 read waits", w_mtime);
+         `endif
+      end
 	end
 	8'd11: begin
-		 if(!w_busy) begin
+		if(!w_busy) begin
 			r_dram_odata1 <= w_dram_odata;
 			if((r_addr[1:0] == 0) || 
 				(r_ctrl[1:0] == 0) || // lb
 				((r_addr[1:0] <= 2) && (r_ctrl[1:0] == 1))) // lh
-				// one read is enough
+			begin
+            // one read is enough
+            `ifdef RAM_DEBUG
+               if(w_mtime < `mtsm)
+                  $display ("%08d: go to s100 ", w_mtime);
+            `endif
 				state <= 100;
-			else begin
+			end else begin
+            `ifdef RAM_DEBUG
+               if(w_mtime < `mtsm)
+                  $display ("%08d: start second read after r_maddr=%x, r_addr=%x", w_mtime, r_maddr, r_addr);
+            `endif
 				state <= 12;
 				r_rd <= 1;
 				r_maddr <= r_maddr + 4;
 			end
-		 end
-        end
+		end else begin
+         `ifdef RAM_DEBUG
+               if(w_mtime < `mtsm)
+                  $display ("%08d: s11 read waits", w_mtime);
+         `endif
+      end
+   end
 	8'd12: begin 
 		// idem state 10
 		if(w_busy) begin
@@ -230,11 +259,22 @@ endtask
          //r_dram_odata2 <= w_dram_odata[23:0];
 			r_dram_odata2 <= w_dram_odata;
          state <= 100;
+         `ifdef RAM_DEBUG
+            if(w_mtime < `mtsm)
+               if(action == 0)
+                  $display ("%08d: read mem[%x]=>%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
+               //else
+               //   $display ("%08d: write mem[%x]<=%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
+         `endif
       end
 	end
 	8'd100: begin 
 		state <= 0;
 		r_stall <= 0;
+      `ifdef RAM_DEBUG
+            if(w_mtime < `mtsm)
+                  $display ("%08d: 100 goes to 0 with w_busy=%x", w_mtime, w_busy);
+      `endif
 	end
 	8'd20: begin // mem_write
 		if(r_ctrl[1:0]==0) begin // SB
@@ -311,8 +351,6 @@ endtask
             state_next <= 42;
 			end
      end
-         state <= 21;
-		   r_we <= 1;
 	end
 	8'd21: begin
 		if(w_busy) begin
