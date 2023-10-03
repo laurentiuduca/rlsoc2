@@ -206,17 +206,8 @@ endtask
 		if(w_busy) begin
 			r_rd <= 0;
          state <= 11;
-         `ifdef RAM_DEBUG
-               if(w_mtime < `mtsm)
-                  $display ("%08d: go to s11", w_mtime);
-         `endif
-		end else begin
-         `ifdef RAM_DEBUG
-               if(w_mtime < `mtsm)
-                  $display ("%08d: s10 read waits", w_mtime);
-         `endif
-      end
-	end
+		end
+   end
 	8'd11: begin
 		if(!w_busy) begin
 			r_dram_odata1 <= w_dram_odata;
@@ -225,10 +216,6 @@ endtask
 				((r_addr[1:0] <= 2) && (r_ctrl[1:0] == 1))) // lh
 			begin
             // one read is enough
-            `ifdef RAM_DEBUG
-               if(w_mtime < `mtsm)
-                  $display ("%08d: go to s100 ", w_mtime);
-            `endif
 				state <= 100;
 			end else begin
             `ifdef RAM_DEBUG
@@ -239,12 +226,7 @@ endtask
 				r_rd <= 1;
 				r_maddr <= r_maddr + 4;
 			end
-		end else begin
-         `ifdef RAM_DEBUG
-               if(w_mtime < `mtsm)
-                  $display ("%08d: s11 read waits", w_mtime);
-         `endif
-      end
+		end
    end
 	8'd12: begin 
 		// idem state 10
@@ -271,10 +253,6 @@ endtask
 	8'd100: begin 
 		state <= 0;
 		r_stall <= 0;
-      `ifdef RAM_DEBUG
-            if(w_mtime < `mtsm)
-                  $display ("%08d: 100 goes to 0 with w_busy=%x", w_mtime, w_busy);
-      `endif
 	end
 	8'd20: begin // mem_write
 		if(r_ctrl[1:0]==0) begin // SB
