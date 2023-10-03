@@ -18,11 +18,10 @@
 `endif
 //`define ARTYA7
 /**************************************************************************************************/
-//`define VERILATOR
 `define SIM_MODE
 //`define DRAM_REFRESH_LOGIC
 `define RAM_DEBUG
-`define mtsm 1000
+`define mtsm 10000
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE
@@ -111,8 +110,12 @@ error
 // speed up a little bit the simulation
 `define SERIAL_WCNT 2
 `else
+`ifdef SIM_MODE
+`define SERIAL_WCNT 13
+`else 
 `define SERIAL_WCNT (`FREQ / 115200)
 `define BYPASS_PLOADER
+`endif
 `endif
 
 

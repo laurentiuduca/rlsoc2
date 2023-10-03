@@ -85,15 +85,16 @@ module UartTx(CLK, RST_X, DATA, WE, TXD, READY);
             if( WE )begin
 `ifdef SIM_MODE
 		        $write("%c", DATA);
-`ifndef VERILATOR
+                `ifdef VERILATOR
                 $fflush();
-`endif
+                `endif
 `endif
                 READY <= 1'b0;
                 cmd   <= {DATA, 1'b0};
                 cnt   <= 10;
             end
         end else if( waitnum >= `SERIAL_WCNT ) begin
+            //$display("tx sending..");
             TXD       <= cmd[0];
             READY     <= (cnt == 1);
             cmd       <= {1'b1, cmd[8:1]};

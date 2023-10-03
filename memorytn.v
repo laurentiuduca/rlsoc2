@@ -268,66 +268,50 @@ endtask
             r_mask <= 4'b1000;
 				r_wdata <= r_wdata_ui << 24;
 			end
-			r_we <= 1;
-			state <= 21;
 			state_next <= 100;
       end else if(r_ctrl[1:0]==1) begin // SH
 			if(r_addr[1:0] == 0) begin
 				r_mask <= 4'b0011;
 				r_wdata <= r_wdata_ui;
-				r_we <= 1;
-				state <= 21;
 				state_next <= 100;
 			end else if (r_addr[1:0] == 1) begin
 				r_mask <= 4'b0110;
 				r_wdata <= r_wdata_ui << 8;
-				r_we <= 1;
-				state <= 21;
 				state_next <= 100;
 			end else if (r_addr[1:0] == 2) begin
             r_mask <= 4'b1100;
-            r_we <= 1;
             r_wdata <= r_wdata_ui << 16;
-            state <= 21;
             state_next <= 100;
 			end else if (r_addr[1:0] == 3) begin
 				// write in two cycles.
             r_mask <= 4'b1000;
             r_wdata <= r_wdata_ui << 24;
-				r_we <= 1;
-            state <= 21;
             state_next <= 31;
 			end
      end else if(r_ctrl[1:0]==2) begin // SW
 			if(r_addr[1:0] == 0) begin
 				r_mask <= 4'b1111;
 				r_wdata <= r_wdata_ui;
-				r_we <= 1;
-            state <= 21;
             state_next <= 100;
 			end else if(r_addr[1:0] == 1) begin
 				// write in two cycles.
 				r_mask <= 4'b1110;
 				r_wdata <= r_wdata_ui << 8;
-				r_we <= 1;
-				state <= 21;
 				state_next <= 40;
 			end else if(r_addr[1:0] == 2) begin
 				// write in two cycles.
 				r_mask <= 4'b1100;
             r_wdata <= r_wdata_ui << 16;
-            r_we <= 1;
-            state <= 21;
             state_next <= 41;
 			end else if(r_addr[1:0] == 3) begin
 				// write in two cycles.
 				r_mask <= 4'b1000;
             r_wdata <= r_wdata_ui << 24;
-            r_we <= 1;
-            state <= 21;
-            state_next <= 42;
+             state_next <= 42;
 			end
      end
+     r_we <= 1;
+     state <= 21;
 	end
 	8'd21: begin
 		if(w_busy) begin
