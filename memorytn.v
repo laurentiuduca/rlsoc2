@@ -55,7 +55,6 @@ module DRAM_conRV
     wire[31:0] w_dram_odata;
     reg [3:0] r_mask = 0;
     reg   [2:0] r_ctrl  = 0;
-    reg [31:0] r_odata = 0;
     reg [31:0] r_dram_odata1 = 0;
     reg [23:0] r_dram_odata2 = 0;
     reg [31:0] r_maddr, r_addr;
@@ -220,7 +219,7 @@ endtask
 			end else begin
             `ifdef RAM_DEBUG
                if(w_mtime < `mtsm)
-                  $display ("%08d: start second read after r_maddr=%x, r_addr=%x", w_mtime, r_maddr, r_addr);
+                  $display ("%08d: ms=11 r_maddr=%x for r_addr=%x, start second read..", w_mtime, r_maddr, r_addr);
             `endif
 				state <= 12;
 				r_rd <= 1;
@@ -241,18 +240,18 @@ endtask
          //r_dram_odata2 <= w_dram_odata[23:0];
 			r_dram_odata2 <= w_dram_odata;
          state <= 100;
-         `ifdef RAM_DEBUG
-            if(w_mtime < `mtsm)
-               if(action == 0)
-                  $display ("%08d: read mem[%x]=>%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
-               //else
-               //   $display ("%08d: write mem[%x]<=%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
-         `endif
       end
 	end
 	8'd100: begin 
 		state <= 0;
 		r_stall <= 0;
+      `ifdef RAM_DEBUG
+         if(w_mtime < `mtsm)
+            if(action == 0)
+               $display ("%08d: ms=64 read mem[%x]=>%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
+            //else
+            //   $display ("%08d: write mem[%x]<=%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
+      `endif
 	end
 	8'd20: begin // mem_write
 		if(r_ctrl[1:0]==0) begin // SB
