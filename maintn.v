@@ -217,8 +217,10 @@ module m_topsim(CLK, RST_X);
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
                                     r_data_data <= {24'h0, r_char_value};
-                                end else
-                                    r_data_data <= 0;
+                                end //else begin
+                                    //r_data_data <= 0;
+                                    //$display ("HVC_BASE_TADDR r_data_data <= 0 ------------------------------------");
+                                //end
             default           : r_data_data <= w_dram_odata;
         endcase
     end
