@@ -24,7 +24,7 @@ module DRAM_conRV
 
 
    `ifdef SIM_MODE
-      input [31:0] w_mtime,
+      input wire [31:0] w_mtime,
    `else
     // SDRAM
     output wire O_sdram_clk,
@@ -54,7 +54,7 @@ module DRAM_conRV
     wire 	w_busy;
     wire[31:0] w_dram_odata;
     reg [3:0] r_mask = 0;
-    reg   [2:0] r_ctrl  = 0;
+    reg [2:0] r_ctrl  = 0;
     reg [31:0] r_dram_odata1 = 0;
     reg [23:0] r_dram_odata2 = 0;
     reg [31:0] r_maddr, r_addr;
@@ -80,6 +80,8 @@ begin
          r_addr <= i_addr;
 			r_maddr <= {i_addr[31:2], 2'b0};
          r_ctrl <= i_ctrl;
+         //if(i_ctrl[1:0] != 2)
+         //   $display("%08x: read with i_addr=%x i_ctrl[1:0]=%x", w_mtime, i_addr, i_ctrl[1:0]);
 end
 endtask 
 task prepare_read_end;
@@ -248,9 +250,9 @@ endtask
       `ifdef RAM_DEBUG
          if(w_mtime < `mtsm)
             if(action == 0)
-               $display ("%08d: ms=64 read mem[%x]=>%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
-            //else
-            //   $display ("%08d: write mem[%x]<=%x r_addr=%x r_ctrl=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl);
+               $display ("%08d: ms=64 read mem[%x]=>%x r_addr=%x r_ctrl[1:0]=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl[1:0]);
+            else
+               $display ("%08d: write mem[%x]<=%x r_addr=%x r_ctrl[1:0]=%x", w_mtime, r_maddr, r_wdata, r_addr, r_ctrl[1:0]);
       `endif
 	end
 	8'd20: begin // mem_write

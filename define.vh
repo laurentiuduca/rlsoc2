@@ -20,8 +20,7 @@
 /**************************************************************************************************/
 `define SIM_MODE
 //`define DRAM_REFRESH_LOGIC
-`define RAM_DEBUG
-`define mtsm 10
+`define mtsm 1000
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE
@@ -32,6 +31,7 @@ error
 // verify dts
 
 `ifdef SIM_MODE
+`define RAM_DEBUG
 //`define DRAM_SIM // slower
 //`define CACHE_DEBUG
 `endif

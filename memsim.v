@@ -115,7 +115,7 @@ endmodule
 /**** BRAM Wrapper for simulation (1-port)                                                     ****/
 /**************************************************************************************************/
 // template from memory.v
-/*
+
 module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)(
      input wire                         o_clk,
      input  wire [31:0]                  i_addr,
@@ -365,13 +365,13 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)(
 				     .o_data(w_dram_odata), .o_busy(w_busy), .i_mask(r_mask), .w_mtime(w_mtime));
 `endif // SKIP_CACHE
 endmodule
-*/
+
 /**************************************************************************************************/
 
 /**** Memory Controller with Cache                                                             ****/
 
 /**************************************************************************************************/
-/*
+
 module cache_ctrl#(parameter MEM_SIZE = `MEM_SIZE)(
      // on FPGA, o_clk is output
      input wire                         o_clk,
@@ -480,13 +480,13 @@ module cache_ctrl#(parameter MEM_SIZE = `MEM_SIZE)(
     m_bu_mem#(MEM_SIZE) idbmem(.CLK(o_clk), .w_addr(w_dram_addr), .w_odata(w_dram_odata),
                                .w_we(i_wr_en), .w_le(w_dram_le), .w_wdata(i_data), .w_ctrl(r_ctrl), .w_stall(w_dram_stall), .w_mask(~i_mask));
 endmodule
-*/
+
 `else
 // simplest memory model
 /**************************************************************************************************/
 /**** Byte unit BRAM Main Memory module with LATENCY for simulation (1-port)                   ****/
 /**************************************************************************************************/
-/*
+
 module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
     input  wire             CLK;
@@ -578,11 +578,11 @@ module m_bu_mem #(parameter MEM_SIZE = `MEM_SIZE)
         endcase
     end
 endmodule
-*/
+
 /**************************************************************************************************/
 /**** BRAM Wrapper for simulation (1-port)                                                     ****/
 /**************************************************************************************************/
-/*
+
 module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
     input  wire             CLK;
@@ -598,7 +598,7 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
                                 w_we, w_le, w_wdata, w_ctrl, w_stall, w_mtime);
 
 endmodule
-*/
+
 /**************************************************************************************************/
 /**** sdRAM Main Memory module
 /**************************************************************************************************/
@@ -648,7 +648,7 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                         if(w_addr[1:0])
                                 $display("unaligned write: w_addr=%x", w_addr);
                 end else if(w_refresh) begin
-                        $display("mem refresh");
+                        //$display("mem refresh");
                         state <= 3;
                         r_stall <= 1;
                 end
@@ -678,11 +678,11 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
 		//r_odata <= r_wdata;
 		if(r_mask[0])
                         mem[r_maddr] <= r_wdata[7:0];
-                else if(r_mask[1])
+                if(r_mask[1])
                         mem[r_maddr+1] <= r_wdata[15:8];
-                else if(r_mask[2])
+                if(r_mask[2])
                         mem[r_maddr+2] <= r_wdata[23:16];
-                else if(r_mask[3])
+                if(r_mask[3])
                         mem[r_maddr+3] <= r_wdata[31:24];
                 `ifdef RAM_DEBUG
                 if(w_mtime < `mtsm)
