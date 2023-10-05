@@ -167,7 +167,7 @@ endtask
       end 
 `ifdef DRAM_REFRESH_LOGIC
       else if((r_refreshcnt > `REFRESH_CNT) && 
-               //((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID)) &&
+               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID)) &&
                !w_busy) begin
          // ram refresh
          prepare_refresh;
@@ -175,12 +175,14 @@ endtask
             r_late_refresh <= 1;
       end
    8'd50: begin
-      if(read_request == 0 && i_rd_en) begin
-         prepare_read_base;
-         read_request <= 1;
-      end else if(write_request == 0 && i_wr_en) begin
-         prepare_write_base;
-         write_request <= 1;
+      if(!w_busy) begin
+         if(read_request == 0 && i_rd_en) begin
+            prepare_read_base;
+            read_request <= 1;
+         end else if(write_request == 0 && i_wr_en) begin
+            prepare_write_base;
+            write_request <= 1;
+         end
       end
 		if(w_busy) begin
          r_refresh <= 0;
@@ -190,6 +192,9 @@ endtask
    8'd51: begin 
       // r_stall is 1.
       if(!w_busy) begin
+         if(read_request || write_request) begin
+            $display("read_request=%x write_request=%x in refresh -----------------", read_request, write_request);
+         end
          if(read_request) begin
             read_request <= 0;
             prepare_read_end;
@@ -248,6 +253,8 @@ endtask
 		state <= 0;
 		r_stall <= 0;
       `ifdef RAM_DEBUG
+         if(r_rd || r_we)
+            $display("memorytn state 100 r_rd=%x r_we=%x --------------------------", r_rd, r_we);
          if(w_mtime < `mtsm)
             if(action == 0)
                $display ("%08d: ms=64 read mem[%x]=>%x r_addr=%x r_ctrl[1:0]=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl[1:0]);

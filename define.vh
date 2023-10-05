@@ -20,6 +20,7 @@
 /**************************************************************************************************/
 `define SIM_MODE
 `define DRAM_REFRESH_LOGIC
+`define USE_SINGLE_CORE
 `define mtsm 1
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
@@ -27,7 +28,6 @@
 error
 `endif
 `endif
-//`define USE_SINGLE_CORE
 // verify dts
 
 `ifdef SIM_MODE
