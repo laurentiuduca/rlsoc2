@@ -19,15 +19,15 @@
 //`define ARTYA7
 /**************************************************************************************************/
 `define SIM_MODE
-//`define DRAM_REFRESH_LOGIC
-`define mtsm 1000
+`define DRAM_REFRESH_LOGIC
+`define mtsm 1
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
 `ifdef SIM_MODE
 error
 `endif
 `endif
-`define USE_SINGLE_CORE
+//`define USE_SINGLE_CORE
 // verify dts
 
 `ifdef SIM_MODE
@@ -111,7 +111,7 @@ error
 `define SERIAL_WCNT 2
 `else
 `ifdef SIM_MODE
-`define SERIAL_WCNT 13
+`define SERIAL_WCNT 2
 `else 
 `define SERIAL_WCNT (`FREQ / 115200)
 `define BYPASS_PLOADER

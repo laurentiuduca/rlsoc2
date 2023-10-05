@@ -85,7 +85,7 @@ module UartTx(CLK, RST_X, DATA, WE, TXD, READY);
             if( WE )begin
 `ifdef SIM_MODE
 		        $write("%c", DATA);
-                `ifdef VERILATOR
+                `ifndef VERILATOR
                 $fflush();
                 `endif
 `endif

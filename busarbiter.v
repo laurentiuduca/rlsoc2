@@ -76,8 +76,9 @@ module busarbiter(
             if(state == 0) begin
                 if(no_req) begin
                     if(w_dram_busy || !w_tx_ready || w_mem_we || w_dram_le || w_dram_we_t ||
-                        w_plic_aces || r_plic_aces_t || w_plic_we || w_clint_we)
-                        $display("t=%8x no_req and busy grant=%1x ir=%x", w_mtime, grant[0], w_core_ir);
+                        w_plic_aces || r_plic_aces_t || w_plic_we || w_clint_we) begin
+                        //$display("t=%8x no_req and busy grant=%1x ir=%x", w_mtime, grant[0], w_core_ir);
+                    end
                     state <= 1;
                 end
             end else if(state == 1) begin
