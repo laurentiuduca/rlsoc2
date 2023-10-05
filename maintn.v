@@ -857,20 +857,11 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? rdbg: w_dram_odata;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_sd_checksum: w_dram_odata;
 
     reg [31:0] rdbg=0;
     reg raux=0;
-    always @ (posedge pll_clk) begin
-        if(r_init_state == 5 && !raux) begin //w_dram_addr==`D_START_PC) begin
-            if(w_dram_busy)
-                rdbg[0] <= 1;
-            else if (rdbg[0]) begin
-                rdbg <= w_dram_odata;
-                raux <= 1;
-            end
-        end
-    end
+
     assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {w_late_refresh, w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail} : 
                     (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[5:0]: ~ rdbg[11:6];
                     //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
