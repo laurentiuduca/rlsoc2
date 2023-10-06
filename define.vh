@@ -18,7 +18,7 @@
 `endif
 //`define ARTYA7
 /**************************************************************************************************/
-`define SIM_MODE
+//`define SIM_MODE
 `define DRAM_REFRESH_LOGIC
 `define USE_SINGLE_CORE
 `define mtsm 1

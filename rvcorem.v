@@ -827,15 +827,21 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if((w_mod & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0 ||
                    ((mstatus & `MSTATUS_MPRV) && (w_mod & `MSTATUS_MPP) != 0)) begin
                     r_tlb_flush <= 1;
-                end //else
-                //    r_tlb_flush <= 0;
+                end else begin
+                    //$display("r_tlb_flush remains %x ---------------------", r_tlb_flush);
+                    // avoid latch warning
+                    r_tlb_flush <= 0;
+                end
             end
             else if(r_op_CSR_SSTA) begin
                 if((w_mod & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0 ||
                    ((mstatus & `MSTATUS_MPRV) && (w_mod & `MSTATUS_MPP) != 0)) begin
                     r_tlb_flush <= 1;
-                end //else
-                //    r_tlb_flush <= 0;
+                end else begin
+                    //$display("r_tlb_flush remains %x ---------------------", r_tlb_flush);
+                    // avoid latch warning
+                    r_tlb_flush <= 0;
+                end
             end
             else r_tlb_flush <= 0;
         end
