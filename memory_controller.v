@@ -42,21 +42,21 @@ reg [22:0] MemAddr;
 reg MemRD, MemWR, MemRefresh, MemInitializing;
 reg [31:0] MemDin;
 wire [31:0] MemDout;
-reg [2:0] cycles;
+reg [7:0] cycles;
 reg r_read_a, r_read_b;
 reg [31:0] da, db;
 wire MemBusy, MemDataReady;
 
-assign dout_a = (cycles == 3'd4 && r_read_a) ? MemDout : da;
-assign dout_b = (cycles == 3'd4 && r_read_b) ? MemDout : db;
+assign dout_a = da;
+assign dout_b = db;
 
 // SDRAM driver
 sdram #(
     .FREQ(`FREQ)
 ) u_sdram (
     .clk(clk), .clk_sdram(clk_sdram), .resetn(resetn),
-	.addr(busy ? MemAddr : addr), .rd(busy ? MemRD : (read_a || read_b)), 
-    .wr(busy ? MemWR : write), .refresh(busy ? MemRefresh : refresh),
+	.addr(MemAddr), .rd(MemRD), 
+    .wr(MemWR), .refresh(MemRefresh),
     .mask(mask),
 	.din(busy ? MemDin : din), .dout(MemDout), .busy(MemBusy), .data_ready(MemDataReady),
 
@@ -68,7 +68,7 @@ sdram #(
 
 always @(posedge clk) begin
     MemWR <= 1'b0; MemRD <= 1'b0; MemRefresh <= 1'b0;
-    cycles <= cycles == 3'd7 ? 3'd7 : cycles + 3'd1;
+    cycles <= cycles == 255 ? 255 : cycles + 1;
     
     // Initiate read or write
     if (!busy) begin
@@ -79,11 +79,9 @@ always @(posedge clk) begin
             MemRefresh <= refresh;
             busy <= 1'b1;
             MemDin <= din;
-            cycles <= 3'd1;
+            cycles <= 1;
             r_read_a <= read_a;
             r_read_b <= read_b;
-
-            if (write) total_written <= total_written + 1;
         end 
     end else if (MemInitializing) begin
         if (~MemBusy) begin
@@ -94,7 +92,7 @@ always @(posedge clk) begin
         end
     end else begin
         // Wait for operation to finish and latch incoming data on read.
-        if (cycles == 3'd4) begin
+        if (cycles == 255 && !MemBusy) begin
             busy <= 0;
             if (r_read_a || r_read_b) begin
                 if (~MemDataReady)      // assert data ready
