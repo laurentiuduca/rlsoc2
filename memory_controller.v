@@ -67,9 +67,11 @@ sdram #(
 );
 
 always @(posedge clk) begin
-    MemWR <= 1'b0; MemRD <= 1'b0; MemRefresh <= 1'b0;
     cycles <= cycles == 255 ? 255 : cycles + 1;
     
+    if(MemBusy) begin
+        MemWR <= 1'b0; MemRD <= 1'b0; MemRefresh <= 1'b0;
+    end else
     // Initiate read or write
     if (!busy) begin
         if (read_a || read_b || write || refresh) begin
