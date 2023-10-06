@@ -92,7 +92,8 @@ always @(posedge clk) begin
         end
     end else begin
         // Wait for operation to finish and latch incoming data on read.
-        if (cycles == 255 && !MemBusy) begin
+        if (cycles == 255 && !MemBusy && 
+            (((r_read_a || r_read_b) && MemDataReady) || !(r_read_a || r_read_b)))  begin
             busy <= 0;
             if (r_read_a || r_read_b) begin
                 if (~MemDataReady)      // assert data ready

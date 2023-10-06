@@ -8,11 +8,11 @@
 
 module Gowin_rPLL_nes (clkout, clkoutp, lock, reset, clkin);
 
-output clkout;
-output clkoutp;
-output lock;
-input reset;
-input clkin;
+output wire clkout;
+output wire clkoutp;
+output wire lock;
+input wire reset;
+input wire clkin;
 
 wire clkoutp_o;
 wire clkoutd_o;
