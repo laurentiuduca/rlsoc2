@@ -42,21 +42,23 @@ reg [22:0] MemAddr;
 reg MemRD, MemWR, MemRefresh, MemInitializing;
 reg [31:0] MemDin;
 wire [31:0] MemDout;
-reg [7:0] cycles;
+reg [2:0] cycles;
+reg [7:0] wcycles=0;
+reg is_read=0, is_write=0, is_refresh=0;
 reg r_read_a, r_read_b;
 reg [31:0] da, db;
 wire MemBusy, MemDataReady;
 
-assign dout_a = da;
-assign dout_b = db;
+assign dout_a = (cycles == 3'd4 && r_read_a) ? MemDout : da;
+assign dout_b = (cycles == 3'd4 && r_read_b) ? MemDout : db;
 
 // SDRAM driver
 sdram #(
     .FREQ(`FREQ)
 ) u_sdram (
     .clk(clk), .clk_sdram(clk_sdram), .resetn(resetn),
-	.addr(MemAddr), .rd(MemRD), 
-    .wr(MemWR), .refresh(MemRefresh),
+	.addr(busy ? MemAddr : addr), .rd(busy ? MemRD : (read_a || read_b)), 
+    .wr(busy ? MemWR : write), .refresh(busy ? MemRefresh : refresh),
     .mask(mask),
 	.din(busy ? MemDin : din), .dout(MemDout), .busy(MemBusy), .data_ready(MemDataReady),
 
@@ -67,11 +69,9 @@ sdram #(
 );
 
 always @(posedge clk) begin
-    cycles <= cycles == 255 ? 255 : cycles + 1;
-    
-    if(MemBusy) begin
-        MemWR <= 1'b0; MemRD <= 1'b0; MemRefresh <= 1'b0;
-    end else
+    MemWR <= 1'b0; MemRD <= 1'b0; MemRefresh <= 1'b0;
+    cycles <= cycles == 3'd7 ? 3'd7 : cycles + 3'd1;
+    wcycles <= wcycles + 1;
     // Initiate read or write
     if (!busy) begin
         if (read_a || read_b || write || refresh) begin
@@ -81,9 +81,24 @@ always @(posedge clk) begin
             MemRefresh <= refresh;
             busy <= 1'b1;
             MemDin <= din;
-            cycles <= 1;
+            cycles <= 3'd1;
+            wcycles <= 1;
             r_read_a <= read_a;
             r_read_b <= read_b;
+
+            if(read_a || read_b) begin
+                is_refresh <= 0;
+                is_read <= 1;
+                is_write <= 0;
+            end else if (write) begin
+                is_refresh <= 0;
+                is_read <= 0;
+                is_write <= 1;
+            end else begin
+                is_refresh <= 1;
+                is_read <= 0;
+                is_write <= 0;
+            end
         end 
     end else if (MemInitializing) begin
         if (~MemBusy) begin
@@ -94,8 +109,9 @@ always @(posedge clk) begin
         end
     end else begin
         // Wait for operation to finish and latch incoming data on read.
-        if (cycles == 255 && !MemBusy && 
-            (((r_read_a || r_read_b) && MemDataReady) || !(r_read_a || r_read_b)))  begin
+        if (((cycles == 3'd4) && (is_read || is_refresh)) || 
+            (wcycles >= 100 && is_write))
+        begin
             busy <= 0;
             if (r_read_a || r_read_b) begin
                 if (~MemDataReady)      // assert data ready
