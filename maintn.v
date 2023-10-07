@@ -862,7 +862,9 @@ module m_topsim(CLK, RST_X);
     reg [31:0] rdbg=0;
     reg raux=0;
 
-    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? ~ {r_init_state == 5, w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, r_bbl_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} : 
+    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? 
+                        ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
+                           r_bbl_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} : 
                     (w_btnl == 1 && w_btnr == 0) ? ~ rdbg[5:0]: ~ rdbg[11:6];
                     //(w_btnl == 0 && w_btnr == 1) ? ~ w_sd_init_data[5:0];
 `endif

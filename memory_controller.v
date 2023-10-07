@@ -71,7 +71,7 @@ sdram #(
 always @(posedge clk) begin
     MemWR <= 1'b0; MemRD <= 1'b0; MemRefresh <= 1'b0;
     cycles <= cycles == 3'd7 ? 3'd7 : cycles + 3'd1;
-    wcycles <= wcycles + 1;
+    wcycles <= wcycles == 255 ? 255 : wcycles + 1;
     // Initiate read or write
     if (!busy) begin
         if (read_a || read_b || write || refresh) begin
@@ -110,7 +110,7 @@ always @(posedge clk) begin
     end else begin
         // Wait for operation to finish and latch incoming data on read.
         if (((cycles == 3'd4) && (is_read || is_refresh)) || 
-            (wcycles >= 100 && is_write))
+            (wcycles >= 100 && is_write && !MemBusy))
         begin
             busy <= 0;
             if (r_read_a || r_read_b) begin
