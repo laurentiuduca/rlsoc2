@@ -830,7 +830,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end else begin
                     //$display("r_tlb_flush remains %x ---------------------", r_tlb_flush);
                     // avoid latch warning
-                    r_tlb_flush <= 0;
+                    //r_tlb_flush <= 0;
                 end
             end
             else if(r_op_CSR_SSTA) begin
@@ -840,7 +840,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end else begin
                     //$display("r_tlb_flush remains %x ---------------------", r_tlb_flush);
                     // avoid latch warning
-                    r_tlb_flush <= 0;
+                    //r_tlb_flush <= 0;
                 end
             end
             else r_tlb_flush <= 0;
@@ -1363,7 +1363,11 @@ module m_decomp(w_ic, r_iw);
             {2'b11, 3'b101}: r_iw=w_ic;
             {2'b11, 3'b110}: r_iw=w_ic;
             {2'b11, 3'b111}: r_iw=w_ic;
-            //default        : r_iw=w_ic;
+            default        : begin
+                //$display("r_iw default -------------------------------- %x", {w_ic[1:0], w_ic[15:13]});
+                // error for 04xxx - not defined; it is reserved by riscv authors
+                // latch warning
+            end
         endcase
     end
 endmodule
