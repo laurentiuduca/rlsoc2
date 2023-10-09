@@ -138,7 +138,8 @@ endtask
    end
    endtask 
 
-   `define REFRESH_CNT 300 // 15us = 405 periods at 27MHz
+   // 15us = 405 periods at 27MHz. a write takes maximum 100 cycles and two 200
+   `define REFRESH_CNT 200 
    `define REFRESH_CNT_MAX 405
    always @(posedge clk) begin
       if(state == 8'd51)
