@@ -246,8 +246,8 @@ module m_topsim(CLK, RST_X);
     assign w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
             ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
 
-    //reg  [31:0] r_wmip = 0;
-    //reg         r_plic_we = 0;
+    reg  [31:0] r_wmip = 0;
+    reg         r_plic_we = 0;
 
     reg  [31:0] r_plic_pending_irq_t    = 0;
     reg  [31:0] r_plic_served_irq_t     = 0;
@@ -394,16 +394,12 @@ module m_topsim(CLK, RST_X);
     reg r_rb_uart_we=0;
     reg [7:0] r_rb_uart_data;
 `endif
-    reg          r_finish=0, rtx_cmd=0;
+    reg          r_finish=0;
     always@(posedge pll_clk) begin
         // optimisation instead of w_mem_wdata put w_data_wdata
         if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR)) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
-            //`ifdef SIM_MODE
-            //    $display("%08x: tx w_tx_ready=%x called with %x='%c'", w_mtime, w_tx_ready, w_data_wdata[7:0], w_data_wdata[7:0]);
-            //`endif
-            rtx_cmd <= 1;
 `ifdef LAUR_MEM_RB
 	    end else if(r_rb_uart_we) begin
 		    r_uart_we <= 1;
@@ -412,7 +408,6 @@ module m_topsim(CLK, RST_X);
     	end else begin 
             r_uart_we   <= 0;
             r_uart_data <= 0;
-            rtx_cmd <= 0;
         end
         // Finish Simulation
         if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_data_wdata[31:16]==`CMD_POWER_OFF)) begin
@@ -420,12 +415,6 @@ module m_topsim(CLK, RST_X);
         end
     end
 
-`ifdef SIM_MODE
-    always@(posedge pll_clk) begin
-        //if(rtx_cmd)
-        //    $display("%08x: tx w_tx_ready=%x", w_mtime, w_tx_ready);
-    end
-`endif
 `ifdef SIM_MODE
     always@(posedge pll_clk) if (r_finish) begin
         $write("FINISH!\n");
@@ -444,7 +433,7 @@ module m_topsim(CLK, RST_X);
 
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_head        = 0;  // Note!!
     reg   [$clog2(`KEYBOARD_QUEUE_SIZE)-1:0] r_consf_tail        = 0;  // Note!!
-    
+
     reg         r_consf_en          = 0;
     reg   [7:0] cons_fifo [0:`KEYBOARD_QUEUE_SIZE-1];
     

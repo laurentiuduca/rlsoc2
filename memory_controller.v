@@ -110,7 +110,7 @@ always @(posedge clk) begin
     end else begin
         // Wait for operation to finish and latch incoming data on read.
         if (((cycles == 3'd4) && (is_read || is_refresh)) || 
-            (wcycles >= 100 && is_write && !MemBusy))
+            (wcycles >= 50 && is_write && !MemBusy))
         begin
             busy <= 0;
             if (r_read_a || r_read_b) begin

@@ -43,7 +43,6 @@ module m_mmu(
     input wire          w_tx_ready
     );
 
-
     /***** Address translation ********************************************************************/
     reg  [31:0] physical_addr       = 0;
     reg         page_walk_fail      = 0;
@@ -294,33 +293,24 @@ module m_tlb#(parameter ADDR_WIDTH = 20, D_WIDTH = 20, ENTRY = 4)
     output wire    [D_WIDTH-1:0]    w_odata;
     output wire                     w_oe;             //output enable
 
-function integer tlbclog2;
-  input integer value;
-  begin  
-    value = value-1;
-    for (tlbclog2=0; value>0; tlbclog2=tlbclog2+1)
-      value = value>>1;
-  end  
-endfunction
-
     reg                               [ENTRY-1:0]   r_valid = 0;
-    reg  [(ADDR_WIDTH-tlbclog2(ENTRY)+D_WIDTH)-1:0]   mem [0:ENTRY-1];
+    reg  [(ADDR_WIDTH-$clog2(ENTRY)+D_WIDTH)-1:0]   mem [0:ENTRY-1];
     integer i;
     initial for(i=0; i<ENTRY; i=i+1) mem[i] = 0;
 
     // READ
-    wire              [tlbclog2(ENTRY)-1:0]   w_ridx;
-    wire [(ADDR_WIDTH-tlbclog2(ENTRY))-1:0]   w_rtag;
+    wire              [$clog2(ENTRY)-1:0]   w_ridx;
+    wire [(ADDR_WIDTH-$clog2(ENTRY))-1:0]   w_rtag;
     assign {w_rtag, w_ridx} = w_raddr;
 
-    wire w_tagmatch = (mem[w_ridx][(ADDR_WIDTH-tlbclog2(ENTRY)+D_WIDTH)-1:D_WIDTH] == w_rtag);
+    wire w_tagmatch = (mem[w_ridx][(ADDR_WIDTH-$clog2(ENTRY)+D_WIDTH)-1:D_WIDTH] == w_rtag);
 
     assign w_odata  = mem[w_ridx][D_WIDTH-1:0];
     assign w_oe     = (w_tagmatch && r_valid[w_ridx]);
 
     // WRITE
-    wire              [tlbclog2(ENTRY)-1:0]   w_widx;
-    wire [(ADDR_WIDTH-tlbclog2(ENTRY))-1:0]   w_wtag;
+    wire              [$clog2(ENTRY)-1:0]   w_widx;
+    wire [(ADDR_WIDTH-$clog2(ENTRY))-1:0]   w_wtag;
     assign {w_wtag, w_widx} = w_waddr;
 
     always  @(posedge  CLK)  begin
