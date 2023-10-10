@@ -1,3 +1,5 @@
+
+
 cat /proc/cpuinfo
 
 #syntax: command<enter>

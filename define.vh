@@ -18,7 +18,7 @@
 `endif
 //`define ARTYA7
 /**************************************************************************************************/
-`define SIM_MODE
+//`define SIM_MODE
 `define DRAM_REFRESH_LOGIC
 `define USE_SINGLE_CORE
 `define mtsm 1
@@ -90,7 +90,7 @@ error
     `endif
 `else
 `ifdef USE_SINGLE_CORE
-    `define ENABLE_TIMER 64'd0510000000
+    `define ENABLE_TIMER 64'd0830000000
 `else
     `define ENABLE_TIMER 64'd1220000000
 `endif
