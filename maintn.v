@@ -366,10 +366,10 @@ module m_topsim(CLK, RST_X);
                 //$display("w_clint_we gnt=%1x", w_grant);
             end
         end else begin
+`ifdef SIM_MODE
             if(r_dev == `CLINT_BASE_TADDR && w_data_we != 0 &&
                 (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant != 0) ||
                  ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant != 1)))
-`ifdef SIM_MODE
                 $display("clint wrong grant offset");
 `endif
             r_was_clint_we <= 0;
