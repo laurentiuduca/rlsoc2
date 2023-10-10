@@ -53,7 +53,7 @@ module busarbiter(
                          (state == 1) ? 1 : 
                          (state == 2) ? 1 : w_dram_busy;
 
-    wire no_req = w_bus_cpustate == `S_ID;
+    wire no_req = (w_bus_cpustate == `S_ID);
     //wire [6:0] w_opcode  = w_core_ir[6:0];
     //wire [3:0] w_funct3  = w_core_ir[14:12];
     //wire [12:0] w_funct12 = w_core_ir[31:20];
