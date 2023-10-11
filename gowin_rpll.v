@@ -2,8 +2,8 @@
 //All rights reserved.
 //File Title: IP file
 //GOWIN Version: V1.9.8.05
-//Part Number: GW2A-LV18PG256C8/I7
-//Device: GW2A-18C
+//Part Number: GW2AR-LV18PG256C8/I7
+//Device: GW2AR-18C
 //Created Time: Fri May 06 23:06:50 2022
 
 module Gowin_rPLL_nes (clkout, clkoutp, lock, reset, clkin);

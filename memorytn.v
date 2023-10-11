@@ -138,7 +138,7 @@ endtask
    end
    endtask 
 
-   // 15us = 405 periods at 27MHz. a write takes maximum 100 cycles and two 200
+   // 15us = 405 periods at 27MHz
    `define REFRESH_CNT 200 
    `define REFRESH_CNT_MAX 405
    always @(posedge clk) begin
@@ -168,7 +168,7 @@ endtask
       end 
 `ifdef DRAM_REFRESH_LOGIC
       else if((r_refreshcnt > `REFRESH_CNT) && 
-               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID)) &&
+               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID_BISS)) &&
                !w_busy) begin
          // ram refresh
          prepare_refresh;

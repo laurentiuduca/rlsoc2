@@ -18,9 +18,9 @@
 `endif
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
+`define SIM_MODE
 `define DRAM_REFRESH_LOGIC
-`define USE_SINGLE_CORE
+//`define USE_SINGLE_CORE
 `define mtsm 1
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
@@ -90,7 +90,7 @@ error
     `endif
 `else
 `ifdef USE_SINGLE_CORE
-    `define ENABLE_TIMER 64'd0830000000
+    `define ENABLE_TIMER 64'd0880000000
 `else
     `define ENABLE_TIMER 64'd1220000000
 `endif
@@ -308,6 +308,18 @@ error
 `define S_IF  1     // Inst Fetch
 `define S_CVT 2     // Convert
 `define S_ID  3     // Inst Decode
+`define LAUR_S_ID2
+`ifdef LAUR_S_ID2
+`define S_ID_BISS 4
+`define S_OF  5     // Operand Fetch
+`define S_EX1 6     // Execution 1
+`define S_LD  7     // Load DATA
+`define S_EX2 8     // Execution 2
+`define S_SD  9     // Store DATA
+`define S_WB  10     // Write Back
+`define S_COM 11    // Complete Insn
+`define S_FIN 12    // Finish
+`else
 `define S_OF  4     // Operand Fetch
 `define S_EX1 5     // Execution 1
 `define S_LD  6     // Load DATA
@@ -316,7 +328,7 @@ error
 `define S_WB  9     // Write Back
 `define S_COM 10    // Complete Insn
 `define S_FIN 11    // Finish
-
+`endif
 /**************************************************************************************************/
 /**** TLB                                                                                      ****/
 /**************************************************************************************************/

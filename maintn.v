@@ -862,57 +862,6 @@ module m_topsim(CLK, RST_X);
 `ifdef SIM_MODE
 `ifdef RAM_DEBUG
 
-reg [7:0] fstate=0, faction=0, foc=0;
-reg [31:0] tnra=0, tnwa=0, tnwd=0, tncnt=0;
-reg [2:0] tnctrl=0;
-integer ftn;
-always @(posedge pll_clk)
-begin
-    if(foc == 0) begin
-        foc <= 1;
-        ftn = $fopen("ftn.txt", "w");
-	    if (ftn == 0) begin
-        	$display ("ERROR: ftn.txt not opened");
-	        $finish;
-	    end
-    end
-        if(fstate == 0) begin
-            if(w_dram_le && !w_dram_busy) begin
-                fstate <= 1;
-                faction <= 0;
-                tnra <= w_dram_addr_t2;
-                tnctrl <= w_dram_ctrl_t;
-            end else if(w_dram_we_t && !w_dram_busy) begin
-                fstate <= 1;
-                faction <= 1;
-                tnwa <= w_dram_addr_t2;
-                tnwd <= w_dram_wdata_t;
-                tnctrl <= w_dram_ctrl_t;
-            end
-        end else if(fstate == 1) begin
-            if(w_dram_busy)
-                fstate <= 2;
-        end else if(fstate == 2) begin
-            if(!w_dram_busy) begin
-                if(tncnt < 1000) begin
-                    if(faction == 0) begin
-                        $fwrite(ftn, "read addr=%x odata=%x ctrl=%x\n", 
-                            tnra, w_dram_odata, tnctrl);
-                    end else if(faction == 1) begin
-                        $fwrite(ftn, "write addr=%x wdata=%x ctrl=%x\n", 
-                            tnwa, tnwd, tnctrl);
-                    end
-                    tncnt <= tncnt + 1;
-                end else if(foc == 1) begin
-                    foc <= 2;
-                    $fclose(ftn);
-                    //$finish;
-                end
-                fstate <= 0;
-            end
-        end
-end
-
 reg [31:0] o_pc0=-1, o_ir0=-1, old_time=-1, rd_cnt=0, o_w_dram_odata=0;
 reg rle=0, rwe=0, rob=0;
 always @(posedge pll_clk)
