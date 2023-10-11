@@ -22,7 +22,6 @@ module DRAM_conRV
      input  wire [3:0]                   w_bus_cpustate,
      output wire [7:0]                   mem_state,
 
-
    `ifdef SIM_MODE
       input wire [31:0] w_mtime,
    `else
@@ -42,6 +41,7 @@ module DRAM_conRV
      `ifdef DRAM_REFRESH_LOGIC
      output reg r_late_refresh,
      `endif
+
      input wire clk,
      input wire rst_x,
      input wire clk_sdram,
@@ -49,6 +49,15 @@ module DRAM_conRV
      output wire sdram_fail
 );
 
+`ifdef SIM_TNSRAM
+`define TNSRAM
+`else
+`ifndef SIM_MODE
+`define TNSRAM
+`endif
+`endif
+
+`ifdef TNSRAM
     reg         r_we    = 0;
     reg         r_rd    = 0;
     wire 	w_busy;
@@ -138,7 +147,7 @@ endtask
    end
    endtask 
 
-   // 15us = 405 periods at 27MHz
+   // 15us = 405 periods at 27MHz, 2writes take max 200ns
    `define REFRESH_CNT 200 
    `define REFRESH_CNT_MAX 405
    always @(posedge clk) begin
@@ -372,11 +381,10 @@ endtask
 	end
 	endcase
 	end
+`endif // SIM_MODE
 
 `ifdef SIM_MODE
-//    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
-//        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
-//        .w_mtime(w_mtime[31:0]));
+`ifdef SIM_TNSRAM
     m_sdram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
         .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_mask(r_mask), .w_stall(w_busy), 
         .w_mtime(w_mtime[31:0]),
@@ -386,7 +394,11 @@ endtask
         .w_refresh(0)
         `endif
         );
-
+`else
+    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(i_addr), .w_odata(o_data), 
+        .w_we(i_wr_en), .w_le(i_rd_en), .w_wdata(i_data), .w_ctrl(i_ctrl), .w_stall(o_busy), 
+        .w_mtime(w_mtime[31:0]));
+`endif
 `else
     MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(rst_x),
         .read_a(r_rd), 

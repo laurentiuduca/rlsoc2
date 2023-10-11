@@ -760,14 +760,13 @@ module m_topsim(CLK, RST_X);
     wire w_wr_en =                 (r_init_state == 6) ? 0 :
 				                    w_zero_we || w_pl_init_we || r_sd_init_we || w_dram_we_t;
 `else
+`ifdef SIM_MODE
+        wire w_wr_en =              w_dram_we_t;
+`else
     wire w_wr_en =                  w_zero_we || w_pl_init_we || r_sd_init_we || w_dram_we_t;
 `endif
+`endif
 
-//`ifdef SIM_MODE
-//    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(CLK), .w_addr(w_dram_addr_t2), .w_odata(w_dram_odata), 
-//        .w_we(w_dram_we_t), .w_le(w_dram_le), .w_wdata(w_dram_wdata_t), .w_ctrl(w_dram_ctrl_t), .w_stall(w_dram_busy), 
-//        .w_mtime(w_mtime[31:0]));
-//`else
     wire sdram_fail;
     wire w_late_refresh;
     wire [7:0] w_mem_state;
@@ -778,11 +777,7 @@ module m_topsim(CLK, RST_X);
 `else
                                .i_rd_en(w_dram_le),
 `endif
-                                `ifdef SIM_MODE
-                               .i_wr_en(w_dram_we_t),
-                                `else
                                .i_wr_en(w_wr_en),
-                               `endif
                                .i_addr(w_dram_addr_t2),
                                .i_data(w_dram_wdata_t),
                                .o_data(w_dram_odata),
@@ -816,7 +811,6 @@ module m_topsim(CLK, RST_X);
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
                                `endif
                                );
-//`endif // SIM_MODE
     /**********************************************************************************************/
 
 /***********************************          write time        *******************************/
