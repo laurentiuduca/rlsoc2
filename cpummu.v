@@ -37,7 +37,7 @@ module m_cpummu(
 
     wire w_halt;
 
-    wire [31:0] w_insn_addr, w_insn_data;
+    wire [31:0] w_insn_data, w_insn_addr;
     wire [31:0] w_data_addr;
     wire        w_data_we;
     wire [2:0]  w_data_ctrl;

@@ -11,15 +11,10 @@
 
 `define NCORES  2
 
-//`define NEXYS1
-`ifdef NEXYS1
-`define CRAM_ADDR_SIZE	23
-`define CRAM_DATA_SIZE	16
-`endif
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
-`define USE_SINGLE_CORE
+`define SIM_MODE
+//`define USE_SINGLE_CORE
 `define DRAM_REFRESH_LOGIC // for tang nano
 
 //`define SIM_MAIN // for xsim
@@ -41,7 +36,7 @@ error
 
 //`define SKIP_CACHE
 `define KEYBOARD_QUEUE_SIZE 32
-`define IPI_MAX_DISPLAYS 200
+`define IPI_MAX_DISPLAYS 2000
 
 `define LINUX
 `define TIMEOUT 64'd30000000001
@@ -92,7 +87,7 @@ error
     `endif
 `else
 `ifdef USE_SINGLE_CORE
-    `define ENABLE_TIMER 64'd0880000000
+    `define ENABLE_TIMER 64'd0530000000
 `else
     `define ENABLE_TIMER 64'd1220000000
 `endif
@@ -310,7 +305,7 @@ error
 `define S_IF  1     // Inst Fetch
 `define S_CVT 2     // Convert
 `define S_ID  3     // Inst Decode
-`define LAUR_S_ID2
+//`define LAUR_S_ID2
 `ifdef LAUR_S_ID2
 `define S_ID_BISS 4
 `define S_OF  5     // Operand Fetch
