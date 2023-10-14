@@ -746,10 +746,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 case(r_funct12)
 		    `CSR_STVEC      : begin
 			    stvec      <= r_wb_data_csr & ~3;
-			    `ifdef LAUR_DEBUG_AFTER_CSRW_SATP
-			    $write("stvec write: \ttime:%x stvec<=%x pc=%x\n",
-				    w_mtime, (r_wb_data_csr & ~3), pc);
-			    `endif
 		    end
                     `CSR_SCOUNTEREN : scounteren <= r_wb_data_csr & 5;
                     `CSR_SSCRATCH   : sscratch   <= r_wb_data_csr;
@@ -769,9 +765,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
 		            `CSR_MEDELEG    : begin 
 		    			medeleg    <= (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1);
-					    `ifdef LAUR_DEBUG_AFTER_CSRW_SATP
-					    $write("medeleg write: \ttime:%x medeleg<=%x r_wb_data_csr=%d\n", w_mtime, (medeleg & ~`WCSR_MASK1) | (r_wb_data_csr & `WCSR_MASK1), r_wb_data_csr);
-					    `endif
 				    end
                     `CSR_MIDELEG    : mideleg    <= (mideleg & ~`WCSR_MASK2) | (r_wb_data_csr & `WCSR_MASK2);
                     `CSR_MIE        : mie        <= (mie & ~`WCSR_MASK3) | (r_wb_data_csr & `WCSR_MASK3);
@@ -781,7 +774,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 		    			satp       <= r_wb_data_csr; 
 					    `ifdef LAUR_DEBUG_AFTER_CSRW_SATP
 					        if(r_wb_data_csr[31]) begin
-						        $write("satp write: \ttime:%x pc=%x r_insn_addr=%x w_insn_data=%x satp<=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
+						        $write("satp write: \ttime:%08x pc=%x r_insn_addr=%x w_insn_data=%x satp<=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
                                                         w_mtime, pc, r_insn_addr, w_insn_data, r_wb_data_csr, pending_exception, stvec, mtvec, w_deleg, w_busy);
 						    was_csrw_satp <= 1;
 						    old_insn_addr <= r_insn_addr;
@@ -796,14 +789,13 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         end
     end
 
-`ifdef LAUR_DEBUG_AFTER_CSRW_SATP 
-    reg [31:0] lcnt=0;
+`ifdef LAUR_DEBUG_AFTER_CSRW_SATP
     always @(posedge CLK) begin
-	    if(was_csrw_satp && (old_insn_addr != r_insn_addr) && (lcnt < 10)) begin
-		$write("new insn addr: \ttime:%x pc=%x r_insn_addr=%x w_insn_data=%x satp=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
+	    if(was_csrw_satp && (old_insn_addr != r_insn_addr)) begin
+		$write("new insn addr: \ttime:%08x pc=%x r_insn_addr=%x w_insn_data=%x satp=%x pending_exception=%x stvec=%x mtvec=%x w_deleg=%x w_busy=%x\n",
                                                         w_mtime, pc, r_insn_addr, w_insn_data, satp, pending_exception, stvec, mtvec, w_deleg, w_busy);
 		old_insn_addr <= r_insn_addr;
-		lcnt = lcnt + 1;
+        was_csrw_satp <= 0;
 	    end
     end
 `endif
@@ -842,6 +834,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     // avoid latch warning
                     //r_tlb_flush <= 0;
                 end
+            end else if (r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct7==`FUNCT7_SFENCE_VMA) begin
+                //$display ("%08x, sfence.vma", w_mtime);
+                // sfence.vma is called write after satp write in setup_vm_final by local_flush_tlb_all()
+                r_tlb_flush <= 1;
             end
             else r_tlb_flush <= 0;
         end

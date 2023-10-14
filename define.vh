@@ -36,7 +36,7 @@ error
 
 //`define SKIP_CACHE
 `define KEYBOARD_QUEUE_SIZE 32
-`define IPI_MAX_DISPLAYS 2000
+`define IPI_MAX_DISPLAYS 200
 
 `define LINUX
 `define TIMEOUT 64'd30000000001
@@ -305,7 +305,7 @@ error
 `define S_IF  1     // Inst Fetch
 `define S_CVT 2     // Convert
 `define S_ID  3     // Inst Decode
-//`define LAUR_S_ID2
+`define LAUR_S_ID2
 `ifdef LAUR_S_ID2
 `define S_ID_BISS 4
 `define S_OF  5     // Operand Fetch
