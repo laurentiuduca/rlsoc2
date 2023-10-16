@@ -641,53 +641,54 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         if(state == `S_IF) begin
             //if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
-                    $display("----rvcorem w_plic_we mip <= %x state=%x", w_mip, state);
-                    mip <= w_wmip;
+                    $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
+                    mip[11:8] <= w_wmip[11:8];
                 end
-                else if(r_was_clint_we && (mtimecmp < w_mtime)) begin
+                if(r_was_clint_we && (mtimecmp < w_mtime)) begin
                     //$display("core%1x gets MTIP", mhartid);
-                    mip <= mip | `MIP_MTIP;
-                    r_was_clint_we <= 0;
+                    mip[7:4] <= `MIP_MTIP >> 4;
                 end
             //end
-                else if(w_ipi & (1<<mhartid)) begin
+                if(w_ipi & (1<<mhartid)) begin
                     if(r_ipi_taken == 0) begin
                         if((w_ipi >> 16) & (1<<mhartid)) begin
                             if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
                             end
-                            mip <= mip | `MIP_SSIP;
+                            mip[3:0] <= mip[3:0] | `MIP_SSIP;
                         end else begin
                             if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
                             end
-                            mip <= mip | `MIP_MSIP;
+                            mip[3:0] <= mip[3:0] | `MIP_MSIP;
                         end
                         r_ipi_taken <= 1;
                     end
                 end else begin
                     r_ipi_taken <= 0;
-                    if(r_ipi_taken == 1)
+                    mip[3:0] <= 0;
+                    if(r_ipi_taken == 1) begin
                         if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got clear ipi", mhartid);
                         end
+                    end
                 end
         end
 
         if(state == `S_EX2 || state == `S_WB) begin
             if(w_plic_we) begin
-                $display("----rvcorem w_plic_we mip <= %x state=%x", w_mip, state);
-                mip <= w_wmip;
+                $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
+                mip     <= w_wmip;
             end
         end
         if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
                 //$display("core%1x sets mtimecmp=%x", mhartid, w_wmtimecmp);
                 mtimecmp    <= w_wmtimecmp;
-                mip         <= mip & ~`MIP_MTIP;
+                mip         <= mip     & ~`MIP_MTIP;
                 r_was_clint_we <= 1;
             end
         end
