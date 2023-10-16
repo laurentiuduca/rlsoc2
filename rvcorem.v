@@ -647,6 +647,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if(r_was_clint_we && (mtimecmp < w_mtime)) begin
                     //$display("core%1x gets MTIP", mhartid);
                     mip[7:4] <= `MIP_MTIP >> 4;
+                    r_was_clint_we <= 0;
                 end
             //end
                 if(w_ipi & (1<<mhartid)) begin
@@ -668,8 +669,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     end
                 end else begin
                     r_ipi_taken <= 0;
-                    mip[3:0] <= 0;
                     if(r_ipi_taken == 1) begin
+                        mip[3:0] <= 0;
                         if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got clear ipi", mhartid);
@@ -681,7 +682,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         if(state == `S_EX2 || state == `S_WB) begin
             if(w_plic_we) begin
                 $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
-                mip     <= w_wmip;
+                mip[31:8]     <= w_wmip[31:8];
             end
         end
         if(state == `S_SD && !w_busy) begin
