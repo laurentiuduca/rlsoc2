@@ -536,19 +536,20 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                       ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
                       ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
 
-    reg [31:0] laur_pc=0, lpc0=0, lpc1=0, lpc2=0;
-
     always @(posedge CLK) begin /////// update program counter
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
         else if(w_pagefault != ~32'h0) begin  pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
         else if(state==`S_FIN && !w_busy) begin
-            if(pending_exception != ~0)   begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
-            else begin
-                if(w_executing_wfi)  begin if(w_exit_wfi) pc <= pc + 4; else pc <= pc; end
-                else 
-                if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
-                else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
-            end
+            if(pending_exception != ~0)    begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
+            else if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
+            else if(w_executing_wfi)  begin
+                if(w_exit_wfi) begin
+                    $display("%0x wfi mhartid=%x pc=%x w_exit_wfi=%x mip=%x mie=%x", 
+                        w_mtime, mhartid, pc, w_exit_wfi, mip, mie);
+                    pc <= pc + 4; 
+                end else 
+                    pc <= pc; 
+            end else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0) || (r_tkn) || (!r_cinsn));
         end
         else if(state==`S_INI) begin
@@ -650,7 +651,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
                     mip[31:8] <= w_wmip[31:8];
                 end
-                if(r_was_clint_we && (mtimecmp < w_mtime)) begin
+                if(r_was_clint_we && (w_mtime >= mtimecmp)) begin
                     //$display("core%1x gets MTIP", mhartid);
                     mip[7:4] <= `MIP_MTIP >> 4;
                     r_was_clint_we <= 0;
