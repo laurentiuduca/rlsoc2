@@ -213,7 +213,7 @@ module m_topsim(CLK, RST_X);
             `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
             `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
                                     //$display("HVC_BASE_ADDR %x", r_consf_cnts);
-                                    r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts};
+                                    r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts /*r_consf_en*/};
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
                                     r_data_data <= {24'h0, r_char_value};
@@ -831,7 +831,7 @@ module m_topsim(CLK, RST_X);
 `endif // SIM_MODE
     /*********************************************************************************************/
 `ifndef SIM_MODE
-    // debug
+    // debug on display
     max7219 max7219(.clk(pll_clk), .clkdiv(clkdiv), .reset_n(RST_X), .data_vector(data_vector),
             .clk_out(MAX7219_CLK),
             .data_out(MAX7219_DATA),
@@ -840,7 +840,7 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_sd_checksum: w_dram_odata;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc1 : w_btnl ? w_pc0 : w_sd_checksum;
 
     reg [31:0] rdbg=0;
     reg raux=0;
@@ -856,25 +856,22 @@ module m_topsim(CLK, RST_X);
 `ifdef SIM_MODE
 `ifdef RAM_DEBUG
 
-reg [31:0] o_pc0=-1, o_ir0=-1, old_time=-1, rd_cnt=0, o_w_dram_odata=0;
+reg [31:0] o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0, o_w_dram_odata=0;
 reg rle=0, rwe=0, rob=0;
 always @(posedge pll_clk)
 begin
-    if(w_mtime < `mtsm) begin
-        if(w_pc0 <= 32'h807024ec && (o_pc0 != w_pc0 || o_ir0 != w_ir0 || o_w_dram_odata != w_dram_odata || 
-            rle != w_dram_le || rwe != w_dram_we_t || rob != w_dram_busy)) 
+    if(w_mtime > 32'h0954e873 && w_mtime < 32'h0954e873 + 200 && w_grant) begin
+        if(o_pc1 != w_pc1)// || o_ir1 != w_ir1)) 
         begin 
-            o_pc0 <= w_pc0;
-            o_ir0 <= w_ir0;
+            o_pc1 <= w_pc1;
+            o_ir1 <= w_ir1;
             o_w_dram_odata <= w_dram_odata;
             rle <= w_dram_le;
             rwe <= w_dram_we_t;
             rob <= w_dram_busy;
-		$write("t=%08d busy=%x ms=%x pc0=%08x ir0=%08x w_dram_addr_t2=%x le=%x w=%x mw=%x w_dram_odata=%x\n\n",
+		$write("t=%08x busy=%x ms=%x pc1=%08x ir1=%08x w_grant=%x\n\n",
                 	w_mtime[31:0], w_dram_busy, w_mem_state,
-                    w_pc0, w_ir0, w_dram_addr_t2,
-                    //core0.p.r_cpc, core0.p.r_ir,
-                    w_dram_le, w_dram_we_t, w_mem_we, w_dram_odata
+                    w_pc1, w_ir1, w_grant
                     
         );
         end

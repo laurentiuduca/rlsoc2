@@ -532,6 +532,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     // wfi keeps pc constant
     wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
+    wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
+                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
+                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
+
+    reg [31:0] laur_pc=0, lpc0=0, lpc1=0, lpc2=0;
 
     always @(posedge CLK) begin /////// update program counter
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
@@ -539,8 +544,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         else if(state==`S_FIN && !w_busy) begin
             if(pending_exception != ~0)   begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
             else begin
+                if(w_executing_wfi)  begin if(w_exit_wfi) pc <= pc + 4; else pc <= pc; end
+                else 
                 if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
-		        else if(w_executing_wfi)  begin pc <= pc; end
                 else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0) || (r_tkn) || (!r_cinsn));
@@ -642,7 +648,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             //if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
                     $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
-                    mip[11:8] <= w_wmip[11:8];
+                    mip[31:8] <= w_wmip[31:8];
                 end
                 if(r_was_clint_we && (mtimecmp < w_mtime)) begin
                     //$display("core%1x gets MTIP", mhartid);
@@ -655,7 +661,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                         if((w_ipi >> 16) & (1<<mhartid)) begin
                             if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
-                                $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                                $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x time=%x", mhartid, w_ipi, priv, mie, mtvec, w_mtime);
                             end
                             mip[3:0] <= mip[3:0] | `MIP_SSIP;
                         end else begin
@@ -665,7 +671,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                             end
                             mip[3:0] <= mip[3:0] | `MIP_MSIP;
                         end
-                        r_ipi_taken <= 1;
+                        r_ipi_taken <= 1; 
                     end
                 end else begin
                     r_ipi_taken <= 0;
@@ -746,9 +752,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             end
             else if(w_csr_we) begin
                 case(r_funct12)
-		    `CSR_STVEC      : begin
-			    stvec      <= r_wb_data_csr & ~3;
-		    end
+		            `CSR_STVEC      : stvec      <= r_wb_data_csr & ~3;
                     `CSR_SCOUNTEREN : scounteren <= r_wb_data_csr & 5;
                     `CSR_SSCRATCH   : sscratch   <= r_wb_data_csr;
                     `CSR_SEPC       : sepc       <= r_wb_data_csr & ~1;

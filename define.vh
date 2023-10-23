@@ -13,7 +13,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-`define SIM_MODE
+//`define SIM_MODE
 //`define USE_SINGLE_CORE
 `define DRAM_REFRESH_LOGIC // for tang nano
 
@@ -27,7 +27,7 @@ error
 
 `ifdef SIM_MODE
 //`define SIM_TNSRAM // tang nano sim ram
-`define RAM_DEBUG
+//`define RAM_DEBUG
 `define mtsm 1
 //`define DRAM_SIM // slower, for nexysa7
 //`define CACHE_DEBUG
@@ -36,7 +36,9 @@ error
 
 //`define SKIP_CACHE
 `define KEYBOARD_QUEUE_SIZE 32
-`define IPI_MAX_DISPLAYS 200
+`define IPI_MAX_DISPLAYS 2000
+//`define LAUR_DEBUG_IPI
+//    `define laurmom 32'h094bd3e3
 
 `define LINUX
 `define TIMEOUT 64'd30000000001
