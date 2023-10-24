@@ -216,7 +216,7 @@ module m_topsim(CLK, RST_X);
                                     r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts /*r_consf_en*/};
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
-                                    r_data_data <= {24'h0, r_char_value};
+                                    r_data_data <= {24'h0, cons_fifo[r_consf_head] /*r_char_value*/};
                                 end //else begin
                                     //r_data_data <= 0;
                                     //$display ("HVC_BASE_TADDR r_data_data <= 0 ------------------------------------");
@@ -478,8 +478,9 @@ module m_topsim(CLK, RST_X);
     always@(posedge pll_clk) begin
         if(r_mem_paddr != (`HVC_BASE_ADDR + 4) && w_grant == r_grant_console) begin
             	r_read_a_char <= 0;
-                //$display("r_mem_paddr=%x != HVC_BASE_ADDR+4 r_consf_cnts=%x w_grant=%x w_pc0=%x w_pc1=%x r_grant_console=%x", 
-                //        r_mem_paddr, r_consf_cnts, w_grant, w_pc0, w_pc1, r_grant_console);
+                //if(r_read_a_char)
+                    //$display("r_mem_paddr=%x != HVC_BASE_ADDR+4 r_consf_cnts=%x w_grant=%x w_pc0=%x w_pc1=%x r_grant_console=%x", 
+                    //    r_mem_paddr, r_consf_cnts, w_grant, w_pc0, w_pc1, r_grant_console);
         end else 
 	    if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts && w_dram_le) begin
 	    	r_read_a_char <= 1;
@@ -487,8 +488,8 @@ module m_topsim(CLK, RST_X);
         end
         if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts && w_dram_le) begin
                 if(r_consf_en)
-                    $display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
-                        r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
+                    //$display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
+                    //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
                 r_consf_head <= r_consf_head + 1;
                 r_consf_cnts <= r_consf_cnts - 1;
