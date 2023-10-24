@@ -660,13 +660,13 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if(w_ipi & (1<<mhartid)) begin
                     if(r_ipi_taken == 0) begin
                         if((w_ipi >> 16) & (1<<mhartid)) begin
-                            if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
+                            if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x time=%x", mhartid, w_ipi, priv, mie, mtvec, w_mtime);
                             end
                             mip[3:0] <= mip[3:0] | `MIP_SSIP;
                         end else begin
-                            if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
+                            if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
                             end
@@ -678,7 +678,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_ipi_taken <= 0;
                     if(r_ipi_taken == 1) begin
                         mip[3:0] <= 0;
-                        if(r_ipi_max_displays < `IPI_MAX_DISPLAYS) begin
+                        if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got clear ipi", mhartid);
                         end
