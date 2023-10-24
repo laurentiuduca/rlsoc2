@@ -544,8 +544,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             else if(w_interrupt_mask != 0) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
             else if(w_executing_wfi)  begin
                 if(w_exit_wfi) begin
-                    $display("%0x wfi mhartid=%x pc=%x w_exit_wfi=%x mip=%x mie=%x", 
-                        w_mtime, mhartid, pc, w_exit_wfi, mip, mie);
+                    //$display("%0x wfi mhartid=%x pc=%x w_exit_wfi=%x mip=%x mie=%x", 
+                    //    w_mtime, mhartid, pc, w_exit_wfi, mip, mie);
                     pc <= pc + 4; 
                 end else 
                     pc <= pc; 

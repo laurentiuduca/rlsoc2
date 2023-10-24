@@ -13,8 +13,8 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
-//`define USE_SINGLE_CORE
+`define SIM_MODE
+`define USE_SINGLE_CORE
 `define DRAM_REFRESH_LOGIC // for tang nano
 
 //`define SIM_MAIN // for xsim
@@ -36,7 +36,7 @@ error
 
 //`define SKIP_CACHE
 `define KEYBOARD_QUEUE_SIZE 32
-`define IPI_MAX_DISPLAYS 2000
+`define IPI_MAX_DISPLAYS 20
 //`define LAUR_DEBUG_IPI
 //    `define laurmom 32'h094bd3e3
 
@@ -89,7 +89,7 @@ error
     `endif
 `else
 `ifdef USE_SINGLE_CORE
-    `define ENABLE_TIMER 64'd0530000000
+    `define ENABLE_TIMER 64'd0650000000
 `else
     `define ENABLE_TIMER 64'd1220000000
 `endif
