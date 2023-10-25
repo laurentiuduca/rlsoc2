@@ -847,7 +847,7 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc1 : w_btnl ? w_pc0 : w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_pc1 : w_sd_checksum;
 
     reg [31:0] rdbg=0;
     reg raux=0;
