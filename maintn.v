@@ -91,7 +91,7 @@ module m_topsim(CLK, RST_X);
     wire w_mem_we, bus_mem_we0, bus_mem_we1;
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
     wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
-    wire [63:0] w_mtimecmp, w_wmtimecmp, bus_mtimecmp0, bus_wmtimecmp0, bus_mtimecmp1, bus_wmtimecmp1;
+    wire [63:0] w_mtimecmp0, w_mtimecmp1, w_wmtimecmp0, w_wmtimecmp1;
     wire w_clint_we, bus_clint_we0, bus_clint_we1;
     wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
     wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
@@ -133,7 +133,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
-        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp0), .w_wmtimecmp(bus_wmtimecmp0), .w_clint_we(bus_clint_we0),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(bus_clint_we0),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
@@ -147,7 +147,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
-        .w_mtime(w_mtime), .w_mtimecmp(bus_mtimecmp1), .w_wmtimecmp(bus_wmtimecmp1), .w_clint_we(bus_clint_we1),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(bus_clint_we1),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
@@ -160,7 +160,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp), .w_wmtimecmp(w_wmtimecmp), .w_clint_we(w_clint_we),
+        .w_mtime(w_mtime), .w_clint_we(w_clint_we),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_aces(w_plic_aces), .r_plic_aces_t(r_plic_aces_t), .w_plic_we(w_plic_we),
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
@@ -169,7 +169,7 @@ module m_topsim(CLK, RST_X);
         .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
         .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
-        .bus_mtimecmp0(bus_mtimecmp0), .bus_wmtimecmp0(bus_wmtimecmp0), .bus_clint_we0(bus_clint_we0),
+        .bus_clint_we0(bus_clint_we0),
         .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
         .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
         .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
@@ -178,7 +178,7 @@ module m_topsim(CLK, RST_X);
         .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
         .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
-        .bus_mtimecmp1(bus_mtimecmp1), .bus_wmtimecmp1(bus_wmtimecmp1), .bus_clint_we1(bus_clint_we1),
+        .bus_clint_we1(bus_clint_we1),
         .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
         .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
         .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
@@ -256,7 +256,6 @@ module m_topsim(CLK, RST_X);
 
     reg [31:0] r_ipi=0;
     assign bus_ipi = r_ipi;
-    reg r_was_clint_we=0;
 `ifdef SIM_MODE
     reg [31:0] r_max_displays=0;
 `endif
@@ -295,10 +294,10 @@ module m_topsim(CLK, RST_X);
         r_clint_odata <=    (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we == 0) ? r_ipi :
                             (w_offset==28'hbff8) ? w_mtime[31:0] :
                             (w_offset==28'hbffc) ? w_mtime[63:32] :
-                            (w_offset==28'h4000) ? w_mtimecmp[31:0] :
-                            (w_offset==28'h4004) ? w_mtimecmp[63:32] : 
-                            (w_offset==28'h4008) ? w_mtimecmp[31:0] :
-                            (w_offset==28'h400c) ? w_mtimecmp[63:32] : 0;
+                            (w_offset==28'h4000) ? w_mtimecmp0[31:0] :
+                            (w_offset==28'h4004) ? w_mtimecmp0[63:32] : 
+                            (w_offset==28'h4008) ? w_mtimecmp1[31:0] :
+                            (w_offset==28'h400c) ? w_mtimecmp1[63:32] : 0;
         
         // ipi
         if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0) begin
@@ -360,27 +359,17 @@ module m_topsim(CLK, RST_X);
                 end
             end
         end
-        if(w_clint_we) begin
-            if(!r_was_clint_we) begin
-                r_was_clint_we <= 1;
-                //$display("w_clint_we gnt=%1x", w_grant);
-            end
-        end else begin
-`ifdef SIM_MODE
-            if(r_dev == `CLINT_BASE_TADDR && w_data_we != 0 &&
-                (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant != 0) ||
-                 ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant != 1)))
-                $display("clint wrong grant offset");
-`endif
-            r_was_clint_we <= 0;
-        end
     end
 
     // shortcut to w_data_we because we do not use microcontroller
-    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 || w_offset==28'h4008) && w_data_we != 0) ?
-                                {w_mtimecmp[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 || w_offset==28'h400c) && w_data_we != 0) ?
-                                {w_data_wdata, w_mtimecmp[31:0]} : 0;
+    assign w_wmtimecmp0  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0) && w_data_we != 0) ?
+                                {w_mtimecmp0[63:32], w_data_wdata} :
+                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0) && w_data_we != 0) ?
+                                {w_data_wdata, w_mtimecmp0[31:0]} : 0;
+    assign w_wmtimecmp1  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1) && w_data_we != 0) ?
+                                {w_mtimecmp1[63:32], w_data_wdata} :
+                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1) && w_data_we != 0) ?
+                                {w_data_wdata, w_mtimecmp1[31:0]} : 0;
     assign w_clint_we   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
                           (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0) ||
                            ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1));
