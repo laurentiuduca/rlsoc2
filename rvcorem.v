@@ -653,7 +653,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
                 if(r_was_clint_we && (w_mtime >= mtimecmp)) begin
                     //$display("core%1x gets MTIP", mhartid);
-                    mip[7:4] <= `MIP_MTIP >> 4;
+                    if(w_priv <= `PRIV_S)
+                        mip[7:4] <= `MIP_STIP >> 4;
+                    else
+                        mip[7:4] <= `MIP_MTIP >> 4;
                     r_was_clint_we <= 0;
                 end
             //end
@@ -696,7 +699,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             if(w_clint_we) begin
                 //$display("core%1x sets mtimecmp=%x", mhartid, w_wmtimecmp);
                 mtimecmp    <= w_wmtimecmp;
-                mip         <= mip     & ~`MIP_MTIP;
+                mip[7:4] <= 0;
                 r_was_clint_we <= 1;
             end
         end
