@@ -77,7 +77,7 @@ run-i:
 run:
 	./simv
 gwsynth:
-	./build.sh && gw_sh run.tcl
+	gw_sh run.tcl
 
 
 # run2: simv
