@@ -56,130 +56,130 @@ begin
 	    case(state)
 		    `reset:
 			    if(driver_state == `ds_idle) begin
-				command_reg <= 16'h0c00;
-                                // Shutdown Register (0x0C): Shutdown Mode (0x00)
-                                start_ds <= 1;
-                        	next_state        <= `init_on;
-				state <= `wait_state;
+					command_reg <= 16'h0c00;
+					// Shutdown Register (0x0C): Shutdown Mode (0x00)
+					start_ds <= 1;
+					next_state        <= `init_on;
+					state <= `wait_state;
+				end
+			`init_on:
+				if (driver_state == `ds_idle) begin
+					// Shutdown Register (0x0C): Normal Operation (0x01)
+					command_reg <= 16'h0c01;
+					start_ds <= 1;
+					next_state        <= `init_mode;
+					state <= `wait_state;
 			    end
-                    `init_on:
-                    	    if (driver_state == `ds_idle) begin
-                        	// Shutdown Register (0x0C): Normal Operation (0x01)
-				command_reg <= 16'h0c01;
-				start_ds <= 1;
-                        	next_state        <= `init_mode;
-				state <= `wait_state;
+			`init_mode:
+			    if (driver_state == `ds_idle) begin
+					// Decode-Mode Register (0x09): No decode for digits 7-0 (0x00)
+					command_reg <= 16'h0900;
+					start_ds <= 1;
+					next_state        <= `init_intensity;
+					state <= `wait_state;
 			    end
-                    `init_mode:
+			`init_intensity:
+				if (driver_state == `ds_idle) begin
+					// Intensity Register (0x0A)
+					command_reg <= {12'h0a0, 4'h3};
+					start_ds <= 1;
+					next_state        <= `init_scan;
+					state <= `wait_state;
+				end
+			`init_scan:
 			    if (driver_state == `ds_idle) begin
-                        	// Decode-Mode Register (0x09): No decode for digits 7-0 (0x00)
-				command_reg <= 16'h0900;
-				start_ds <= 1;
-                        	next_state        <= `init_intensity;
-				state <= `wait_state;
-			    end
-                    `init_intensity:
-			    if (driver_state == `ds_idle) begin
-                            	// Intensity Register (0x0A)
-			    	command_reg <= {12'h0a0, 4'h3};
-				start_ds <= 1;
-                            	next_state        <= `init_scan;
-				state <= `wait_state;
-		    	    end
-                    `init_scan:
-			    if (driver_state == `ds_idle) begin
-                        	// Scan-Limit Register(0x0B): Display digits 0 1 2 3 4 5 6 7 (0x07)
-				command_reg <= 16'h0b07;
-				start_ds <= 1;
-                        	next_state        <= `latch_data;
-				state <= `wait_state;
+					// Scan-Limit Register(0x0B): Display digits 0 1 2 3 4 5 6 7 (0x07)
+					command_reg <= 16'h0b07;
+					start_ds <= 1;
+					next_state        <= `latch_data;
+					state <= `wait_state;
 			    end
 		    `latch_data: begin
-			`ifdef laur0
-         	digits[7] <= data_vector[31:28];
-			digits[6] <= data_vector[27:24];
-			digits[5] <= data_vector[23:20];
-			digits[4] <= data_vector[19:16];
-			digits[3] <= data_vector[15:12];
-			digits[2] <= data_vector[11:8];
-			digits[1] <= data_vector[7:4];
-			digits[0] <= data_vector[3:0];
-			`endif
-                    	digit_index <= 7;
-                    	state <= `send_digits;
+					`ifdef laur0
+					digits[7] <= data_vector[31:28];
+					digits[6] <= data_vector[27:24];
+					digits[5] <= data_vector[23:20];
+					digits[4] <= data_vector[19:16];
+					digits[3] <= data_vector[15:12];
+					digits[2] <= data_vector[11:8];
+					digits[1] <= data_vector[7:4];
+					digits[0] <= data_vector[3:0];
+					`endif
+					digit_index <= 7;
+					state <= `send_digits;
 		    end
-                    `send_digits: 
-                    	if (driver_state == `ds_idle) begin
-				command_reg <= {4'h0, digit_index + 1, segments};
-				start_ds <= 1;
-				if (digit_index == 0) begin
-                            	    //next_state <= `latch_data;
-			    	    next_state <= `finish_state;
-				    state <= `wait_state;
-				end else begin
-                            	    digit_index <= digit_index - 4'h1;
-                            	    next_state <= `send_digits;
-				    state <= `wait_state;
+			`send_digits: 
+				if (driver_state == `ds_idle) begin
+					command_reg <= {4'h0, digit_index + 1, segments};
+					start_ds <= 1;
+					if (digit_index == 0) begin
+						//next_state <= `latch_data;
+						next_state <= `finish_state;
+						state <= `wait_state;
+					end else begin
+						digit_index <= digit_index - 4'h1;
+						next_state <= `send_digits;
+						state <= `wait_state;
+					end
 				end
-                        end
 		    `wait_state: begin
-			if(driver_state != `ds_idle) begin
-				state <= next_state;
-				start_ds <= 0;
+				if(driver_state != `ds_idle) begin
+					state <= next_state;
+					start_ds <= 0;
+				end
 			end
-		    end
 		    `finish_state: begin
 				if(driver_state == `ds_idle)
 					state <= `latch_data;
 					//state <= `reset;
-		    end
+			end
             endcase
 
             case (driver_state)
 		    `ds_idle: begin
-                    	load_out <= 1;
-                    	clk_out  <= 0;
-						ds_cnt <= ds_cnt + 1;
-			if(start_ds && ds_cnt > 10) begin
-				ds_cnt <= 0;
-				driver_state <= `ds_start;
+				load_out <= 1;
+				clk_out  <= 0;
+				ds_cnt <= ds_cnt + 1;
+				if(start_ds && ds_cnt > 10) begin
+					ds_cnt <= 0;
+					driver_state <= `ds_start;
 				end
-		    end
+			end
 		    `ds_start: begin
-                    	load_out <= 0;
-                    	counter <= CommandRegSize;
-                    	driver_state <= `ds_clk_data;
+				load_out <= 0;
+				counter <= CommandRegSize;
+				driver_state <= `ds_clk_data;
 		    end
-                    `ds_clk_data: begin
-                    	counter <= counter - 16'h1;
-                    	data_out <= command_reg[counter - 1];
-                    	driver_state <= `ds_pre_clk_high;
-		    end
-                    `ds_pre_clk_high: begin
-						driver_state <= `ds_clk_high;
-					end
-                    `ds_clk_high: begin
-                    	clk_out      <= 1;
-                    	driver_state <= `ds_pre_clk_low;
-		    end
-					`ds_pre_clk_low: begin
-						driver_state <= `ds_pre_clk_low2;
-					end
-					`ds_pre_clk_low2: begin
-						driver_state <= `ds_clk_low;
-					end
-                    `ds_clk_low: begin
-                    	clk_out <= 0;
-			if (counter == 0) begin
-                        	load_out     <= 1;
-                        	driver_state <= `ds_finished;
-			end else
-                        	driver_state <= `ds_clk_data;
-                    end 
-                    `ds_finished: begin
-                    	driver_state <= `ds_idle;
-						ds_cnt <= 0;
-					end
+			`ds_clk_data: begin
+				counter <= counter - 16'h1;
+				data_out <= command_reg[counter - 1];
+				driver_state <= `ds_pre_clk_high;
+			end
+			`ds_pre_clk_high: begin
+				driver_state <= `ds_clk_high;
+			end
+			`ds_clk_high: begin
+				clk_out      <= 1;
+				driver_state <= `ds_pre_clk_low;
+			end
+			`ds_pre_clk_low: begin
+				driver_state <= `ds_pre_clk_low2;
+			end
+			`ds_pre_clk_low2: begin
+				driver_state <= `ds_clk_low;
+			end
+			`ds_clk_low: begin
+				clk_out <= 0;
+				if (counter == 0) begin
+					load_out     <= 1;
+					driver_state <= `ds_finished;
+				end else
+					driver_state <= `ds_clk_data;
+			end 
+			`ds_finished: begin
+				driver_state <= `ds_idle;
+				ds_cnt <= 0;
+			end
             endcase
         end
 		end
@@ -195,7 +195,7 @@ assign mydigits =
 			digit_index == 3 ? data_vector[15:12] :
 			digit_index == 2 ? data_vector[11:8]  :
 			digit_index == 1 ? data_vector[7:4]   :
-									 data_vector[3:0]   ;
+			data_vector[3:0] ;
 
 
     always @(*)
