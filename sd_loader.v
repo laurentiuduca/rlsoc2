@@ -1,4 +1,5 @@
 // modified by Laurentiu-Cristian Duca, 2023-09-12
+// used to copy rlsoc from microsd to ram
 // adapted from https://github.com/WangXuan95/FPGA-SDcard-Reader
 //--------------------------------------------------------------------------------------------------------
 

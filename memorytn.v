@@ -1,5 +1,5 @@
-/* Modified by Laurentiu-Cristian Duca, 2021-12-20
- * - implemented a new controller with unaligned ld/sw
+/* author Laurentiu-Cristian Duca, 2023-10-28
+ * - implemented a controller with unaligned ld/sw and refresh for tang nano
  */
 /**************************************************************************************************/
 /**************************************************************************************************/

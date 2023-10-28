@@ -1,3 +1,6 @@
+// author Laurentiu-Cristian Duca, 20231028-1235
+// SPDX-License-Identifier: MIT
+
 module clkdivider(clk, reset_n, n, clkdiv);
 
 input wire clk, reset_n;

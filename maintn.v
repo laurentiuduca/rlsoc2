@@ -1,16 +1,8 @@
+// modified by Laurentiu-Cristian Duca, 20231028-1235
 // author: Laurentiu-Cristian Duca, date: 2023-05-25
 // - dual-core support
 // spdx license identifier MIT
-/* Modified by Laurentiu-Cristian Duca, 2021-12-20
- * - memory model similar to dram memory controller with DRAM_SIM
- * or simple memory model
- * - debug with RAM_DEBUG
- * - allow ICARUS simulation
- */
-/**************************************************************************************************/
-/**** RVSoC (Mini Kuroda/RISC-V)                       since 2018-08-07   ArchLab. TokyoTech   ****/
-/**** top module and simulation module v0.01                                                   ****/
-/**************************************************************************************************/
+
 `default_nettype none
 /**************************************************************************************************/
 `include "define.vh"

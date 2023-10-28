@@ -1,3 +1,5 @@
+// modified by L.-C. Duca  2023-10-28
+// add a tang nano sdram like memory simulator
 // author: Laurentiu-Cristian Duca, date: 2023-05-25
 // spdx license identifier MIT
 `include "define.vh"

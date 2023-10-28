@@ -1,8 +1,6 @@
 //Copyright (C)2014-2022 Gowin Semiconductor Corporation.
 //All rights reserved.
 //File Title: IP file
-//GOWIN Version: V1.9.8.05
-//Part Number: GW2AR-LV18PG256C8/I7
 //Device: GW2AR-18C
 //Created Time: Fri May 06 23:06:50 2022
 

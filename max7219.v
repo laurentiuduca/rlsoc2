@@ -1,4 +1,8 @@
 
+// modified by L.-C. Duca 20231028
+// a stable way to print on max7219 display
+// original source - https://github.com/cerkit/max7219TinyFPGA
+
 module max7219(clk, clkdiv, reset_n, data_vector, clk_out, data_out, load_out);
 
 input wire clk, clkdiv, reset_n;

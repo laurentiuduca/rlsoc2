@@ -1,4 +1,4 @@
-
+// original https://github.com/WangXuan95/FPGA-SDcard-Reader
 //--------------------------------------------------------------------------------------------------------
 // Module  : sd_reader
 // Type    : synthesizable, IP's top

@@ -1,4 +1,6 @@
-// nand2mario, 2022.10
+// modified by L.-C. Duca, 20231028
+// use 32 bit memory words
+// original source - nand2mario, 2022.10, nestang project
 // 
 
 `include "define.vh"
