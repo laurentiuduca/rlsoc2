@@ -1,3 +1,5 @@
+// modified: Laurentiu-Cristian Duca, date: 2023-10-28
+// bug correction for wfi and ipi
 // modified: Laurentiu-Cristian Duca, date: 2023-05-25
 // - ipi support
 // - wfi
