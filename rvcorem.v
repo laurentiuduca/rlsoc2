@@ -1,5 +1,5 @@
 // modified: Laurentiu-Cristian Duca, date: 2023-10-28
-// bug correction for wfi and ipi
+// bug correction for wfi and ipi and added tlb flush when satp is changed
 // modified: Laurentiu-Cristian Duca, date: 2023-05-25
 // - ipi support
 // - wfi
