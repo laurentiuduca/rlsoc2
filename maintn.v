@@ -468,7 +468,7 @@ module m_topsim(CLK, RST_X);
             r_grant_console <= w_grant;
         end
         if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts && w_dram_le) begin
-                if(r_consf_en)
+                //if(r_consf_en)
                     //$display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
                     //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;

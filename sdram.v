@@ -1,4 +1,4 @@
-// modified by l.-c. duca 20231028
+// modified by L.-C. Duca 20231028
 // use 32bit words instead of 8
 // original - see below
 
