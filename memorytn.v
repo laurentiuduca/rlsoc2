@@ -115,7 +115,7 @@ begin
          r_maddr <= {i_addr[31:2], 2'b0};
          r_wdata_ui <= (i_ctrl[1:0] == 0) ? {24'h0, i_data[7:0]}  :
                        (i_ctrl[1:0] == 1) ? {16'h0, i_data[15:0]} : 
-								 									 i_data;
+                        i_data;
          r_ctrl <= i_ctrl;
 end
 endtask
