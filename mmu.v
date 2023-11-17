@@ -39,8 +39,7 @@ module m_mmu(
     output wire         w_dram_we_t,
     input wire          w_dram_busy,
     output wire [2:0]   w_dram_ctrl,
-    output wire         w_dram_le,
-    input wire          w_tx_ready
+    output wire         w_dram_le
     );
 
     /***** Address translation ********************************************************************/
@@ -277,7 +276,7 @@ module m_mmu(
 
     assign w_dram_we_t =   w_pte_we || w_dram_we;// && !w_dram_busy;
 
-    assign w_proc_busy = w_tlb_busy || w_dram_busy || !w_tx_ready;
+    assign w_proc_busy = w_tlb_busy || w_dram_busy;
 /**************************************************************************************************/
     
 endmodule

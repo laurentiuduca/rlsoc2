@@ -78,8 +78,7 @@ module m_cpummu(
         .w_dram_we_t(w_dram_we_t),
         .w_dram_busy(w_dram_busy),
         .w_dram_ctrl(w_dram_ctrl),
-        .w_dram_le(w_dram_le),
-        .w_tx_ready(w_tx_ready)
+        .w_dram_le(w_dram_le)
     );
 
     m_RVCoreM p(

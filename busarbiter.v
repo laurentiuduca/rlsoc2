@@ -43,13 +43,16 @@ module busarbiter(
     reg [7:0] state=0;
     integer i;
     reg [7:0] cnt=0, r_max_cnt=1;
+
     
+    wire w_sys_busy = w_dram_busy || !w_tx_ready;
+
 `ifdef USE_SINGLE_CORE
-    wire a_w_dram_busy = w_dram_busy;
+    wire a_w_dram_busy = w_sys_busy;
 `else
-    wire a_w_dram_busy = (state == 0) ? w_dram_busy :
+    wire a_w_dram_busy = (state == 0) ? w_sys_busy :
                          (state == 1) ? 1 : 
-                         (state == 2) ? 1 : w_dram_busy;
+                         (state == 2) ? 1 : w_sys_busy;
 
     wire no_req = (w_bus_cpustate == `S_ID);
     
@@ -60,10 +63,6 @@ module busarbiter(
         end else if(w_init_done) begin
             if(state == 0) begin
                 if(no_req) begin
-                    if(w_dram_busy || !w_tx_ready || w_mem_we || w_dram_le || w_dram_we_t ||
-                        w_plic_aces || r_plic_aces_t || w_plic_we || w_clint_we) begin
-                        //$display("t=%8x no_req and busy grant=%1x ir=%x", w_mtime, grant[0], w_core_ir);
-                    end
                     state <= 1;
                 end
             end else if(state == 1) begin
