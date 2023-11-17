@@ -454,20 +454,8 @@ module m_topsim(CLK, RST_X);
 `ifdef SIM_MODE
     integer i;
 `endif
-    reg r_read_a_char=0;
-    reg [31:0] r_grant_console=0;
     always@(posedge pll_clk) begin
-        if(r_mem_paddr != (`HVC_BASE_ADDR + 4) && w_grant == r_grant_console) begin
-            	r_read_a_char <= 0;
-                //if(r_read_a_char)
-                    //$display("r_mem_paddr=%x != HVC_BASE_ADDR+4 r_consf_cnts=%x w_grant=%x w_pc0=%x w_pc1=%x r_grant_console=%x", 
-                    //    r_mem_paddr, r_consf_cnts, w_grant, w_pc0, w_pc1, r_grant_console);
-        end else 
-	    if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts && w_dram_le) begin
-	    	r_read_a_char <= 1;
-            r_grant_console <= w_grant;
-        end
-        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && !r_read_a_char && r_consf_cnts && w_dram_le) begin
+        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && w_dram_le) begin
                 //if(r_consf_en)
                     //$display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
                     //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);

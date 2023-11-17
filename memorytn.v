@@ -82,7 +82,6 @@ module DRAM_conRV
     reg [7:0] state_next = 0, state = 0;
     assign mem_state = state;
     reg r_refresh = 0;
-    reg [1:0] action = 0;
 
 task prepare_read_base;
 begin
@@ -98,7 +97,6 @@ begin
 			state <= 10;
          r_stall <= 1;
          r_rd <= 1;
-         action <= 0;
 end
 endtask 
 task prepare_read;
@@ -123,7 +121,6 @@ task prepare_write_end;
 begin
 			state <= 20;
          r_stall <= 1;
-         action <= 1;
 end
 endtask 
 task prepare_write;
@@ -143,7 +140,6 @@ endtask
             state <= 50;
             r_refresh <= 1;
             r_stall <= 1;
-            action <= 6; // 2
    end
    endtask 
 
@@ -234,10 +230,6 @@ endtask
             // one read is enough
 				state <= 100;
 			end else begin
-            `ifdef RAM_DEBUG
-               if(w_mtime < `mtsm)
-                  $display ("%08d: ms=11 r_maddr=%x for r_addr=%x, start second read..", w_mtime, r_maddr, r_addr);
-            `endif
 				state <= 12;
 				r_rd <= 1;
 				r_maddr <= r_maddr + 4;
@@ -262,15 +254,6 @@ endtask
 	8'd100: begin 
 		state <= 0;
 		r_stall <= 0;
-      `ifdef RAM_DEBUG
-         if(r_rd || r_we)
-            $display("memorytn state 100 r_rd=%x r_we=%x --------------------------", r_rd, r_we);
-         if(w_mtime < `mtsm)
-            if(action == 0)
-               $display ("%08d: ms=64 read mem[%x]=>%x r_addr=%x r_ctrl[1:0]=%x", w_mtime, r_maddr, o_data, r_addr, r_ctrl[1:0]);
-            else
-               $display ("%08d: write mem[%x]<=%x r_addr=%x r_ctrl[1:0]=%x", w_mtime, r_maddr, r_wdata, r_addr, r_ctrl[1:0]);
-      `endif
 	end
 	8'd20: begin // mem_write
 		if(r_ctrl[1:0]==0) begin // SB
