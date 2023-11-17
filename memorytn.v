@@ -177,7 +177,7 @@ endtask
       end 
 `ifdef DRAM_REFRESH_LOGIC
       else if((r_refreshcnt > `REFRESH_CNT) && 
-               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_ID_BISS)) &&
+               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_OF)) &&
                !w_busy) begin
          // ram refresh
          prepare_refresh;
