@@ -198,9 +198,9 @@ endtask
    8'd51: begin 
       // r_stall is 1.
       if(!w_busy) begin
-         if(read_request || write_request) begin
-            $display("read_request=%x write_request=%x in refresh -----------------", read_request, write_request);
-         end
+         //if(read_request || write_request) begin
+            //$display("read_request=%x write_request=%x in refresh -----------------", read_request, write_request);
+         //end
          if(read_request) begin
             read_request <= 0;
             prepare_read_end;

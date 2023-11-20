@@ -80,7 +80,7 @@ module m_topsim(CLK, RST_X);
     wire [3:0] bus_cpustate0, bus_cpustate1;
     wire [3:0] w_bus_cpustate = w_grant == 0 ? bus_cpustate0 : bus_cpustate1;
     wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
-    wire w_mem_we, bus_mem_we0, bus_mem_we1;
+    wire w_data_we, bus_data_we0, bus_data_we1;
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
     wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
     wire [63:0] w_mtimecmp0, w_mtimecmp1, w_wmtimecmp0, w_wmtimecmp1;
@@ -113,7 +113,6 @@ module m_topsim(CLK, RST_X);
 	 reg   [$clog2(`KEYBOARD_QUEUE_SIZE):0] r_consf_cnts        = 0;  // Note!!
 	 reg [7:0] r_char_value=0;
 	 
-	 wire w_data_we = w_mem_we;
 	 reg         r_uart_we = 0;
     reg   [7:0] r_uart_data = 0;
     wire        w_key_we;
@@ -123,7 +122,7 @@ module m_topsim(CLK, RST_X);
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr0), .w_mem_we(bus_mem_we0),
+        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(bus_clint_we0),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
@@ -137,7 +136,7 @@ module m_topsim(CLK, RST_X);
      m_cpummu core1(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr1), .w_mem_we(bus_mem_we1),
+        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(bus_clint_we1),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
@@ -150,7 +149,7 @@ module m_topsim(CLK, RST_X);
 
     busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(w_mem_paddr), .w_mem_we(w_mem_we),
+        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_clint_we(w_clint_we),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
@@ -159,7 +158,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
 
         .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
-        .bus_mem_paddr0(bus_mem_paddr0), .bus_mem_we0(bus_mem_we0),
+        .bus_mem_paddr0(bus_mem_paddr0), .bus_data_we0(bus_data_we0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
         .bus_clint_we0(bus_clint_we0),
         .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
@@ -168,7 +167,7 @@ module m_topsim(CLK, RST_X);
         .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
 
         .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
-        .bus_mem_paddr1(bus_mem_paddr1), .bus_mem_we1(bus_mem_we1),
+        .bus_mem_paddr1(bus_mem_paddr1), .bus_data_we1(bus_data_we1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
         .bus_clint_we1(bus_clint_we1),
         .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
@@ -378,7 +377,7 @@ module m_topsim(CLK, RST_X);
     reg          r_finish=0;
     always@(posedge pll_clk) begin
         // optimisation instead of w_mem_wdata put w_data_wdata
-        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR)) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR)) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
 `ifdef LAUR_MEM_RB
@@ -391,7 +390,7 @@ module m_topsim(CLK, RST_X);
             r_uart_data <= 0;
         end
         // Finish Simulation
-        if((w_mem_paddr==`TOHOST_ADDR && w_mem_we) && (w_data_wdata[31:16]==`CMD_POWER_OFF)) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_POWER_OFF)) begin
             r_finish = 1;
         end
     end

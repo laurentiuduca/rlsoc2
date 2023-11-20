@@ -10,7 +10,7 @@ module m_cpummu(
     output wire [31:0] w_core_ir,
     output wire [3:0]  w_state,
     output wire [31:0] w_mem_paddr,
-    output wire w_mem_we,
+    output wire w_data_we,
     output wire [31:0] w_data_wdata,
     input wire [31:0] w_data_data,
     input wire [63:0] w_mtime,
@@ -39,7 +39,6 @@ module m_cpummu(
 
     wire [31:0] w_insn_data, w_insn_addr;
     wire [31:0] w_data_addr;
-    wire        w_data_we;
     wire [2:0]  w_data_ctrl;
 
     wire [31:0] w_priv, w_satp, w_mstatus;
@@ -70,7 +69,6 @@ module m_cpummu(
 
         //-------------------------------------------------------------------------------------------------------//
         .w_mem_paddr(w_mem_paddr),
-        .w_mem_we(w_mem_we),
         .w_tlb_busy(w_tlb_busy),
         .w_dram_addr(w_dram_addr),
         .w_dram_wdata(w_dram_wdata),

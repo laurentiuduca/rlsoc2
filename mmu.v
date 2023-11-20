@@ -31,7 +31,6 @@ module m_mmu(
     output wire         w_proc_busy,
     //--------------------------------------------------------------------------------------------//
     output wire [31:0]  w_mem_paddr,
-    output wire         w_mem_we,
     output wire         w_tlb_busy,
     output wire [31:0]  w_dram_addr,
     output wire [31:0]  w_dram_wdata,
@@ -65,7 +64,6 @@ module m_mmu(
     wire  [1:0] w_mc_aces;
 
     wire [31:0] w_mem_wdata = (r_mc_mode!=0) ? w_mc_wdata  : w_data_wdata;
-    assign        w_mem_we    = (r_mc_mode!=0) ? w_mc_we     : w_data_we;
 
 
     /***********************************        Page walk       ***********************************/
@@ -246,7 +244,7 @@ module m_mmu(
     //always@(posedge CLK) w_virt <= w_mem_paddr & 32'h0f000000;
 
     assign w_dram_wdata         = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
-    wire      w_dram_we       = (w_mem_we && !w_tlb_busy
+    wire      w_dram_we       = (w_data_we && !w_tlb_busy
                                     && (w_dev == `MEM_BASE_TADDR || w_dev == 0));
 
     assign w_dram_addr          =   (r_mc_mode!=0)              ? w_mc_addr         :
