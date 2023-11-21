@@ -128,7 +128,7 @@ module m_mmu(
                         r_pw_state <= 1;
                 end
                 else begin
-                    r_pw_state <= 7;
+                    r_pw_state <= 6;
                     case ({w_iscode, w_isread, w_iswrite})
                         3'b100 : r_tlb_addr <= {w_tlb_inst_r_addr[21:2], w_insn_addr[11:0]};
                         3'b010 : r_tlb_addr <= {w_tlb_data_r_addr[21:2], w_data_addr[11:0]};
@@ -194,11 +194,16 @@ module m_mmu(
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
             end
+        end 
+        else if(r_pw_state == 6) begin
+            if(w_dram_busy) begin
+                r_pw_state <= 7;
+                r_tlb_use <= 0;
+            end
         end
-        else if(r_pw_state == 7) begin
+        else if(r_pw_state == 7 && !w_dram_busy) begin
             r_pw_state <= 0;
             r_tlb_use <= 0;
-            //$write("hoge!, %x, %x\n", page_walk_fail, r_tlb_use);
         end
     end
     
@@ -279,11 +284,12 @@ module m_mmu(
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
                     !(w_use_tlb)                            ? 0 :
-                    (r_pw_state == 7)                       ? 0 : 1;
+                    (r_pw_state == 6)                       ? 0 : 1;
 
     assign w_dram_we_t =   w_pte_we || w_dram_we;
 
-    assign w_proc_busy = w_tlb_busy || w_dram_busy;
+    //assign w_proc_busy = w_tlb_busy || w_dram_busy;
+    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy;
 /**************************************************************************************************/
     
 endmodule

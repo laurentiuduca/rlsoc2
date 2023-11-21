@@ -42,7 +42,6 @@ module m_cpummu(
     wire [2:0]  w_data_ctrl;
 
     wire [31:0] w_priv, w_satp, w_mstatus;
-    wire        w_busy;
     wire [31:0] w_pagefault;
     wire        w_tlb_flush;
     wire        w_proc_busy;
