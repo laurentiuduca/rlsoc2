@@ -125,7 +125,6 @@ module m_mmu(
             if(!w_dram_busy && w_use_tlb) begin
                 // tlb miss
                 if(!w_tlb_hit) begin
-                    //if(!w_dram_busy)
                         r_pw_state <= 1;
                 end
                 else begin
@@ -180,7 +179,7 @@ module m_mmu(
         // Update pte
         else if(r_pw_state == 5) begin
             if(page_walk_fail)
-                $write("$");
+                $write("~");
             if(!r_was_busy)
                 if(w_dram_busy && w_pte_we) begin
                     $write("*");
@@ -282,7 +281,7 @@ module m_mmu(
                     !(w_use_tlb)                            ? 0 :
                     (r_pw_state == 7)                       ? 0 : 1;
 
-    assign w_dram_we_t =   w_pte_we || w_dram_we;// && !w_dram_busy;
+    assign w_dram_we_t =   w_pte_we || w_dram_we;
 
     assign w_proc_busy = w_tlb_busy || w_dram_busy;
 /**************************************************************************************************/
