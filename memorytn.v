@@ -173,7 +173,7 @@ endtask
       end 
 `ifdef DRAM_REFRESH_LOGIC
       else if((r_refreshcnt > `REFRESH_CNT) && 
-               ((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_OF)) &&
+               //((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_OF)) &&
                !w_busy) begin
          // ram refresh
          prepare_refresh;
@@ -181,7 +181,7 @@ endtask
             r_late_refresh <= 1;
       end
    8'd50: begin
-      if(!w_busy) begin
+      //if(!w_busy) begin
          if(read_request == 0 && i_rd_en) begin
             prepare_read_base;
             read_request <= 1;
@@ -189,7 +189,7 @@ endtask
             prepare_write_base;
             write_request <= 1;
          end
-      end
+      //end
 		if(w_busy) begin
          r_refresh <= 0;
          state <= 51;

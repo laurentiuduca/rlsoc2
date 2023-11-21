@@ -377,7 +377,7 @@ module m_topsim(CLK, RST_X);
     reg          r_finish=0;
     always@(posedge pll_clk) begin
         // optimisation instead of w_mem_wdata put w_data_wdata
-        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR)) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
 `ifdef LAUR_MEM_RB

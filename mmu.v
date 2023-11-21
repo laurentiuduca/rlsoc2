@@ -118,6 +118,7 @@ module m_mmu(
                             (w_iswrite && w_tlb_data_w_oe));
 
     // PAGE WALK state
+    reg r_was_busy = 0;
     always@(posedge CLK) begin
         if(r_pw_state == 0) begin
             // PAGE WALK START
@@ -171,13 +172,29 @@ module m_mmu(
                 physical_addr   <= (L0_success) ? L0_p_addr : 0;
                 page_walk_fail  <= (L0_success) ? 0 : 1;
             end
-            r_pw_state  <= 5;
+            if(!w_dram_busy) begin
+                r_was_busy <= 0;
+                r_pw_state  <= 5;
+            end
         end
         // Update pte
         else if(r_pw_state == 5) begin
-            r_pw_state      <= 0;
-            physical_addr   <= 0;
-            page_walk_fail  <= 0;
+            if(page_walk_fail)
+                $write("$");
+            if(!r_was_busy)
+                if(w_dram_busy && w_pte_we) begin
+                    $write("*");
+                    r_was_busy <= 1;
+                end else begin    
+                    r_pw_state      <= 0;
+                    physical_addr   <= 0;
+                    page_walk_fail  <= 0;
+                end
+            else if(!w_dram_busy) begin
+                    r_pw_state      <= 0;
+                    physical_addr   <= 0;
+                    page_walk_fail  <= 0;
+            end
         end
         else if(r_pw_state == 7) begin
             r_pw_state <= 0;
