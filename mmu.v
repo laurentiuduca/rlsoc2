@@ -181,7 +181,7 @@ module m_mmu(
         else if(r_pw_state == 5) begin
             if(page_walk_fail) begin
                 $write("~");
-                if(w_pte_we)    $write(" _ ");
+                if(w_pte_we)    $write("--------pte-we-------");
                 r_pw_state      <= 0;
                 physical_addr   <= 0;
                 page_walk_fail  <= 0;
