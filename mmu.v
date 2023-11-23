@@ -18,6 +18,8 @@
 /**************************************************************************************************/
 module m_mmu(
     input  wire         CLK, RST_X,
+    input wire [31:0] w_hart_id,
+    input wire [31:0] w_grant,
     input  wire [31:0]  w_insn_addr,
     input  wire [31:0]  w_data_addr,
     input  wire [31:0]  w_data_wdata,
@@ -47,6 +49,7 @@ module m_mmu(
 
     // Page walk state
     reg  [2:0]  r_pw_state          = 0;
+    reg  [2:0]  r_state_aux         = 0;
 
     // Page table entry
     reg  [31:0] L1_pte              = 0;
@@ -118,7 +121,7 @@ module m_mmu(
                             (w_iswrite && w_tlb_data_w_oe));
 
     // PAGE WALK state
-    reg r_was_busy = 0;
+    reg [7:0] r_from_state = 0;
     always@(posedge CLK) begin
         if(r_pw_state == 0) begin
             // PAGE WALK START
@@ -171,28 +174,40 @@ module m_mmu(
                 physical_addr   <= (L0_success) ? L0_p_addr : 0;
                 page_walk_fail  <= (L0_success) ? 0 : 1;
             end
-            if(!w_dram_busy) begin
-                r_was_busy <= 0;
-                r_pw_state  <= 5;
-            end
+            r_pw_state  <= 5;
+            r_state_aux <= 0;
         end
         // Update pte
         else if(r_pw_state == 5) begin
-            if(page_walk_fail)
+            if(page_walk_fail) begin
                 $write("~");
-            if(!r_was_busy)
-                if(w_dram_busy && w_pte_we) begin
-                    $write("*");
-                    r_was_busy <= 1;
-                end else begin    
+                if(w_pte_we)    $write(" _ ");
+                r_pw_state      <= 0;
+                physical_addr   <= 0;
+                page_walk_fail  <= 0;
+            end else begin
+                if(w_pte_we)       $write("+");
+                if(!w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
+                end else begin // w_pte_we is 1
+                    if(r_state_aux == 0) begin
+                        if(w_grant != w_hart_id)
+                            r_state_aux <= 1;
+                        else begin
+                            r_pw_state      <= 0;
+                            physical_addr   <= 0;
+                            page_walk_fail  <= 0;
+                        end
+                    end else if(r_state_aux == 1) begin
+                        if(w_grant == w_hart_id) begin
+                            r_pw_state      <= 0;
+                            physical_addr   <= 0;
+                            page_walk_fail  <= 0;
+                        end
+                    end
                 end
-            else if(!w_dram_busy) begin
-                    r_pw_state      <= 0;
-                    physical_addr   <= 0;
-                    page_walk_fail  <= 0;
             end
         end 
         else if(r_pw_state == 6) begin

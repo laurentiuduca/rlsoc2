@@ -6,6 +6,7 @@
 module m_cpummu(
     input wire CLK, RST_X,
     input wire [31:0] w_hart_id,
+    input wire [31:0] w_grant,
     input  wire [31:0] w_ipi,
     output wire [31:0] w_core_ir,
     output wire [3:0]  w_state,
@@ -52,6 +53,9 @@ module m_cpummu(
     m_mmu mmu(
         .CLK            (CLK),
         .RST_X          (RST_X),
+        .w_hart_id      (w_hart_id),
+        .w_grant        (w_grant),
+
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),
         .w_data_wdata   (w_data_wdata),
