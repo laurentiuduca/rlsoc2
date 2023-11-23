@@ -55,6 +55,7 @@ module m_cpummu(
         .RST_X          (RST_X),
         .w_hart_id      (w_hart_id),
         .w_grant        (w_grant),
+        .w_tx_ready     (w_tx_ready),
 
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),

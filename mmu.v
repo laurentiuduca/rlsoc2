@@ -20,6 +20,7 @@ module m_mmu(
     input  wire         CLK, RST_X,
     input wire [31:0] w_hart_id,
     input wire [31:0] w_grant,
+    input wire w_tx_ready,
     input  wire [31:0]  w_insn_addr,
     input  wire [31:0]  w_data_addr,
     input  wire [31:0]  w_data_wdata,
@@ -181,7 +182,7 @@ module m_mmu(
         else if(r_pw_state == 5) begin
             if(page_walk_fail) begin
                 $write("~");
-                if(w_pte_we)    $write("--------pte-we-------");
+                if(w_pte_we)    $write("--------pte-we and page_walk_fail-------");
                 r_pw_state      <= 0;
                 physical_addr   <= 0;
                 page_walk_fail  <= 0;
@@ -201,7 +202,7 @@ module m_mmu(
                             page_walk_fail  <= 0;
                         end
                     end else if(r_state_aux == 1) begin
-                        if(w_grant == w_hart_id) begin
+                        if(w_grant == w_hart_id && w_tx_ready) begin
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
                             page_walk_fail  <= 0;
@@ -211,7 +212,7 @@ module m_mmu(
             end
         end 
         else if(r_pw_state == 6) begin
-            if(w_dram_busy) begin
+            if(w_dram_busy && (w_grant == w_hart_id) && w_tx_ready) begin
                 r_pw_state <= 7;
                 r_tlb_use <= 0;
             end
@@ -304,7 +305,7 @@ module m_mmu(
     assign w_dram_we_t =   w_pte_we || w_dram_we;
 
     //assign w_proc_busy = w_tlb_busy || w_dram_busy;
-    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy;
+    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy;// || !w_tx_ready;
 /**************************************************************************************************/
     
 endmodule
