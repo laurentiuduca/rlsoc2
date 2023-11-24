@@ -202,7 +202,7 @@ module m_mmu(
                             page_walk_fail  <= 0;
                         end
                     end else if(r_state_aux == 1) begin
-                        if(w_grant == w_hart_id && w_tx_ready) begin
+                        if(w_grant == w_hart_id) begin // our w_pte_we command is taken
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
                             page_walk_fail  <= 0;
@@ -212,7 +212,7 @@ module m_mmu(
             end
         end 
         else if(r_pw_state == 6) begin
-            if(w_dram_busy && (w_grant == w_hart_id) && w_tx_ready) begin
+            if(w_dram_busy && (w_grant == w_hart_id)) begin
                 r_pw_state <= 7;
                 r_tlb_use <= 0;
             end

@@ -88,14 +88,13 @@ begin
          r_addr <= i_addr;
 			r_maddr <= {i_addr[31:2], 2'b0};
          r_ctrl <= i_ctrl;
-         //if(i_ctrl[1:0] != 2)
-         //   $display("%08x: read with i_addr=%x i_ctrl[1:0]=%x", w_mtime, i_addr, i_ctrl[1:0]);
+         r_stall <= 1;
 end
 endtask 
 task prepare_read_end;
 begin
 			state <= 10;
-         r_stall <= 1;
+         // r_stall <= 1;
          r_rd <= 1;
 end
 endtask 
@@ -115,12 +114,13 @@ begin
                        (i_ctrl[1:0] == 1) ? {16'h0, i_data[15:0]} : 
                         i_data;
          r_ctrl <= i_ctrl;
+         r_stall <= 1;
 end
 endtask
 task prepare_write_end;
 begin
 			state <= 20;
-         r_stall <= 1;
+         // r_stall <= 1;
 end
 endtask 
 task prepare_write;
@@ -139,7 +139,7 @@ endtask
    begin
             state <= 50;
             r_refresh <= 1;
-            r_stall <= 1;
+            //r_stall <= 1;
    end
    endtask 
 
@@ -217,7 +217,7 @@ endtask
          else if(i_wr_en)
             prepare_write;
          else begin
-            r_stall <= 0;
+            //r_stall <= 0; // refresh does not set r_stall
             state <= 0;
          end
       end
