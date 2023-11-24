@@ -196,7 +196,6 @@ endtask
       end
    end
    8'd51: begin 
-      // r_stall is 1.
       if(w_busy) begin
          if(read_request == 0 && i_rd_en) begin
             prepare_read_base;
