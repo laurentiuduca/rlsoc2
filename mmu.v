@@ -122,7 +122,6 @@ module m_mmu(
                             (w_iswrite && w_tlb_data_w_oe));
 
     // PAGE WALK state
-    reg [7:0] r_from_state = 0;
     always@(posedge CLK) begin
         if(r_pw_state == 0) begin
             // PAGE WALK START
@@ -180,15 +179,12 @@ module m_mmu(
         end
         // Update pte
         else if(r_pw_state == 5) begin
-            if(page_walk_fail) begin
-                $write("~");
-                if(w_pte_we)    $write("--------pte-we and page_walk_fail-------");
-                r_pw_state      <= 0;
-                physical_addr   <= 0;
-                page_walk_fail  <= 0;
-            end else begin
-                if(w_pte_we)       $write("+");
-                if(!w_pte_we) begin
+                if(page_walk_fail) begin
+                    r_pw_state      <= 0;
+                    physical_addr   <= 0;
+                    page_walk_fail  <= 0;
+                    $write("~ fault=%x ia=%x da=%x\n", w_pagefault, w_insn_addr, w_data_addr);
+                end else if(!w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
@@ -197,20 +193,21 @@ module m_mmu(
                         if(w_grant != w_hart_id)
                             r_state_aux <= 1;
                         else begin
+                            $write("+ state=%x addr=%x data=%x\n", r_state_aux, w_pte_waddr, w_pte_wdata);
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
                             page_walk_fail  <= 0;
                         end
                     end else if(r_state_aux == 1) begin
                         if(w_grant == w_hart_id) begin // our w_pte_we command is taken
+                            $write("+ state=%x addr=%x data=%x\n", r_state_aux, w_pte_waddr, w_pte_wdata);
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
                             page_walk_fail  <= 0;
                         end
                     end
                 end
-            end
-        end 
+        end
         else if(r_pw_state == 6) begin
             if(w_dram_busy && (w_grant == w_hart_id)) begin
                 r_pw_state <= 7;

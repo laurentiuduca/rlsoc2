@@ -150,7 +150,16 @@ endtask
       if(state == 8'd51)
          r_refreshcnt <= 0;
       else
+         `ifdef SIM_MODE
+         if(state == 0 && i_rd_en)
+            r_refreshcnt <= r_refreshcnt + 4;
+         else if(state == 0 && i_wr_en)
+            r_refreshcnt <= r_refreshcnt + 100;
+         else
+            r_refreshcnt <= r_refreshcnt + 1;
+         `else
          r_refreshcnt <= r_refreshcnt + 1;
+         `endif
    end
 `endif
 

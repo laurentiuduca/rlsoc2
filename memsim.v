@@ -624,6 +624,7 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
 
     assign w_odata = r_odata;
 
+    reg [7:0] r_refresh_cnt=0;
     reg r_stall=0;
     assign w_stall = r_stall;
     reg [`XLEN-1:0] r_maddr;
@@ -653,6 +654,7 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                         //$display("mem refresh");
                         state <= 3;
                         r_stall <= 1;
+                        r_refresh_cnt <= 0;
                 end
         8'd1: begin // mem read
 		r_odata <= {mem[r_maddr+3], mem[r_maddr+2], mem[r_maddr+1], mem[r_maddr+0]};
@@ -696,9 +698,12 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                 r_stall <= 0;
 	end
         8'd3: begin
-                // refresh done
-                state <= 0;
-                r_stall <= 0;
+                if(r_refresh_cnt >= 3) begin
+                        // refresh done
+                        state <= 0;
+                        r_stall <= 0;
+                end else
+                        r_refresh_cnt <= r_refresh_cnt + 1;
         end
         endcase
     end
