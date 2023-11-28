@@ -767,7 +767,7 @@ module m_topsim(CLK, RST_X);
                                .clk_sdram(clk_sdram),
                                .o_init_calib_complete(calib_done),
                                .sdram_fail(sdram_fail),
-                               `ifdef DRAM_REFRESH_LOGIC
+                               `ifdef TN_DRAM_REFRESH
                                .r_late_refresh(w_late_refresh),
                                `endif
 

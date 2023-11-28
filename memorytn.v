@@ -38,7 +38,7 @@ module DRAM_conRV
     output wire [3:0] O_sdram_dqm,       // 32/4
     `endif
 
-     `ifdef DRAM_REFRESH_LOGIC
+     `ifdef TN_DRAM_REFRESH
      output reg r_late_refresh,
      `endif
 
@@ -130,7 +130,7 @@ begin
 end
 endtask 
 
-`ifdef DRAM_REFRESH_LOGIC
+`ifdef TN_DRAM_REFRESH
    reg [31:0] r_refreshcnt = 0;
    reg read_request=0;
    reg write_request=0;
@@ -150,7 +150,7 @@ endtask
       if(state == 8'd51)
          r_refreshcnt <= 0;
       else
-         `ifdef SIM_MODE
+         `ifdef TN_SIM_REFRESH
          if(state == 0 && i_rd_en)
             r_refreshcnt <= r_refreshcnt + 4;
          else if(state == 0 && i_wr_en)
@@ -165,7 +165,7 @@ endtask
 
     always@(posedge clk) begin
     if(~rst_x) begin
-`ifdef DRAM_REFRESH_LOGIC
+`ifdef TN_DRAM_REFRESH
       read_request <= 0;
       write_request <= 0;
       r_late_refresh <= 0;
@@ -180,7 +180,7 @@ endtask
       end else if(i_wr_en && !w_busy) begin
          prepare_write;
       end 
-`ifdef DRAM_REFRESH_LOGIC
+`ifdef TN_DRAM_REFRESH
       else if((r_refreshcnt > `REFRESH_CNT) && 
                //((sys_state != 5)) || ((sys_state == 5)  && (w_bus_cpustate == `S_OF)) &&
                !w_busy) begin
@@ -230,7 +230,7 @@ endtask
          end
       end
    end
-`endif // DRAM_REFRESH_LOGIC
+`endif // TN_DRAM_REFRESH
 	8'd10: begin //mem read
 		if(w_busy) begin
 			r_rd <= 0;
@@ -388,7 +388,7 @@ endtask
     m_sdram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata), 
         .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_mask(r_mask), .w_stall(w_busy), 
         .w_mtime(w_mtime[31:0]),
-        `ifdef DRAM_REFRESH_LOGIC
+        `ifdef TN_DRAM_REFRESH
         .w_refresh(r_refresh)
         `else
         .w_refresh(0)
