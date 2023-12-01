@@ -150,7 +150,7 @@ endtask
       if(state == 8'd51)
          r_refreshcnt <= 0;
       else
-         `ifdef TN_SIM_REFRESH
+         `ifdef SIM_TNREFRESH
          if(state == 0 && i_rd_en)
          //if(state == 10 || state == 12)
             r_refreshcnt <= r_refreshcnt + 4;
