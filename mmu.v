@@ -183,7 +183,9 @@ module m_mmu(
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
-                    $write("~ fault=%x ia=%x da=%x\n", w_pagefault, w_insn_addr, w_data_addr);
+                    $display("~ fault=%x ia=%x da=%x", w_pagefault, w_insn_addr, w_data_addr);
+                    if(w_pte_we)
+                        $display("-----pte-we in pagefault-----");
                 end else if(!w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
@@ -193,14 +195,14 @@ module m_mmu(
                         if(w_grant != w_hart_id)
                             r_state_aux <= 1;
                         else begin
-                            $write("+ state=%x addr=%x data=%x\n", r_state_aux, w_pte_waddr, w_pte_wdata);
+                            $display("+ state=%x addr=%x data=%x", r_state_aux, w_pte_waddr, w_pte_wdata);
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
                             page_walk_fail  <= 0;
                         end
                     end else if(r_state_aux == 1) begin
                         if(w_grant == w_hart_id) begin // our w_pte_we command is taken
-                            $write("+ state=%x addr=%x data=%x\n", r_state_aux, w_pte_waddr, w_pte_wdata);
+                            $display("+ state=%x addr=%x data=%x", r_state_aux, w_pte_waddr, w_pte_wdata);
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
                             page_walk_fail  <= 0;

@@ -152,8 +152,10 @@ endtask
       else
          `ifdef TN_SIM_REFRESH
          if(state == 0 && i_rd_en)
+         //if(state == 10 || state == 12)
             r_refreshcnt <= r_refreshcnt + 4;
          else if(state == 0 && i_wr_en)
+         //if(state == 20 || state == 31 || state == 40 || state == 41 || state == 42)
             r_refreshcnt <= r_refreshcnt + 100;
          else
             r_refreshcnt <= r_refreshcnt + 1;

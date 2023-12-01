@@ -13,7 +13,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
+`define SIM_MODE
 //`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 
@@ -27,6 +27,7 @@ error
 
 `ifdef SIM_MODE
 `define SIM_TNSRAM // tang nano sim ram
+//`define TN_SIM_REFRESH
 //`define RAM_DEBUG
 `define mtsm 1
 //`define DRAM_SIM // slower, for nexysa7
