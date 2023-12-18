@@ -529,8 +529,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     end
 
     wire [31:0] cause = (pending_exception != ~0) ? pending_exception : (`CAUSE_INTERRUPT | irq_num);
-    wire [31:0] w_deleg = (r_priv_t <= `PRIV_S) ? ((cause & `CAUSE_INTERRUPT) ? (mideleg >> (cause & 32'h1f))  & 1 :
-                                                                                (medeleg >> (cause & 32'h1f))) & 1 : 0;
+    wire [31:0] w_deleg = (r_priv_t <= `PRIV_S) ? ((cause & `CAUSE_INTERRUPT) ? (mideleg >> (cause & 32'h1f)) & 1 :
+                                                                                (medeleg >> (cause & 32'h1f)) & 1) : 0;
 
     // wfi keeps pc constant
     wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
