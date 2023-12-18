@@ -561,7 +561,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     reg r_during_exception=0;
     always@(posedge CLK) begin
-        if(pending_exception != ~0) begin
+        if(pending_exception != ~0 && !(pending_exception & `CAUSE_INTERRUPT)) begin
             r_during_exception <= 1;
         end else if(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ &&
                 (r_funct12 == `FUNCT12_URET__ || r_funct12 == `FUNCT12_SRET__ || r_funct12 == `FUNCT12_MRET__) &&
