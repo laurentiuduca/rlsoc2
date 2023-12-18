@@ -829,26 +829,28 @@ module m_topsim(CLK, RST_X);
     /**********************************************************************************************/
  
 `ifdef SIM_MODE
-`ifdef RAM_DEBUG
-
-reg [31:0] o_pc1=-1, o_ir1=-1, old_time=-1, rd_cnt=0, o_w_dram_odata=0;
-reg rle=0, rwe=0, rob=0;
+//`define RAM_TRACE
+`ifdef RAM_TRACE
+integer file;
+reg [999:0] filename;
+reg [7:0] trace_state=0;
 always @(posedge pll_clk)
 begin
-    if(w_mtime > 32'h0954e873 && w_mtime < 32'h0954e873 + 200 && w_grant) begin
-        if(o_pc1 != w_pc1)// || o_ir1 != w_ir1)) 
+            $sformat(filename, "serial%0d.out", 1);
+            file = $fopen(filename, "w");
+            $fwrite(file, "id=%0d\n", 1);
+            $fclose(file);
+    // id w_grant addr r/w data
+    if(trace_state == 0) begin
         begin 
-            o_pc1 <= w_pc1;
-            o_ir1 <= w_ir1;
-            o_w_dram_odata <= w_dram_odata;
             rle <= w_dram_le;
             rwe <= w_dram_we_t;
             rob <= w_dram_busy;
-		$write("t=%08x busy=%x ms=%x pc1=%08x ir1=%08x w_grant=%x\n\n",
+		    $write("t=%08x busy=%x ms=%x pc1=%08x ir1=%08x w_grant=%x\n\n",
                 	w_mtime[31:0], w_dram_busy, w_mem_state,
                     w_pc1, w_ir1, w_grant
                     
-        );
+            );
         end
 	end
 end
