@@ -374,10 +374,15 @@ module m_topsim(CLK, RST_X);
     reg r_rb_uart_we=0;
     reg [7:0] r_rb_uart_data;
 `endif
+    reg r_wait_ready=1;
     reg          r_finish=0;
     always@(posedge pll_clk) begin
+        if(w_tx_ready)
+            r_wait_ready <= 1;
+        else
+            r_wait_ready <= 0;
         // optimisation instead of w_mem_wdata put w_data_wdata
-        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready) begin
+        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
 `ifdef LAUR_MEM_RB
@@ -829,32 +834,32 @@ module m_topsim(CLK, RST_X);
     /**********************************************************************************************/
  
 `ifdef SIM_MODE
-//`define RAM_TRACE
+`define RAM_TRACE
 `ifdef RAM_TRACE
 integer file;
 reg [999:0] filename;
 reg [7:0] trace_state=0;
 always @(posedge pll_clk)
 begin
+`ifdef laur0
             $sformat(filename, "serial%0d.out", 1);
             file = $fopen(filename, "w");
             $fwrite(file, "id=%0d\n", 1);
             $fclose(file);
+`endif
     // id w_grant addr r/w data
-    if(trace_state == 0) begin
+    if(trace_state == 0 && w_pc0 == 32'hc00f9bca) begin
         begin 
-            rle <= w_dram_le;
-            rwe <= w_dram_we_t;
-            rob <= w_dram_busy;
-		    $write("t=%08x busy=%x ms=%x pc1=%08x ir1=%08x w_grant=%x\n\n",
+            trace_state <= 1;
+		    $write("t=%08x busy=%x ms=%x pc0=%08x ir0=%08x w_grant=%x\n",
                 	w_mtime[31:0], w_dram_busy, w_mem_state,
-                    w_pc1, w_ir1, w_grant
+                    w_pc0, w_ir0, w_grant
                     
             );
         end
 	end
 end
-`endif // RAM_DEBUG
+`endif
 `endif // SIM_MODE
 endmodule
 
