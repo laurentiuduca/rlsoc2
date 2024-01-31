@@ -181,9 +181,6 @@ module m_topsim(CLK, RST_X);
 
     /**********************************************************************************************/
 
-    wire        w_isread        = (w_tlb_req == `ACCESS_READ);
-    wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
-
     wire  [3:0] w_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
@@ -218,6 +215,10 @@ module m_topsim(CLK, RST_X);
     assign w_data_data = r_data_data;
 
     /*********************************          INTERRUPTS          *********************************/
+    
+    wire        w_isread        = (w_tlb_req == `ACCESS_READ);
+    wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
+
     wire [31:0] w_cons_irq=0;
     wire        w_cons_irq_oe=0;
     wire        w_key_req=0;
@@ -838,26 +839,57 @@ module m_topsim(CLK, RST_X);
 `ifdef RAM_TRACE
 integer file;
 reg [999:0] filename;
-reg [7:0] trace_state=0;
+reg [7:0] trace_state=0, dstate=0;
+reg [31:0] daddr=0, dstart=0;
+reg [31:0] id=0;
 always @(posedge pll_clk)
 begin
-`ifdef laur0
+    if(dstart == 0) begin
+            dstart <= 1;
             $sformat(filename, "serial%0d.out", 1);
             file = $fopen(filename, "w");
-            $fwrite(file, "id=%0d\n", 1);
-            $fclose(file);
-`endif
-    // id w_grant addr r/w data
+    end
     if(trace_state == 0 && w_pc0 == 32'hc00f9bca) begin
-        begin 
             trace_state <= 1;
 		    $write("t=%08x busy=%x ms=%x pc0=%08x ir0=%08x w_grant=%x\n",
                 	w_mtime[31:0], w_dram_busy, w_mem_state,
-                    w_pc0, w_ir0, w_grant
-                    
+                    w_pc0, w_ir0, w_grant              
             );
+        //.w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
+        //.w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
+            // dram
+            //.i_rd_en(w_dram_le), .i_wr_en(w_wr_en), .i_addr(w_dram_addr_t2), .i_data(w_dram_wdata_t), .o_data(w_dram_odata),
+            //.o_busy(w_dram_busy), .i_ctrl(w_dram_ctrl_t),
+	end else begin
+        if(dstate == 0) begin
+            //if(!w_data_we && (r_dev==`CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || r_dev == `HVC_BASE_TADDR || w_plic_aces))
+            //    $display("t=%08x r_dev in data io zone with read or w_plic_aces", w_mtime);
+            //else 
+            if(w_data_we) begin
+                $fwrite(file, "%08x: data_we=%x %x %x %x %x\n", id, w_data_we, w_mem_paddr, w_data_wdata, w_pc0, w_ir0);
+                id <= id + 1;
+            end else if (dram_con.i_wr_en) begin
+                $fwrite(file, "%08x: dram_wr %x %x %x %x\n", id, dram_con.i_addr, dram_con.i_data, w_pc0, w_ir0);
+                id <= id + 1;
+            end else if (dram_con.i_rd_en) begin
+                daddr <= dram_con.i_addr;
+                dstate <= 1;
+            end else if (w_mtime >= 60000000) begin
+                $display("finish sim");
+                $fclose(file);
+                $finish;
+            end
+        end else if (dstate == 1) begin
+            if(dram_con.o_busy == 1)
+                dstate <= 2;
+        end else if (dstate == 2) begin
+            if(dram_con.o_busy == 0) begin
+                $fwrite(file, "%08x: dram_rd %x %x %x %x\n", id, daddr, dram_con.o_data, w_pc0, w_ir0);
+                dstate <= 0;
+                id <= id + 1;
+            end
         end
-	end
+    end
 end
 `endif
 `endif // SIM_MODE
