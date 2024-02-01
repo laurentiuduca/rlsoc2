@@ -859,10 +859,12 @@ begin
             //    $display("t=%08x r_dev in data io zone with read or w_plic_aces", w_mtime);
             //else 
             if(w_data_we) begin
-                $fwrite(file, "%08x: data_we %x %x %x %x\n", id, w_mem_paddr, w_data_wdata, w_pc0, w_ir0);
+                $fwrite(file, "%08x: data_we %x %x %x\n", id, w_mem_paddr, w_data_wdata, w_pc0);
                 id <= id + 1;
+                dstate <= 6;
             end else if (dram_con.i_wr_en) begin
-                $fwrite(file, "%08x: dram_wr %x %x %x %x\n", id, dram_con.i_addr, dram_con.i_data, w_pc0, w_ir0);
+                dstate <= 4;
+                $fwrite(file, "%08x: dram_wr %x %x %x\n", id, dram_con.i_addr, dram_con.i_data, w_pc0);
                 id <= id + 1;
             end else if (dram_con.i_rd_en) begin
                 daddr <= dram_con.i_addr;
@@ -870,18 +872,32 @@ begin
             end else if (w_mtime >= 70000000) begin
                 $display("finish ram trace");
                 $fclose(file);
-                dstate <= 4;
-                //$finish;
+                dstate <= 400;
+                $finish;
             end
         end else if (dstate == 1) begin
             if(dram_con.o_busy == 1)
                 dstate <= 2;
         end else if (dstate == 2) begin
             if(dram_con.o_busy == 0) begin
-                $fwrite(file, "%08x: dram_rd %x %x %x %x\n", id, daddr, dram_con.o_data, w_pc0, w_ir0);
+                if(id >= 137 && id <= 141)
+                    $fwrite(file, "%08x: dram_rd %x %x %x\n", id, daddr, dram_con.o_data, w_pc0, 
+                    //w_ir0, core0.p.w_insn_data, core0.p.w_ir_org, core0.p.state, core0.p.r_if_state
+                    );
+                else
+                    $fwrite(file, "%08x: dram_rd %x %x %x\n", id, daddr, dram_con.o_data, w_pc0);
                 dstate <= 0;
                 id <= id + 1;
             end
+        end else if (dstate == 4) begin // wait dram-write
+            if(dram_con.o_busy == 1)
+                dstate <= 5;
+        end else if (dstate == 5) begin
+            if(dram_con.o_busy == 0)
+                dstate <= 0;
+        end else if (dstate == 6) begin
+            if(w_data_we == 0)
+                dstate <= 0;
         end
 end
 `endif // RAM_TRACE
