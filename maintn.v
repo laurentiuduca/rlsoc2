@@ -867,10 +867,11 @@ begin
             end else if (dram_con.i_rd_en) begin
                 daddr <= dram_con.i_addr;
                 dstate <= 1;
-            end else if (w_mtime >= 60000000) begin
-                $display("finish sim");
+            end else if (w_mtime >= 70000000) begin
+                $display("finish ram trace");
                 $fclose(file);
-                $finish;
+                dstate <= 4;
+                //$finish;
             end
         end else if (dstate == 1) begin
             if(dram_con.o_busy == 1)
@@ -883,7 +884,7 @@ begin
             end
         end
 end
-`endif
+`endif // RAM_TRACE
 `endif // SIM_MODE
 endmodule
 
