@@ -835,7 +835,7 @@ module m_topsim(CLK, RST_X);
     /**********************************************************************************************/
  
 `ifdef SIM_MODE
-`define RAM_TRACE
+//`define RAM_TRACE
 `ifdef RAM_TRACE
 integer file;
 reg [999:0] filename;
@@ -869,7 +869,7 @@ begin
             end else if (dram_con.i_rd_en) begin
                 daddr <= dram_con.i_addr;
                 dstate <= 1;
-            end else if (w_mtime >= 70000000) begin
+            end else if (w_mtime >= 60000000) begin
                 $display("finish ram trace");
                 $fclose(file);
                 dstate <= 400;
