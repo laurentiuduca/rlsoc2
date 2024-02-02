@@ -210,16 +210,17 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_insn_addr <=  (w_nalign4 && r_ir16_v) ? w_vadr2 :
                         (w_if_state==2 || w_if_state==3) ? w_vadr2 :
                         (w_usestate) ? w_vadr1 : pc;
-        if(w_nalign4 || w_if_state==2 || w_if_state==3) begin
-            $display("------------------------------w_nalign4 || w_if_state==2 || w_if_state==3");
-            $finish;
+        if((w_nalign4 || w_if_state==2 || w_if_state==3) && (w_mtime > 10)) begin
+            //$display("%8x: w_nalign4=%x w_if_state=%x pc=%x w_cinsn=%x w_ir_org=%x w_insn_data=%x", 
+            //    w_mtime, w_nalign4, w_if_state, pc, w_cinsn, w_ir_org, w_insn_data);
+            //$finish;
         end
     end
     assign w_insn_addr = r_insn_addr;
       
     wire [31:0] w_ir_org = (r_if_state == 3) ? (r_ir16_v) ? {w_insn_data[15:0], r_ir16} :
                                                             {w_insn_data[15:0], r_if_irl} :
-                                                w_insn_data;
+                                                            w_insn_data;
 
     /***********************************           CVT          ***********************************/
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
@@ -539,10 +540,14 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     // wfi keeps pc constant
     wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
     wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
-                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP |`MIP_STIP | `MIP_SSIP))) |
-                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP |`MIP_UTIP | `MIP_USIP)));
+                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
+                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
 
     always @(posedge CLK) begin /////// update program counter
+        if(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)) begin
+            $display("(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP))");
+            $finish;
+        end
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
         else if(w_pagefault != ~32'h0) begin  pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
         else if(state==`S_FIN && !w_busy) begin
@@ -564,6 +569,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     end
 
     reg r_during_exception=0;
+    `ifdef laur0
     always@(posedge CLK) begin
         if(pending_exception != ~0 && !(pending_exception & `CAUSE_INTERRUPT)) begin
             r_during_exception <= 1;
@@ -573,7 +579,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             r_during_exception <= 0;
         end
     end
-
+    `endif
     /***********************************           FIN          ***********************************/
     always@(posedge CLK) begin
         if(state == `S_FIN && !w_busy) begin 
