@@ -121,6 +121,8 @@ module m_mmu(
                             (w_isread && w_tlb_data_r_oe)  ||
                             (w_iswrite && w_tlb_data_w_oe));
 
+    reg r_dram_was_busy=0;
+
     // PAGE WALK state
     always@(posedge CLK) begin
         if(r_pw_state == 0) begin
@@ -129,6 +131,7 @@ module m_mmu(
                 // tlb miss
                 if(!w_tlb_hit) begin
                         r_pw_state <= 1;
+                        r_dram_was_busy <= 0;
                 end
                 else begin
                     r_pw_state <= 6;
@@ -143,18 +146,26 @@ module m_mmu(
             end
         end
         // Level 1
-        else if(r_pw_state == 1 && !w_dram_busy) begin
-            L1_pte      <= w_dram_odata;
-            r_pw_state  <= 2;
+        else if(r_pw_state == 1) begin
+            if(r_dram_was_busy && !w_dram_busy) begin
+                L1_pte      <= w_dram_odata;
+                r_pw_state  <= 2;
+                r_dram_was_busy <= 0;
+            end else if(w_dram_busy)
+                r_dram_was_busy <= 1;
         end
         else if(r_pw_state == 2) begin
-            if(!w_dram_busy)
-                r_pw_state  <= 3;
+                r_pw_state <= 3;
+                r_dram_was_busy <= 0;
         end
         // Level 0
-        else if(r_pw_state == 3 && !w_dram_busy) begin
-            L0_pte      <= w_dram_odata;
-            r_pw_state  <= 4;
+        else if(r_pw_state == 3) begin
+            if(r_dram_was_busy && !w_dram_busy) begin
+                L0_pte      <= w_dram_odata;
+                r_pw_state  <= 4;
+                r_dram_was_busy <= 0;
+            end else if(w_dram_busy)
+                r_dram_was_busy <= 1;
         end
         // Success?
         else if(r_pw_state == 4) begin
