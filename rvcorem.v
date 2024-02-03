@@ -210,11 +210,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_insn_addr <=  (w_nalign4 && r_ir16_v) ? w_vadr2 :
                         (w_if_state==2 || w_if_state==3) ? w_vadr2 :
                         (w_usestate) ? w_vadr1 : pc;
-        if((w_nalign4 || w_if_state==2 || w_if_state==3) && (w_mtime > 10)) begin
-            //$display("%8x: w_nalign4=%x w_if_state=%x pc=%x w_cinsn=%x w_ir_org=%x w_insn_data=%x", 
-            //    w_mtime, w_nalign4, w_if_state, pc, w_cinsn, w_ir_org, w_insn_data);
-            //$finish;
-        end
     end
     assign w_insn_addr = r_insn_addr;
       
