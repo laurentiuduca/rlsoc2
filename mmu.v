@@ -201,8 +201,8 @@ module m_mmu(
                             page_walk_fail  <= 0;
                         end
                     end else if(r_state_aux == 1) begin
-                        r_state_aux <= 0;
                         if(w_grant == w_hart_id) begin // our w_pte_we command is taken
+                            r_state_aux <= 0;
                             $display("+ state=%x addr=%x data=%x", r_state_aux, w_pte_waddr, w_pte_wdata);
                             r_pw_state      <= 0;
                             physical_addr   <= 0;
