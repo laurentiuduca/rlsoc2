@@ -324,9 +324,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             r_tkn             <= 0;
         end
         else if(state == `S_FIN && !w_busy) begin
+            `ifdef laur0
             if(w_interrupt_mask != 0 && !r_during_exception) begin
                 pending_exception <= `CAUSE_INTERRUPT | irq_num;
             end
+            `endif
         end
         else if(state == `S_EX1) begin
             case(r_opcode)
