@@ -541,9 +541,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     // wfi keeps pc constant
     wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
-    wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
-                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
-                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
+    wire w_exit_wfi =                           (mip & mie & (`MIP_MTIP | `MIP_MSIP))  |
+                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_STIP | `MIP_SSIP))) |
+                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UTIP | `MIP_USIP)));
 
     always @(posedge CLK) begin /////// update program counter
         if(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)) begin
