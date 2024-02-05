@@ -14,7 +14,7 @@
 //`define ARTYA7
 /**************************************************************************************************/
 `define SIM_MODE
-`define USE_SINGLE_CORE
+//`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 
 //`define SIM_MAIN // for xsim

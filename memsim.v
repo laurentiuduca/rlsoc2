@@ -698,7 +698,7 @@ module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
                 r_stall <= 0;
 	end
         8'd3: begin
-                if(r_refresh_cnt >= 1) begin
+                if(r_refresh_cnt >= 3) begin
                         // refresh done
                         state <= 0;
                         r_stall <= 0;

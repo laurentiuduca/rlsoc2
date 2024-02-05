@@ -154,6 +154,9 @@ module m_mmu(
                 r_dram_was_busy <= 1;
         end
         else if(r_pw_state == 2) begin
+            if(w_dram_busy && !(w_priv == `PRIV_M || w_satp[31] == 0)) begin
+                $display("dram_busy in pw_state 2");
+            end
             if(!w_dram_busy) begin
                 r_pw_state <= 3;
                 r_dram_was_busy <= 0;
@@ -190,10 +193,14 @@ module m_mmu(
         end
         // Update pte
         else if(r_pw_state == 5) begin
-                if(page_walk_fail || !w_pte_we) begin
+                if(page_walk_fail || !w_pte_we || !w_dram_busy) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
+                    if(r_dram_was_busy) begin
+                        $display("---- !dram_busy in pw_state 5");
+                        r_dram_was_busy <= 0;
+                    end
                     if(page_walk_fail) begin
                         $display("~ fault=%x ia=%x da=%x", w_pagefault, w_insn_addr, w_data_addr);
                         if(w_pte_we) begin
@@ -201,10 +208,10 @@ module m_mmu(
                             $finish;
                         end
                     end
-                end else if(!w_dram_busy) begin // w_pte_we is 1
-                    r_pw_state      <= 0;
-                    physical_addr   <= 0;
-                    page_walk_fail  <= 0;
+                end else
+                if(w_dram_busy && !(w_priv == `PRIV_M || w_satp[31] == 0)) begin
+                    $display("dram_busy in pw_state 5");
+                    r_dram_was_busy <= 1;
                 end
         end
         else if(r_pw_state == 6) begin
