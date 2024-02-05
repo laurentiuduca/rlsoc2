@@ -50,7 +50,6 @@ module m_mmu(
 
     // Page walk state
     reg  [2:0]  r_pw_state          = 0;
-    reg  [2:0]  r_state_aux         = 0;
 
     // Page table entry
     reg  [31:0] L1_pte              = 0;
@@ -155,8 +154,10 @@ module m_mmu(
                 r_dram_was_busy <= 1;
         end
         else if(r_pw_state == 2) begin
+            if(!w_dram_busy) begin
                 r_pw_state <= 3;
                 r_dram_was_busy <= 0;
+            end
         end
         // Level 0
         else if(r_pw_state == 3) begin
@@ -186,40 +187,24 @@ module m_mmu(
                 page_walk_fail  <= (L0_success) ? 0 : 1;
             end
             r_pw_state  <= 5;
-            r_state_aux <= 0;
         end
         // Update pte
         else if(r_pw_state == 5) begin
-                if(page_walk_fail) begin
+                if(page_walk_fail || !w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
-                    $display("~ fault=%x ia=%x da=%x", w_pagefault, w_insn_addr, w_data_addr);
-                    if(w_pte_we)
-                        $display("-----pte-we in pagefault-----");
-                end else if(!w_pte_we) begin
-                    r_pw_state      <= 0;
-                    physical_addr   <= 0;
-                    page_walk_fail  <= 0;
-                end else begin // w_pte_we is 1
-                    if(r_state_aux == 0) begin
-                        if(w_grant != w_hart_id)
-                            r_state_aux <= 1;
-                        else begin
-                            $display("+ state=%x addr=%x data=%x", r_state_aux, w_pte_waddr, w_pte_wdata);
-                            r_pw_state      <= 0;
-                            physical_addr   <= 0;
-                            page_walk_fail  <= 0;
-                        end
-                    end else if(r_state_aux == 1) begin
-                        if(w_grant == w_hart_id) begin // our w_pte_we command is taken
-                            r_state_aux <= 0;
-                            $display("+ state=%x addr=%x data=%x", r_state_aux, w_pte_waddr, w_pte_wdata);
-                            r_pw_state      <= 0;
-                            physical_addr   <= 0;
-                            page_walk_fail  <= 0;
+                    if(page_walk_fail) begin
+                        $display("~ fault=%x ia=%x da=%x", w_pagefault, w_insn_addr, w_data_addr);
+                        if(w_pte_we) begin
+                            $display("-----pte-we in pagefault-----");
+                            $finish;
                         end
                     end
+                end else if(!w_dram_busy) begin // w_pte_we is 1
+                    r_pw_state      <= 0;
+                    physical_addr   <= 0;
+                    page_walk_fail  <= 0;
                 end
         end
         else if(r_pw_state == 6) begin
