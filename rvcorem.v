@@ -357,6 +357,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     if(r_funct3 == `FUNCT3_PRIV__) begin
                         case (r_funct12)
                             `FUNCT12_ECALL_ : begin
+                                // `CAUSE_USER_ECALL + 3 = `CAUSE_MACHINE_ECALL                                
                                 r_wb_data_csr       <= `CAUSE_USER_ECALL + priv;
                                 pending_exception   <= `CAUSE_USER_ECALL + priv;
                             end
@@ -595,6 +596,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                              (r_funct12 == `FUNCT12_SRET__)  ? `CSR_SEPC :
                              (r_funct12 == `FUNCT12_MRET__)  ? `CSR_MEPC : 0;
     
+    /* mstatus[14:13]=FS[1:0].  The FS field encodes the status of the floating-point unit, 
+        including the CSR fcsr and floating-point data registers f0–f31. FS=0=> is off
+        XS field encodes the status of additional user-mode extensions and associated state. XS=0 => is off
+        FS[1:0] WARL field and the XS[1:0] read-only field are used to reduce the cost of context save
+        and restore by setting and tracking the current state of the floating-point unit and any other user-
+        mode extensions respectivel
+    */
+    // SSTATUS_MASK0=h000de133=> sstatus has MXR, SUM, XS, FS, SPP, SPIE, SIE
+    // h6000 => MXR, SUM
     wire [31:0] w_sstatus_t = (mstatus | 32'h6000) & 32'h000de133;
     wire [31:0] w_mstatus_t = (mstatus | 32'h6000);
 
@@ -639,6 +649,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             `CSR_INSTRETH   : r_rcsr_t = w_mtime[63:32];
             `CSR_TIMEH      : r_rcsr_t = w_mtime[63:32];
 
+            // h80000000 => SD
+            // w_mstatus_t[31:13]==3 => FS, w_mstatus_t[31:15]==3 => XS
+            /* The SD bit is a read-only bit that summarizes whether either the FS field or XS field signals the
+                presence of some dirty state that will require saving extended user context to memory. If both XS
+                and FS are hardwired to zero, then SD is also always zero*/
             `CSR_SSTATUS    : r_rcsr_t = (w_sstatus_t[31:13]==3 | w_sstatus_t[31:15]==3) ? (w_sstatus_t | 32'h80000000) : w_sstatus_t;
             `CSR_MSTATUS    : r_rcsr_t = (w_mstatus_t[31:13]==3 | w_mstatus_t[31:15]==3) ? (w_mstatus_t | 32'h80000000) : w_mstatus_t;
             `CSR_MHARTID    : r_rcsr_t = mhartid;
@@ -648,8 +663,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
 
     wire        w_csr_we    = (r_op_SYS) && (r_funct3 != `FUNCT3_PRIV__);
+    // SSTATUS_MASK =  32'h000de133 see above
     wire [31:0] w_sstatus   = (mstatus & ~`SSTATUS_MASK) | (r_wb_data_csr & `SSTATUS_MASK);
 
+    // t1 sets mpie, t2 sets mpp, t3 clears mie
     wire [31:0] w_sstatus_t1 = (w_mstatus_nxt & ~`MSTATUS_SPIE) | (((w_mstatus_nxt >> r_priv_t) & 1) << `MSTATUS_SPIE_SHIFT);
     wire [31:0] w_sstatus_t2 = (w_sstatus_t1  & ~`MSTATUS_SPP) | (r_priv_t << `MSTATUS_SPP_SHIFT);
     wire [31:0] w_sstatus_t3 = (w_sstatus_t2  & ~`MSTATUS_SIE);
@@ -763,13 +780,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     `FUNCT12_URET__ : begin
                     end
                     `FUNCT12_SRET__ : begin
-                        mstatus <= (((mstatus & ~(1<<mstatus[8])) | (mstatus[5] << mstatus[8])) | 32'h20) & ~32'h100;
-                        priv    <= mstatus[8];
+                        mstatus <= (((mstatus & ~(1<<mstatus[`MSTATUS_SPP_SHIFT])) | 
+                                    (mstatus[`MSTATUS_SPIE_SHIFT] << mstatus[`MSTATUS_SPP_SHIFT])) 
+                                    | `MSTATUS_SPIE) & ~`MSTATUS_SPP;
+                        priv    <= mstatus[`MSTATUS_SPP_SHIFT];
                     end
                     `FUNCT12_MRET__ : begin
-                        mstatus <= (((mstatus & ~(1 << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT]))
-                                     | (mstatus[`MSTATUS_MPIE_SHIFT] << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT])) 
-                                    | `MSTATUS_MPIE) & ~`MSTATUS_MPP;
+                        mstatus <= (((mstatus & ~(1 << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT])) |
+                                     (mstatus[`MSTATUS_MPIE_SHIFT] << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT])) 
+                                     | `MSTATUS_MPIE) & ~`MSTATUS_MPP;
                         priv    <= mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT];
                     end
                 endcase
@@ -812,6 +831,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 					    `endif
 		    		end	
 
+                     /* MASK_STATUS (`MSTATUS_MASK & ~`MSTATUS_FS) = h000e79bb & ~h6000 = h000e19bb = 
+                            MXR SUM MPRV MPP SPP MPIE SPIE MIE SIE
+                            The MPRV (Modify PRiVilege) bit modifies the privilege level at which loads and stores execute
+                            in all privilege modes. When MPRV=0, loads and stores behave as normal, using the translation
+                            and protection mechanisms of the current privilege mode. When MPRV=1, load and store memory
+                            addresses are translated and protected, and endianness is applied, as though the current privilege
+                            mode were set to MPP. Instruction address-translation and protection are unaffected by the setting
+                            of MPRV. MPRV is hardwired to 0 if U-mode is not supported.
+                     */
                     `CSR_MSTATUS    : mstatus    <= (mstatus & ~`MASK_STATUS) | (r_wb_data_csr & `MASK_STATUS);
                     `CSR_SSTATUS    : mstatus    <= (mstatus & ~`MASK_STATUS) | (w_sstatus & `MASK_STATUS);
                 endcase

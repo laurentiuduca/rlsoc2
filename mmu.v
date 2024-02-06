@@ -78,6 +78,12 @@ module m_mmu(
     // Level 1
     wire [31:0] vpn1            = {22'b0, v_addr[31:22]};
     wire [31:0] L1_pte_addr     = {w_satp[19:0], 12'b0} + {vpn1, 2'b0};
+    /* 
+        mstatus[18]=SUM permit Supervisor User Memory access
+        mstatus[19]=MXR
+        When MXR=0, only loads from pages marked readable (R=1 in Figure 4.17) will succeed.
+        When MXR=1, loads from pages marked either readable or executable (R=1 or X=1) will succeed 
+    */
     wire  [2:0] L1_xwr          = w_mstatus[19] ? (L1_pte[3:1] | L1_pte[5:3]) : L1_pte[3:1];
     wire [31:0] L1_paddr        = {L1_pte[29:10], 12'h0};
     wire [31:0] L1_p_addr       = {L1_paddr[31:22], v_addr[21:0]};
@@ -203,7 +209,7 @@ module m_mmu(
                         r_dram_was_busy <= 0;
                     end
                     if(page_walk_fail) begin
-                        $display("~ fault=%x ia=%x da=%x", w_pagefault, w_insn_addr, w_data_addr);
+                        $display("~ fault=%x ia=%x da=%x vaddr=%x", w_pagefault, w_insn_addr, w_data_addr, v_addr);
                         if(w_pte_we) begin
                             $display("-----pte-we in pagefault-----");
                             //$finish;
