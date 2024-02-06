@@ -102,7 +102,8 @@ module m_mmu(
     // update pte
     wire [31:0] L1_pte_write    = L1_pte | `PTE_A_MASK | (w_iswrite ? `PTE_D_MASK : 0);
     wire [31:0] L0_pte_write    = L0_pte | `PTE_A_MASK | (w_iswrite ? `PTE_D_MASK : 0);
-    wire        w_pte_we        = (r_pw_state==5) && (((L1_xwr != 0 && L1_success) && L1_write) ||
+    wire        w_pte_we        = (r_pw_state==5) && !page_walk_fail && 
+                                        (((L1_xwr != 0 && L1_success) && L1_write) ||
                                         ((L0_xwr != 0 && L0_success) && L0_write));
     wire [31:0] w_pte_waddr     = (L1_xwr != 0 && L1_success) ? L1_pte_addr : L0_pte_addr;
     wire [31:0] w_pte_wdata     = (L1_xwr != 0 && L1_success) ? L1_pte_write : L0_pte_write;
@@ -205,7 +206,7 @@ module m_mmu(
                         $display("~ fault=%x ia=%x da=%x", w_pagefault, w_insn_addr, w_data_addr);
                         if(w_pte_we) begin
                             $display("-----pte-we in pagefault-----");
-                            $finish;
+                            //$finish;
                         end
                     end
                 end else
