@@ -907,7 +907,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_data_en <= w_d_en_t;
         r_tlb_req <= (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
                      (w_d_en_t)                        ? `ACCESS_READ  :
-                     (w_d_we_t)                        ? `ACCESS_WRITE : 2'h3;
+                     (w_d_we_t)                        ? `ACCESS_WRITE : `ACCESS_NONE;
     end
 
     assign w_tlb_req  = r_tlb_req;
