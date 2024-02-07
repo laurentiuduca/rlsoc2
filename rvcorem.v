@@ -653,7 +653,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             // w_mstatus_t[31:13]==3 => FS, w_mstatus_t[31:15]==3 => XS
             /* The SD bit is a read-only bit that summarizes whether either the FS field or XS field signals the
                 presence of some dirty state that will require saving extended user context to memory. If both XS
-                and FS are hardwired to zero, then SD is also always zero*/
+                and FS are hardwired to zero, then SD=mstatus[31] is also always zero*/
             `CSR_SSTATUS    : r_rcsr_t = (w_sstatus_t[31:13]==3 | w_sstatus_t[31:15]==3) ? (w_sstatus_t | 32'h80000000) : w_sstatus_t;
             `CSR_MSTATUS    : r_rcsr_t = (w_mstatus_t[31:13]==3 | w_mstatus_t[31:15]==3) ? (w_mstatus_t | 32'h80000000) : w_mstatus_t;
             `CSR_MHARTID    : r_rcsr_t = mhartid;

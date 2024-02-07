@@ -84,24 +84,24 @@ module m_mmu(
         When MXR=0, only loads from pages marked readable (R=1 in Figure 4.17) will succeed.
         When MXR=1, loads from pages marked either readable or executable (R=1 or X=1) will succeed 
     */
-    wire  [2:0] L1_xwr          = w_mstatus[19] ? (L1_pte[3:1] | L1_pte[5:3]) : L1_pte[3:1];
+    wire  [2:0] L1_xwr          = w_mstatus[MSTATUS_MXR_SHIFT] ? (L1_pte[3:1] | L1_pte[5:3]) : L1_pte[3:1];
     wire [31:0] L1_paddr        = {L1_pte[29:10], 12'h0};
     wire [31:0] L1_p_addr       = {L1_paddr[31:22], v_addr[21:0]};
     wire        L1_write        = !L1_pte[6] || (!L1_pte[7] && w_iswrite);
     wire        L1_success      = !(L1_xwr ==2 || L1_xwr == 6 ||
-                                    (w_priv == `PRIV_S && (L1_pte[4] && !w_mstatus[18])) ||
+                                    (w_priv == `PRIV_S && (L1_pte[4] && !w_mstatus[MSTATUS_SUM_SHIFT])) ||
                                     (w_priv == `PRIV_U && !L1_pte[4]) ||
                                     (L1_xwr[w_tlb_req] == 0));
 
     // Level 0
     wire [31:0] vpn0            = {22'b0, v_addr[21:12]};
     wire [31:0] L0_pte_addr     = {L1_pte[29:10], 12'b0} + {vpn0, 2'b0};
-    wire  [2:0] L0_xwr          = w_mstatus[19] ? (L0_pte[3:1] | L0_pte[5:3]) : L0_pte[3:1];
+    wire  [2:0] L0_xwr          = w_mstatus[MSTATUS_MXR_SHIFT] ? (L0_pte[3:1] | L0_pte[5:3]) : L0_pte[3:1];
     wire [31:0] L0_paddr        = {L0_pte[29:10], 12'h0};
     wire [31:0] L0_p_addr       = {L0_paddr[31:12], v_addr[11:0]};
     wire        L0_write        = !L0_pte[6] || (!L0_pte[7] && w_iswrite);
     wire        L0_success      = !(L0_xwr ==2 || L0_xwr == 6 ||
-                                    (w_priv == `PRIV_S && (L0_pte[4] && !w_mstatus[18])) ||
+                                    (w_priv == `PRIV_S && (L0_pte[4] && !w_mstatus[MSTATUS_SUM_SHIFT])) ||
                                     (w_priv == `PRIV_U && !L0_pte[4]) ||
                                     (L0_xwr[w_tlb_req] == 0));
 
