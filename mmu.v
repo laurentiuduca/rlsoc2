@@ -75,15 +75,31 @@ module m_mmu(
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
     wire [31:0] v_addr          = w_iscode ? w_insn_addr : w_data_addr;
 
-    // Level 1
-    wire [31:0] vpn1            = {22'b0, v_addr[31:22]};
-    wire [31:0] L1_pte_addr     = {w_satp[19:0], 12'b0} + {vpn1, 2'b0};
     /* 
         mstatus[18]=SUM permit Supervisor User Memory access
         mstatus[19]=MXR
         When MXR=0, only loads from pages marked readable (R=1 in Figure 4.17) will succeed.
         When MXR=1, loads from pages marked either readable or executable (R=1 or X=1) will succeed 
     */
+
+    /* pte
+       31 20  19 10  9 8 7 6 5 4 3 2 1 0
+       PPN[1] PPN[0] RSW D A G U X W R V
+        12     10     2  1 1 1 1 1 1 1 1
+    */
+    /*  virtual address
+        31 22  21 12  11 0
+        VPN[1] VPN[0] Page offset
+         10     10    12
+    */
+    /*  physical address
+        33 22   21 12 11 0
+        PPN[1] PPN[0] Page offset
+         12      10   12
+    */
+    // Level 1
+    wire [31:0] vpn1            = {22'b0, v_addr[31:22]};
+    wire [31:0] L1_pte_addr     = {w_satp[19:0], 12'b0} + {vpn1, 2'b0};
     wire  [2:0] L1_xwr          = w_mstatus[MSTATUS_MXR_SHIFT] ? (L1_pte[3:1] | L1_pte[5:3]) : L1_pte[3:1];
     wire [31:0] L1_paddr        = {L1_pte[29:10], 12'h0};
     wire [31:0] L1_p_addr       = {L1_paddr[31:22], v_addr[21:0]};
