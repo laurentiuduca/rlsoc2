@@ -604,7 +604,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         mode extensions respectivel
     */
     // SSTATUS_MASK0=h000de133=> sstatus has MXR, SUM, XS, FS, SPP, SPIE, SIE
-    // h6000 => MXR, SUM
+    // h6000 => FS
     wire [31:0] w_sstatus_t = (mstatus | 32'h6000) & 32'h000de133;
     wire [31:0] w_mstatus_t = (mstatus | 32'h6000);
 
@@ -898,8 +898,17 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 r_tlb_flush <= 1;
             end
             else r_tlb_flush <= 0;
-        end
+        end 
         else r_tlb_flush <= 0;
+
+        if((mstatus & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0) begin
+            if(mstatus & `MSTATUS_MPRV)
+                $display("%x MSTATUS_MPRV mpp=%x --------------------", w_mtime, mstatus&(3 << `MSTATUS_MPP_SHIFT));
+            //if(mstatus & `MSTATUS_SUM)
+                //$display("%x MSTATUS_SUM", w_mtime);
+            if(mstatus & `MSTATUS_MXR)
+                $display("%x MSTATUS_MXR --------------------------", w_mtime);
+        end
     end
 
     /***********************************      STATE UPDATE      ***********************************/
