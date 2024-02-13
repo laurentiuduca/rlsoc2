@@ -330,6 +330,7 @@ error
 `define ACCESS_READ     0
 `define ACCESS_WRITE    1
 `define ACCESS_CODE     2
+`define ACCESS_NONE     3
 
 `define LEVELS      2
 `define PTE_SIZE    4
@@ -452,6 +453,8 @@ error
 `define MSTATUS_SPP_SHIFT   8
 `define MSTATUS_MPP_SHIFT   11
 `define MSTATUS_FS_SHIFT    13
+`define MSTATUS_SUM_SHIFT    18
+`define MSTATUS_MXR_SHIFT    19
 
 `define MSTATUS_MASK    32'h000e79bb
 `define SSTATUS_MASK0   32'h000de133
