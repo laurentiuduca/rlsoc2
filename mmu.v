@@ -49,7 +49,7 @@ module m_mmu(
     reg         page_walk_fail      = 0;
 
     // Page walk state
-    reg  [2:0]  r_pw_state          = 0;
+    reg  [3:0]  r_pw_state          = 0;
 
     // Page table entry
     reg  [31:0] L1_pte              = 0;
