@@ -94,7 +94,6 @@ endtask
 task prepare_read_end;
 begin
 			state <= 10;
-         // r_stall <= 1;
          r_rd <= 1;
 end
 endtask 
@@ -120,7 +119,6 @@ endtask
 task prepare_write_end;
 begin
 			state <= 20;
-         // r_stall <= 1;
 end
 endtask 
 task prepare_write;
