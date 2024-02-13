@@ -863,6 +863,7 @@ begin
                 else
                     $fwrite(file, "%08x: dram_rd %x %x %x\n", id, dram_con.i_addr, dram_con.o_data, w_pc0);
                 dstate <= 1;
+                id <= id + 1;
             end else if (dram_con.i_wr_en && dram_con.o_busy == 0) begin
                 dstate <= 4;
                 if(mmustate)
@@ -882,11 +883,6 @@ begin
                 $fwrite(file, "%08x: data_we %x %x %x\n", id, w_mem_paddr, w_data_wdata, w_pc0);
                 id <= id + 1;
                 dstate <= 6;
-            end else if (w_mtime >= 90000000) begin
-                $display("finish ram trace");
-                $fclose(file);
-                dstate <= 400;
-                $finish;
             end
         end else if (dstate == 1) begin
             if(dram_con.o_busy == 1)
@@ -894,7 +890,6 @@ begin
         end else if (dstate == 2) begin
             if(dram_con.o_busy == 0) begin
                 dstate <= 0;
-                id <= id + 1;
             end
         end else if (dstate == 4) begin // wait dram-write
             if(dram_con.o_busy == 1)
@@ -907,6 +902,14 @@ begin
                 dstate <= 0;
         end else if (dstate == 7) begin
             dstate <= 0;
+        end
+
+        if (w_mtime >= 70000000) begin
+                $display("finish ram trace with dstate=%x dram_con.o_busy=%x dram_con.i_rd_en=%x r_dev=%x w_data_we=%x", 
+                    dstate, dram_con.o_busy, dram_con.i_rd_en, dram_con.i_wr_en, r_dev, w_data_we);
+                $fclose(file);
+                dstate <= 400;
+                $finish;
         end
 end
 `endif // RAM_TRACE
