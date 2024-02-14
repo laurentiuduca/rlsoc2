@@ -226,6 +226,8 @@ endtask
             prepare_write;
          else begin
             //r_stall <= 0; // refresh does not set r_stall
+            if(r_stall != 0)
+               $display("TN_DRAM_REFRESH bug r_stall not null ------------");
             state <= 0;
          end
       end

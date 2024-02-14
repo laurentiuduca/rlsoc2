@@ -238,7 +238,7 @@ module m_mmu(
                 end
         end
         else if(r_pw_state == 6) begin
-            if(w_dram_busy && (w_grant == w_hart_id)) begin
+            if(w_dram_busy) begin
                 r_pw_state <= 7;
                 r_tlb_use <= 0;
             end

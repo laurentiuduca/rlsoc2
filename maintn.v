@@ -840,24 +840,25 @@ module m_topsim(CLK, RST_X);
 task ramtrace;
 begin
             if (dram_con.i_rd_en && dram_con.o_busy == 0) begin
-                daddr <= dram_con.i_addr;
+                daddr <= w_dram_addr; //dram_con.i_addr;
                 dstate <= 1;
             end else if (dram_con.i_wr_en && dram_con.o_busy == 0) begin
                 dstate <= 4;
                 if(w_tlb_busy)
-                    $fwrite(file, "%08x: dram_wr %x %x %x mmu%x\n", id, dram_con.i_addr, dram_con.i_data, w_pc0, mmustate);
+                    $fwrite(file, "%08x: dram_wr %x %x %x mmu%x\n", id, w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, mmustate);
                 else
-                    $fwrite(file, "%08x: dram_wr %x %x %x\n", id, dram_con.i_addr, dram_con.i_data, w_pc0);
+                    $fwrite(file, "%08x: dram_wr %x %x %x\n", id, w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0);
                 id <= id + 1;
-            end else if (r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
-                         r_dev == `HVC_BASE_TADDR || r_dev == `PLIC_BASE_TADDR) begin
+            end else if ((r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
+                         r_dev == `HVC_BASE_TADDR) && w_data_we == 0) begin
                 id <= id + 1;
                 dstate <= 0;
                 if(r_plic_aces_t)
                     $fwrite(file, "%08x: data_re %x %x %x\n", id, r_mem_paddr, r_plic_odata, w_pc0);
                 else
                     $fwrite(file, "%08x: data_re %x %x %x\n", id, r_mem_paddr, r_data_data, w_pc0);
-            end else if(w_data_we) begin
+            end else if((r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
+                         r_dev == `HVC_BASE_TADDR || r_dev==8'h40/*`TOHOST_ADDR*/) && w_data_we == 1) begin
                 $fwrite(file, "%08x: data_we %x %x %x\n", id, w_mem_paddr, w_data_wdata, w_pc0);
                 id <= id + 1;
                 dstate <= 6;
@@ -879,11 +880,6 @@ begin
             $sformat(filename, "serial%0d.out", 1);
             file = $fopen(filename, "w");
     end
-        //.w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
-        //.w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
-            // dram
-            //.i_rd_en(w_dram_le), .i_wr_en(w_wr_en), .i_addr(w_dram_addr_t2), .i_data(w_dram_wdata_t), .o_data(w_dram_odata),
-            //.o_busy(w_dram_busy), .i_ctrl(w_dram_ctrl_t),
         if(dstate == 0) begin
             ramtrace;
         end else if (dstate == 1) begin
