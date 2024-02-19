@@ -862,12 +862,13 @@ begin
                     else
                         $fwrite(file, "plic_nrw %x %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state, w_plic_we);
                 end else if(r_mem_paddr != old_mem_paddr || r_data_data != old_data_data || w_pc0 != old_pc0) begin
-                    if(rcnt < 100) begin
+                    old_mem_paddr <= r_mem_paddr;
+                    old_data_data <= r_data_data;
+                    old_pc0 <= w_pc0;
+                    $fwrite(file, "data_re %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state);
+                end else begin
+                    if (rcnt < 100) begin
                         rcnt = rcnt + 1;
-                        old_mem_paddr <= r_mem_paddr;
-                        old_data_data <= r_data_data;
-                        old_pc0 <= w_pc0;
-                        $fwrite(file, "data_re %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state);
                     end else begin
                         $display("rcnt = 100 dram_con.o_busy=%x", dram_con.o_busy);
                         $finish;
