@@ -840,6 +840,7 @@ module m_topsim(CLK, RST_X);
 `define RAM_TRACE
 `ifdef RAM_TRACE
 reg [31:0] old_mem_paddr=0, old_data_data = 0, old_pc0 = 0, rcnt=0;
+reg pc0_was_3090=0;
 task ramtrace;
 begin
             if (dram_con.i_rd_en && dram_con.o_busy == 0) begin
@@ -865,12 +866,15 @@ begin
                     old_mem_paddr <= r_mem_paddr;
                     old_data_data <= r_data_data;
                     old_pc0 <= w_pc0;
-                    $fwrite(file, "data_re %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state);
+                    $fwrite(file, "data_re %x %x %x %x %x\n", 
+                        r_mem_paddr, r_data_data, w_pc0, core0.p.state, mmustate);
                 end else begin
                     if (rcnt < 100000) begin
                         rcnt = rcnt + 1;
                     end else begin
-                        $display("rcnt = 100000 dram_con.o_busy=%x", dram_con.o_busy);
+                        $display("rcnt = 100000 dram_con.o_busy=%x r_pw_state=%x v_addr=%x", 
+                            dram_con.o_busy, mmustate, core0.mmu.v_addr);
+                        $fclose(file);
                         $finish;
                     end
                 end
@@ -903,9 +907,9 @@ begin
         end else if (dstate == 2) begin
             if(dram_con.o_busy == 0) begin
                 if(mmustate)
-                    $fwrite(file, "dram_rd %x %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state, mmustate);
+                    $fwrite(file, "dram_rd %x %x %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state, mmustate, core0.mmu.v_addr);
                 else
-                    $fwrite(file, "dram_rd %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state);
+                    $fwrite(file, "dram_rd %x %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state, core0.mmu.v_addr);
                 ramtrace;
             end
         end else if (dstate == 4) begin // wait dram-write
@@ -927,9 +931,17 @@ begin
                 $finish;
         end
 
-        //if(w_pc0 >= 32'hc00001c0 && w_pc0 <= 32'hc00001c8) begin
-        //    $display("pc = %x", w_pc0);
-        //end
+        if(w_pc0 == 32'hc00f3090) begin
+            pc0_was_3090 <= 1;
+            if(core0.mmu.r_pw_state==6 && (dram_con.i_rd_en || dram_con.i_wr_en) && core0.mmu.v_addr != 32'hc00f3090) begin
+                $display("c00f3090 and rd or wr");
+                $finish;
+            end
+            $display("pc = %x core0.p.state=%x r_pw_state=%x dram rd=%x wr=%x daddr=%x vaddr=%x dram_con.o_busy=%x", 
+                w_pc0, core0.p.state, core0.mmu.r_pw_state, dram_con.i_rd_en, dram_con.i_wr_en, w_dram_addr, core0.mmu.v_addr,
+                dram_con.o_busy);
+        end else if(pc0_was_3090)
+            $finish;
 end
 `endif // RAM_TRACE
 `endif // SIM_MODE

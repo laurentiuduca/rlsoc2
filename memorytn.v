@@ -78,7 +78,7 @@ module DRAM_conRV
     reg [31:0] r_wdata=0, r_wdata_ui=0;
 
     reg r_stall = 0;
-    assign o_busy = (r_stall | w_busy);
+    assign o_busy = (r_stall/* | w_busy*/);
     reg [7:0] state_next = 0, state = 0;
     assign mem_state = state;
     reg r_refresh = 0;
