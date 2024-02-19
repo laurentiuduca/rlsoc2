@@ -235,7 +235,7 @@ module m_topsim(CLK, RST_X);
                                             (w_isread) ? plic_served_irq | w_plic_mask :
                                             plic_served_irq & ~(1 << (w_data_wdata-1));
 
-    assign w_plic_aces = (w_dev == `PLIC_BASE_TADDR && !w_tlb_busy &&
+    assign w_plic_aces = (w_dev == `PLIC_BASE_TADDR && /*!w_tlb_busy &&*/
             ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
 
     reg  [31:0] r_wmip = 0;
@@ -253,12 +253,14 @@ module m_topsim(CLK, RST_X);
 `endif
 
     wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
-
+    reg r_was_read=0, r_was_write=0;
     always@(posedge pll_clk) begin
         if(!w_tlb_busy) begin
             //r_plic_we   <= (w_virt_irq_oe || w_plic_aces);
             r_virt_irq_oe_t         <= w_virt_irq_oe;
             r_plic_aces_t           <= w_plic_aces;
+            r_was_read              <= w_isread;
+            r_was_write             <= w_iswrite;
             r_plic_pending_irq_t    <= w_plic_pending_irq_nxt;
             r_plic_served_irq_t     <= w_plic_served_irq_nxt;
         end
@@ -835,8 +837,9 @@ module m_topsim(CLK, RST_X);
     /**********************************************************************************************/
  
 `ifdef SIM_MODE
-//`define RAM_TRACE
+`define RAM_TRACE
 `ifdef RAM_TRACE
+reg [31:0] old_mem_paddr=0, old_data_data = 0, old_pc0 = 0, rcnt=0;
 task ramtrace;
 begin
             if (dram_con.i_rd_en && dram_con.o_busy == 0) begin
@@ -844,26 +847,35 @@ begin
                 dstate <= 1;
             end else if (dram_con.i_wr_en && dram_con.o_busy == 0) begin
                 dstate <= 4;
-                if(w_tlb_busy)
-                    $fwrite(file, "%08x: dram_wr %x %x %x %x\n", id, w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, mmustate);
+                if(mmustate)
+                    $fwrite(file, "dram_wr %x %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state, mmustate);
                 else
-                    $fwrite(file, "%08x: dram_wr %x %x %x\n", id, w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0);
-                id <= id + 1;
+                    $fwrite(file, "dram_wr %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state);
             end else if ((r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
                          r_dev == `HVC_BASE_TADDR) && w_data_we == 0) begin
-                id <= id + 1;
                 dstate <= 0;
-                if(r_plic_aces_t)
-                    if(w_isread)
-                        $fwrite(file, "%08x: plic_r %x %x %x\n", id, r_mem_paddr, r_plic_odata, w_pc0);
-                    else if(w_iswrite)
-                        $fwrite(file, "%08x: plic_w %x %x %x\n", id, r_mem_paddr, r_plic_odata, w_pc0);
-                else
-                    $fwrite(file, "%08x: data_re %x %x %x\n", id, r_mem_paddr, r_data_data, w_pc0);
+                if(r_plic_aces_t) begin
+                    if(r_was_read)
+                        $fwrite(file, "plic_r %x %x %x %x\n", r_mem_paddr, r_plic_odata, w_pc0, w_plic_we);
+                    else if(r_was_write)
+                        $fwrite(file, "plic_w %x %x %x %x\n", r_mem_paddr, w_data_wdata, w_pc0, w_plic_we);
+                    else
+                        $fwrite(file, "plic_nrw %x %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state, w_plic_we);
+                end else if(r_mem_paddr != old_mem_paddr || r_data_data != old_data_data || w_pc0 != old_pc0) begin
+                    if(rcnt < 100) begin
+                        rcnt = rcnt + 1;
+                        old_mem_paddr <= r_mem_paddr;
+                        old_data_data <= r_data_data;
+                        old_pc0 <= w_pc0;
+                        $fwrite(file, "data_re %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state);
+                    end else begin
+                        $display("rcnt = 100 dram_con.o_busy=%x", dram_con.o_busy);
+                        $finish;
+                    end
+                end
             end else if((r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
                          r_dev == `HVC_BASE_TADDR || r_dev==4'h4/*`TOHOST_ADDR*/) && w_data_we == 1) begin
-                $fwrite(file, "%08x: data_we %x %x %x\n", id, w_mem_paddr, w_data_wdata, w_pc0);
-                id <= id + 1;
+                $fwrite(file, "data_we %x %x %x %x\n", w_mem_paddr, w_data_wdata, w_pc0, core0.p.state);
                 dstate <= 6;
             end else
                 dstate <= 0;
@@ -874,7 +886,6 @@ integer file;
 reg [999:0] filename;
 reg [7:0] trace_state=0, dstate=0, drdev=0;
 reg [31:0] daddr=0, dstart=0;
-reg [31:0] id=0;
 wire [3:0] mmustate=core0.mmu.r_pw_state;
 always @(posedge pll_clk)
 begin
@@ -890,11 +901,10 @@ begin
                 dstate <= 2;
         end else if (dstate == 2) begin
             if(dram_con.o_busy == 0) begin
-                if(w_tlb_busy)
-                    $fwrite(file, "%08x: dram_rd %x %x %x mmu%x\n", id, daddr, dram_con.o_data, w_pc0, mmustate);
+                if(mmustate)
+                    $fwrite(file, "dram_rd %x %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state, mmustate);
                 else
-                    $fwrite(file, "%08x: dram_rd %x %x %x\n", id, daddr, dram_con.o_data, w_pc0);
-                id <= id + 1;
+                    $fwrite(file, "dram_rd %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state);
                 ramtrace;
             end
         end else if (dstate == 4) begin // wait dram-write
@@ -915,6 +925,10 @@ begin
                 dstate <= 400;
                 $finish;
         end
+
+        //if(w_pc0 >= 32'hc00001c0 && w_pc0 <= 32'hc00001c8) begin
+        //    $display("pc = %x", w_pc0);
+        //end
 end
 `endif // RAM_TRACE
 `endif // SIM_MODE

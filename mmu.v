@@ -241,13 +241,13 @@ module m_mmu(
             if(w_dram_busy && r_dram_takes_cmd) begin
                 r_pw_state <= 7;
                 r_tlb_use <= 0;
+                r_dram_takes_cmd <= 0;
             end else if(!w_dram_busy)
                 r_dram_takes_cmd <= 1;
         end
         else if(r_pw_state == 7 && !w_dram_busy) begin
             r_pw_state <= 0;
             r_tlb_use <= 0;
-            r_dram_takes_cmd <= 0;
         end
     end
     
