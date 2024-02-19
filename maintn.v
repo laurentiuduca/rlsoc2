@@ -867,10 +867,10 @@ begin
                     old_pc0 <= w_pc0;
                     $fwrite(file, "data_re %x %x %x %x\n", r_mem_paddr, r_data_data, w_pc0, core0.p.state);
                 end else begin
-                    if (rcnt < 100) begin
+                    if (rcnt < 100000) begin
                         rcnt = rcnt + 1;
                     end else begin
-                        $display("rcnt = 100 dram_con.o_busy=%x", dram_con.o_busy);
+                        $display("rcnt = 100000 dram_con.o_busy=%x", dram_con.o_busy);
                         $finish;
                     end
                 end
