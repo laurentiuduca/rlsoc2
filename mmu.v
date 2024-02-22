@@ -334,7 +334,7 @@ module m_mmu(
 
     
     assign      w_data_le = (w_priv == `PRIV_M || w_satp[31] == 0) ? w_isread && !w_dram_aces :
-                            (r_pw_state == 6);
+                            w_isread && !w_dram_aces && (r_pw_state == 6);
 
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
