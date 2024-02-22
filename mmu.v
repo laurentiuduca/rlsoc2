@@ -25,6 +25,7 @@ module m_mmu(
     input  wire [31:0]  w_data_addr,
     input  wire [31:0]  w_data_wdata,
     input  wire         w_data_we,
+    output wire         w_data_le,
     input  wire  [2:0]  w_data_ctrl,
     output wire [31:0]  w_insn_data,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
@@ -308,6 +309,7 @@ module m_mmu(
     //always@(posedge CLK) w_virt <= w_mem_paddr & 32'h0f000000;
 
     assign w_dram_wdata         = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
+    // w_data_we means that the cpu wants to write in mem or io
     wire      w_dram_we       = (w_data_we && !w_tlb_busy
                                     && (w_dev == `MEM_BASE_TADDR || w_dev == 0));
 
@@ -331,6 +333,8 @@ module m_mmu(
                     (w_tlb_busy && !w_tlb_hit && (r_pw_state == 0 || r_pw_state==2)) ? 1 : 0;
 
     
+    assign      w_data_le = w_iscode && !w_dram_aces && (r_pw_state == 6);
+
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
                     !(w_use_tlb)                            ? 0 :

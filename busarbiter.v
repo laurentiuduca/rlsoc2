@@ -7,7 +7,7 @@ module busarbiter(
     // here we do not keep the w_ notation for wire
     input wire CLK, RST_X, output wire [31:0] w_grant,
     input wire w_init_done, input wire w_tx_ready,
-    output wire [31:0] w_mem_paddr, output wire w_data_we,
+    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
     input wire [63:0] w_mtime, input wire w_clint_we,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
@@ -16,7 +16,7 @@ module busarbiter(
     input wire w_dram_busy, output wire [2:0] w_dram_ctrl, output wire w_dram_le,
 
     input wire [31:0] bus_core_ir0, input wire [3:0] bus_cpustate0,
-    input wire [31:0] bus_mem_paddr0, input wire bus_data_we0,
+    input wire [31:0] bus_mem_paddr0, input wire bus_data_we0, input wire bus_data_le0,
     input wire [31:0] bus_data_wdata0, 
     output reg [31:0] bus_data_data0,
     output reg bus_clint_we0,
@@ -26,7 +26,7 @@ module busarbiter(
     output reg bus_dram_busy0, input wire [2:0] bus_dram_ctrl0, input bus_dram_le0,
 
     input wire [31:0] bus_core_ir1, input wire [3:0] bus_cpustate1,
-    input wire [31:0] bus_mem_paddr1, input wire bus_data_we1,
+    input wire [31:0] bus_mem_paddr1, input wire bus_data_we1, input wire bus_data_le1,
     input wire [31:0] bus_data_wdata1, 
     output reg [31:0] bus_data_data1,
     output reg bus_clint_we1,
@@ -119,6 +119,7 @@ module busarbiter(
 
     assign w_mem_paddr  = grant == 0 ? bus_mem_paddr0 : bus_mem_paddr1;
     assign w_data_we    = grant == 0 ? bus_data_we0 : bus_data_we1;
+    assign w_data_le    = grant == 0 ? bus_data_le0 : bus_data_le1;
     assign w_data_wdata = grant == 0 ? bus_data_wdata0 : bus_data_wdata1;
     assign w_tlb_req    = grant == 0 ? bus_tlb_req0 : bus_tlb_req1;
     assign w_tlb_busy   = grant == 0 ? bus_tlb_busy0 : bus_tlb_busy1;

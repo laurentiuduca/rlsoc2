@@ -81,6 +81,7 @@ module m_topsim(CLK, RST_X);
     wire [3:0] w_bus_cpustate = w_grant == 0 ? bus_cpustate0 : bus_cpustate1;
     wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
     wire w_data_we, bus_data_we0, bus_data_we1;
+    wire w_data_le, bus_data_le0, bus_data_le1;
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
     wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
     wire [63:0] w_mtimecmp0, w_mtimecmp1, w_wmtimecmp0, w_wmtimecmp1;
@@ -122,7 +123,7 @@ module m_topsim(CLK, RST_X);
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0),
+        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(bus_clint_we0),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
@@ -136,7 +137,7 @@ module m_topsim(CLK, RST_X);
      m_cpummu core1(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1),
+        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(bus_clint_we1),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
@@ -149,7 +150,7 @@ module m_topsim(CLK, RST_X);
 
     busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we),
+        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_clint_we(w_clint_we),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
@@ -158,7 +159,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(w_dram_busy), .w_dram_ctrl(w_dram_ctrl), .w_dram_le(w_dram_le),
 
         .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
-        .bus_mem_paddr0(bus_mem_paddr0), .bus_data_we0(bus_data_we0),
+        .bus_mem_paddr0(bus_mem_paddr0), .bus_data_we0(bus_data_we0), .bus_data_le0(bus_data_le0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
         .bus_clint_we0(bus_clint_we0),
         .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
@@ -167,7 +168,7 @@ module m_topsim(CLK, RST_X);
         .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
 
         .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
-        .bus_mem_paddr1(bus_mem_paddr1), .bus_data_we1(bus_data_we1),
+        .bus_mem_paddr1(bus_mem_paddr1), .bus_data_we1(bus_data_we1), .bus_data_le1(bus_data_le1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
         .bus_clint_we1(bus_clint_we1),
         .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
@@ -462,7 +463,7 @@ module m_topsim(CLK, RST_X);
     integer i;
 `endif
     always@(posedge pll_clk) begin
-        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && w_dram_le) begin
+        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && w_data_le) begin
                 //if(r_consf_en)
                     //$display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
                     //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
@@ -837,7 +838,7 @@ module m_topsim(CLK, RST_X);
     /**********************************************************************************************/
  
 `ifdef SIM_MODE
-`define RAM_TRACE
+//`define RAM_TRACE
 `ifdef RAM_TRACE
 reg [31:0] old_mem_paddr=0, old_data_data = 0, old_pc0 = 0, rcnt=0;
 reg pc0_was_3090=0;
