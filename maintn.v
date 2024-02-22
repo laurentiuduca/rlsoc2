@@ -186,12 +186,14 @@ module m_topsim(CLK, RST_X);
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
     reg   [31:0] r_mem_paddr= 0;
+    reg   r_data_le = 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
     always@(posedge pll_clk) begin
         r_dev   <= w_dev;
         r_virt  <= w_virt;
         r_mem_paddr <= w_mem_paddr;
+        r_data_le <= w_data_le;
     end
 
     /***********************************          OUTPUT        ***********************************/
@@ -463,7 +465,7 @@ module m_topsim(CLK, RST_X);
     integer i;
 `endif
     always@(posedge pll_clk) begin
-        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && w_data_le) begin
+        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && r_data_le) begin
                 //if(r_consf_en)
                     //$display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
                     //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
