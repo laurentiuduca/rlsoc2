@@ -238,16 +238,22 @@ module m_mmu(
                 end
         end
         else if(r_pw_state == 6) begin
-            if(w_dram_busy && r_dram_takes_cmd) begin
+            if(w_dram_aces) begin
+                if(w_dram_busy && r_dram_takes_cmd) begin
+                    r_pw_state <= 7;
+                    r_tlb_use <= 0;
+                    r_dram_takes_cmd <= 0;
+                end else if(!w_dram_busy)
+                    r_dram_takes_cmd <= 1;
+            end else begin
                 r_pw_state <= 7;
                 r_tlb_use <= 0;
-                r_dram_takes_cmd <= 0;
-            end else if(!w_dram_busy)
-                r_dram_takes_cmd <= 1;
+            end
         end
         else if(r_pw_state == 7 && !w_dram_busy) begin
             r_pw_state <= 0;
             r_tlb_use <= 0;
+            r_dram_takes_cmd <= 0;
         end
     end
     
@@ -317,7 +323,7 @@ module m_mmu(
     wire        w_dram_aces = (w_dram_addr[31:28] == 8 || w_dram_addr[31:28] == 0 || w_dram_addr[31:28] == 9);
 
     assign        w_dram_le   =
-                    (w_dram_busy)  ? 0 :
+                    //(w_dram_busy)  ? 0 :
                     (!w_dram_aces) ? 0 :
                     (r_mc_mode!=0) ? (w_mc_aces==`ACCESS_READ && w_mc_addr[31:28] != 0) :
                     (w_priv == `PRIV_M || w_satp[31] == 0) ? (w_iscode || w_isread) :
