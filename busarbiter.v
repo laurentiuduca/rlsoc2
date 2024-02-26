@@ -7,7 +7,7 @@ module busarbiter(
     // here we do not keep the w_ notation for wire
     input wire CLK, RST_X, output wire [31:0] w_grant,
     input wire w_init_done, input wire w_tx_ready,
-    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le,
+    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le, input wire w_data_busy,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
     input wire [63:0] w_mtime, input wire w_clint_we,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
@@ -45,7 +45,7 @@ module busarbiter(
     reg [7:0] cnt=0, r_max_cnt=1;
 
     
-    wire w_sys_busy = w_dram_busy || !w_tx_ready;
+    wire w_sys_busy = w_dram_busy || !w_tx_ready || w_data_busy;
 
 `ifdef USE_SINGLE_CORE
     wire a_w_dram_busy = w_sys_busy;

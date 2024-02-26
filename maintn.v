@@ -123,7 +123,7 @@ module m_topsim(CLK, RST_X);
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0),
+        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(r_data_busy),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(bus_clint_we0),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
@@ -137,7 +137,7 @@ module m_topsim(CLK, RST_X);
      m_cpummu core1(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1),
+        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(r_data_busy),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
         .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(bus_clint_we1),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
@@ -150,7 +150,7 @@ module m_topsim(CLK, RST_X);
 
     busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le),
+        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le), .w_data_busy(r_data_busy),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime), .w_clint_we(w_clint_we),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
@@ -186,14 +186,19 @@ module m_topsim(CLK, RST_X);
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
     reg   [31:0] r_mem_paddr= 0;
-    reg   r_data_le = 0;
+    reg   r_data_le = 0, r_data_busy = 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
     always@(posedge pll_clk) begin
-        r_dev   <= w_dev;
-        r_virt  <= w_virt;
-        r_mem_paddr <= w_mem_paddr;
-        r_data_le <= w_data_le;
+        if(!r_data_busy && !w_tlb_busy) begin
+            r_dev   <= w_dev;
+            r_virt  <= w_virt;
+            r_mem_paddr <= w_mem_paddr;
+            r_data_le <= w_data_le;
+            if(w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR)
+                r_data_busy <= 1;
+        end else
+            r_data_busy <= 0;
     end
 
     /***********************************          OUTPUT        ***********************************/
@@ -297,7 +302,7 @@ module m_topsim(CLK, RST_X);
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c) && w_data_we == 0) ? w_mtimecmp1[63:32] : 0;
         
         // ipi
-        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0) begin
+        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0 && r_data_busy) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
 `ifdef SIM_MODE

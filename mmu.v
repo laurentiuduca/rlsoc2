@@ -26,6 +26,7 @@ module m_mmu(
     input  wire [31:0]  w_data_wdata,
     input  wire         w_data_we,
     output wire         w_data_le,
+    input wire          w_data_busy,
     input  wire  [2:0]  w_data_ctrl,
     output wire [31:0]  w_insn_data,
     input  wire [31:0]  w_priv, w_satp, w_mstatus,
@@ -144,7 +145,7 @@ module m_mmu(
                             (w_isread && w_tlb_data_r_oe)  ||
                             (w_iswrite && w_tlb_data_w_oe));
 
-    reg r_dram_was_busy=0, r_dram_takes_cmd=0;
+    reg r_dram_was_busy=0, r_dram_takes_cmd=0, r_data_was_busy=0;
 
     // PAGE WALK state
     always@(posedge CLK) begin
@@ -247,14 +248,18 @@ module m_mmu(
                 end else if(!w_dram_busy)
                     r_dram_takes_cmd <= 1;
             end else begin
-                r_pw_state <= 7;
-                r_tlb_use <= 0;
+                if(w_data_busy) begin
+                    r_pw_state <= 7;
+                    r_tlb_use <= 0;
+                    r_data_was_busy <= 1;
+                end
             end
         end
-        else if(r_pw_state == 7 && !w_dram_busy) begin
+        else if(r_pw_state == 7 && (!w_dram_busy || (r_data_was_busy && !w_data_busy))) begin
             r_pw_state <= 0;
             r_tlb_use <= 0;
             r_dram_takes_cmd <= 0;
+            r_data_was_busy <= 0;
         end
     end
     
@@ -339,12 +344,12 @@ module m_mmu(
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
                     !(w_use_tlb)                            ? 0 :
-                    (r_pw_state == 6 && !w_dram_busy)       ? 0 : 1;
+                    (r_pw_state == 6)                       ? 0 : 1;
 
     assign w_dram_we_t =   w_pte_we || w_dram_we;
 
     //assign w_proc_busy = w_tlb_busy || w_dram_busy;
-    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy;// || !w_tx_ready;
+    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy || w_data_busy || !w_tx_ready;
 /**************************************************************************************************/
     
 endmodule
