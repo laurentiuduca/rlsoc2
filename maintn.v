@@ -186,18 +186,23 @@ module m_topsim(CLK, RST_X);
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
     reg   [31:0] r_mem_paddr= 0;
-    reg   r_data_le = 0, r_data_busy = 0;
+    reg   r_data_le = 0;
+    reg   [3:0] r_data_busy = 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
     always@(posedge pll_clk) begin
-        if(!r_data_busy && !w_tlb_busy) begin
-            r_dev   <= w_dev;
-            r_virt  <= w_virt;
-            r_mem_paddr <= w_mem_paddr;
-            r_data_le <= w_data_le;
-            if(w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR)
-                r_data_busy <= 1;
-        end else
+        if(r_data_busy == 0) begin
+            if(!w_tlb_busy) begin
+                r_dev   <= w_dev;
+                r_virt  <= w_virt;
+                r_mem_paddr <= w_mem_paddr;
+                r_data_le <= w_data_le;
+                if(w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR)
+                    r_data_busy <= 1;
+            end
+        end else if(r_data_busy < 2)
+            r_data_busy <= 2;
+        else
             r_data_busy <= 0;
     end
 
@@ -212,7 +217,7 @@ module m_topsim(CLK, RST_X);
                                     r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts /*r_consf_en*/};
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
-                                    r_data_data <= {24'h0, cons_fifo[r_consf_head] /*r_char_value*/};
+                                    r_data_data <= {24'h0, /*cons_fifo[r_consf_head]*/ r_char_value};
                                 end else begin
                                     r_data_data <= 0;
                                     $display ("HVC_BASE_TADDR r_data_data <= 0 ------------------------------------");
@@ -302,7 +307,7 @@ module m_topsim(CLK, RST_X);
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c) && w_data_we == 0) ? w_mtimecmp1[63:32] : 0;
         
         // ipi
-        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0 && r_data_busy) begin
+        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0 && (r_data_busy==2)) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
 `ifdef SIM_MODE
@@ -434,7 +439,7 @@ module m_topsim(CLK, RST_X);
     
 `ifdef SIM_MODE
     wire w_file_we;
-    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER));
+    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(900000/*`ENABLE_TIMER)*/));
 `endif
 
 `ifdef SIM_MODE
@@ -470,10 +475,10 @@ module m_topsim(CLK, RST_X);
     integer i;
 `endif
     always@(posedge pll_clk) begin
-        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && r_data_le && r_data_busy) begin
+        if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && r_data_le && (r_data_busy==2)) begin
                 //if(r_consf_en)
-                    //$display("HVC_BASE_ADDR+4 r_consf_cnts=%x c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
-                    //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
+                    $display("HVC_BASE_ADDR+4 r_consf_cnts=%d c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
+                        r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
                 r_consf_head <= r_consf_head + 1;
                 r_consf_cnts <= r_consf_cnts - 1;

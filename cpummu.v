@@ -13,7 +13,7 @@ module m_cpummu(
     output wire [31:0] w_mem_paddr,
     output wire w_data_we,
     output wire w_data_le,
-    input wire  w_data_busy,
+    input wire [3:0] w_data_busy,
     output wire [31:0] w_data_wdata,
     input wire [31:0] w_data_data,
     input wire [63:0] w_mtime,
