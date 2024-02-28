@@ -9,7 +9,7 @@ module busarbiter(
     input wire w_init_done, input wire w_tx_ready,
     output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le, input wire [3:0] w_data_busy,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
-    input wire [63:0] w_mtime, input wire w_clint_we,
+    input wire [63:0] w_mtime,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
     output wire [31:0] w_mip, input wire [31:0] w_wmip, input wire w_plic_aces, input wire r_plic_aces_t, input wire w_plic_we,
     output wire [31:0] w_dram_addr, output wire [31:0] w_dram_wdata, input wire [31:0] w_dram_odata, output wire w_dram_we_t,
@@ -88,28 +88,24 @@ module busarbiter(
     always @(*) begin
         if(grant == 0) begin
             bus_data_data0  <= w_data_data;
-            bus_clint_we0 <= w_clint_we;
             bus_wmip0 <= w_wmip; 
             bus_plic_we0 <= w_plic_we;
             bus_dram_odata0 <= w_dram_odata;
             bus_dram_busy0  <= a_w_dram_busy;
             
             bus_data_data1  <= 0;
-            bus_clint_we1 <= 0;
             bus_wmip1 <= 0; 
             bus_plic_we1 <= 0;
             bus_dram_odata1 <= 0;
             bus_dram_busy1  <= 1;            
         end else begin
             bus_data_data1  <= w_data_data;
-            bus_clint_we1 <= w_clint_we;
             bus_wmip1 <= w_wmip; 
             bus_plic_we1 <= w_plic_we;
             bus_dram_odata1 <= w_dram_odata;
             bus_dram_busy1  <= a_w_dram_busy;
             
             bus_data_data0  <= 0;
-            bus_clint_we0 <= 0;
             bus_wmip0 <= 0; 
             bus_plic_we0 <= 0;
             bus_dram_odata0 <= 0;

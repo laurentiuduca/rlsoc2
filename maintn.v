@@ -85,7 +85,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
     wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
     wire [63:0] w_mtimecmp0, w_mtimecmp1, w_wmtimecmp0, w_wmtimecmp1;
-    wire w_clint_we, bus_clint_we0, bus_clint_we1;
+    wire w_clint_we0, w_clint_we1;
     wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
     wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
     wire [31:0] w_mip, w_wmip, bus_mip0, bus_wmip0, bus_mip1, bus_wmip1;
@@ -125,7 +125,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(r_data_busy),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(bus_clint_we0),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(w_clint_we0),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
@@ -139,7 +139,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(r_data_busy),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(bus_clint_we1),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(w_clint_we1),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
@@ -152,7 +152,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le), .w_data_busy(r_data_busy),
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
-        .w_mtime(w_mtime), .w_clint_we(w_clint_we),
+        .w_mtime(w_mtime),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
         .w_mip(w_mip), .w_wmip(w_wmip), .w_plic_aces(w_plic_aces), .r_plic_aces_t(r_plic_aces_t), .w_plic_we(w_plic_we),
         .w_dram_addr(w_dram_addr), .w_dram_wdata(w_dram_wdata), .w_dram_odata(w_dram_odata), .w_dram_we_t(w_dram_we_t),
@@ -161,7 +161,6 @@ module m_topsim(CLK, RST_X);
         .bus_core_ir0(bus_core_ir_0), .bus_cpustate0(bus_cpustate0),
         .bus_mem_paddr0(bus_mem_paddr0), .bus_data_we0(bus_data_we0), .bus_data_le0(bus_data_le0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
-        .bus_clint_we0(bus_clint_we0),
         .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
         .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
         .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
@@ -170,7 +169,6 @@ module m_topsim(CLK, RST_X);
         .bus_core_ir1(bus_core_ir_1), .bus_cpustate1(bus_cpustate1),
         .bus_mem_paddr1(bus_mem_paddr1), .bus_data_we1(bus_data_we1), .bus_data_le1(bus_data_le1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
-        .bus_clint_we1(bus_clint_we1),
         .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
         .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
         .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
@@ -377,9 +375,10 @@ module m_topsim(CLK, RST_X);
                                 {w_mtimecmp1[63:32], w_data_wdata} :
                                 (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1) && w_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp1[31:0]} : 0;
-    assign w_clint_we   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
-                          (((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0) ||
-                           ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1));
+    assign w_clint_we0   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+                           ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0);
+    assign w_clint_we1   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+                           ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1);
 
     /**********************************************************************************************/
     // OUTPUT CHAR
@@ -439,7 +438,7 @@ module m_topsim(CLK, RST_X);
     
 `ifdef SIM_MODE
     wire w_file_we;
-    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(900000/*`ENABLE_TIMER)*/));
+    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(ENABLE_TIMER));
 `endif
 
 `ifdef SIM_MODE
@@ -477,8 +476,8 @@ module m_topsim(CLK, RST_X);
     always@(posedge pll_clk) begin
         if((r_mem_paddr == (`HVC_BASE_ADDR + 4)) && r_consf_cnts && r_data_le && (r_data_busy==2)) begin
                 //if(r_consf_en)
-                    $display("HVC_BASE_ADDR+4 r_consf_cnts=%d c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
-                        r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
+                    //$display("HVC_BASE_ADDR+4 r_consf_cnts=%d c=%x w_grant=%x w_pc0=%x w_pc1=%x", 
+                    //    r_consf_cnts, cons_fifo[r_consf_head], w_grant, w_pc0, w_pc1);
                 r_consf_en <= (r_consf_cnts<=1) ? 0 : 1;
                 r_consf_head <= r_consf_head + 1;
                 r_consf_cnts <= r_consf_cnts - 1;
