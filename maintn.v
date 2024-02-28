@@ -438,7 +438,7 @@ module m_topsim(CLK, RST_X);
     
 `ifdef SIM_MODE
     wire w_file_we;
-    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(ENABLE_TIMER));
+    read_file rf(.clk(pll_clk), .r_consf_en(r_consf_en), .we(w_file_we), .w_mtime(w_mtime), .min_time(`ENABLE_TIMER));
 `endif
 
 `ifdef SIM_MODE
