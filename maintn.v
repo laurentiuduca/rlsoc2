@@ -230,72 +230,16 @@ module m_topsim(CLK, RST_X);
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
 
-    wire [31:0] w_cons_irq=0;
-    wire        w_cons_irq_oe=0;
-    wire        w_key_req=0;
-    wire [31:0] w_virt_irq      = w_cons_irq;
-    wire        w_virt_irq_oe   = w_cons_irq_oe | w_key_req;
-    // PLIC
-    reg  [31:0] plic_served_irq     = 0;
-    reg  [31:0] plic_pending_irq    = 0;
-    // CLINT
+    assign w_plic_we      = 0;
+    assign w_wmip  = 0;
 
-    wire [31:0] w_plic_pending_irq_nxt  =   w_virt_irq_oe ? w_virt_irq : plic_pending_irq;
-    wire [31:0] w_plic_mask             =   w_plic_pending_irq_nxt & ~plic_served_irq;
-    wire [31:0] w_plic_served_irq_nxt   =   (w_virt_irq_oe) ? plic_served_irq :
-                                            (w_isread) ? plic_served_irq | w_plic_mask :
-                                            plic_served_irq & ~(1 << (w_data_wdata-1));
-
-    assign w_plic_aces = (w_dev == `PLIC_BASE_TADDR && /*!w_tlb_busy &&*/
-            ((w_isread && w_plic_mask != 0) || (w_iswrite && w_offset == `PLIC_HART_BASE+4)));
-
-    reg  [31:0] r_wmip = 0;
-    reg         r_plic_we = 0;
-
-    reg  [31:0] r_plic_pending_irq_t    = 0;
-    reg  [31:0] r_plic_served_irq_t     = 0;
-
-    reg         r_virt_irq_oe_t = 0;
-
-    reg [31:0] r_ipi=0;
-    assign bus_ipi = r_ipi;
 `ifdef SIM_MODE
     reg [31:0] r_max_displays=0;
 `endif
-
-    wire [31:0] w_plic_mask_nxt = r_plic_pending_irq_t & ~r_plic_served_irq_t;
-    reg r_was_read=0, r_was_write=0;
-    always@(posedge pll_clk) begin
-        if(!w_tlb_busy) begin
-            //r_plic_we   <= (w_virt_irq_oe || w_plic_aces);
-            r_virt_irq_oe_t         <= w_virt_irq_oe;
-            r_plic_aces_t           <= w_plic_aces;
-            r_was_read              <= w_isread;
-            r_was_write             <= w_iswrite;
-            r_plic_pending_irq_t    <= w_plic_pending_irq_nxt;
-            r_plic_served_irq_t     <= w_plic_served_irq_nxt;
-        end
-    end
-
-    assign w_plic_we      = (r_virt_irq_oe_t || r_plic_aces_t);//r_plic_we;
-    assign w_wmip  = (w_plic_mask_nxt) ? w_mip | (`MIP_MEIP | `MIP_SEIP) :
-                            w_mip & ~(`MIP_MEIP | `MIP_SEIP);
+    reg [31:0] r_ipi=0;
+    assign bus_ipi = r_ipi;
 
     always@(posedge pll_clk) begin
-`ifdef SIM_MODE
-        if(w_plic_we)
-            $display("----w_plic_we w_grant=%x", w_grant);
-`endif
-
-        if(w_plic_aces) begin
-            r_plic_odata    <= (w_plic_mask!=0) ? w_plic_mask : 0;
-            plic_served_irq <= w_plic_served_irq_nxt;
-        end
-
-        if(w_virt_irq_oe) begin
-            plic_pending_irq    <= w_virt_irq;
-        end
-
         r_clint_odata <=    (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we == 0) ? r_ipi :
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbff8) && w_data_we == 0) ? w_mtime[31:0] :
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbffc) && w_data_we == 0) ? w_mtime[63:32] :
