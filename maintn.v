@@ -144,7 +144,7 @@ module m_topsim(CLK, RST_X);
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1)
-    );   
+    );
 `endif
 
 
@@ -241,13 +241,13 @@ module m_topsim(CLK, RST_X);
     assign bus_ipi = r_ipi;
 
     always@(posedge pll_clk) begin
-        r_clint_odata <=    (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_le) ? r_ipi :
-                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbff8) && w_data_le) ? w_mtime[31:0] :
-                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbffc) && w_data_le) ? w_mtime[63:32] :
-                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000) && w_data_le) ? w_mtimecmp0[31:0] :
-                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004) && w_data_le) ? w_mtimecmp0[63:32] : 
-                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008) && w_data_le) ? w_mtimecmp1[31:0] :
-                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c) && w_data_le) ? w_mtimecmp1[63:32] : 0;
+        r_clint_odata <=    (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4)) ? r_ipi :
+                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbff8)) ? w_mtime[31:0] :
+                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbffc)) ? w_mtime[63:32] :
+                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000)) ? w_mtimecmp0[31:0] :
+                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004)) ? w_mtimecmp0[63:32] : 
+                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008)) ? w_mtimecmp1[31:0] :
+                            (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c)) ? w_mtimecmp1[63:32] : 0;
         
         // ipi
         if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0 && (r_data_busy==2)) begin

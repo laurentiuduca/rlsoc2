@@ -340,8 +340,8 @@ module m_mmu(
                     (w_tlb_busy && !w_tlb_hit && (r_pw_state == 0 || r_pw_state==2)) ? 1 : 0;
 
     
-    assign      w_data_le = w_isread && !w_tlb_busy && !w_dram_aces;
-    assign      w_data_we = w_proc_data_we && !w_tlb_busy && !w_dram_aces;
+    assign      w_data_le = !w_tlb_busy && !w_dram_aces;
+    assign      w_data_we = (w_iswrite || w_proc_data_we) && !w_tlb_busy && !w_dram_aces;
 
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
