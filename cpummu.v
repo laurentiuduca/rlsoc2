@@ -43,6 +43,7 @@ module m_cpummu(
     wire [31:0] w_insn_data, w_insn_addr;
     wire [31:0] w_data_addr;
     wire [2:0]  w_data_ctrl;
+    wire        w_proc_data_we;
 
     wire [31:0] w_priv, w_satp, w_mstatus;
     wire [31:0] w_pagefault;
@@ -62,6 +63,7 @@ module m_cpummu(
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),
         .w_data_wdata   (w_data_wdata),
+        .w_proc_data_we (w_proc_data_we),
         .w_data_we      (w_data_we),
         .w_data_le      (w_data_le),
         .w_data_busy    (w_data_busy),
@@ -99,7 +101,7 @@ module m_cpummu(
         .w_insn_data    (w_insn_data),
         .w_data_data    (w_data_data),
         .w_data_wdata   (w_data_wdata),
-        .w_data_we      (w_data_we),
+        .w_data_we      (w_proc_data_we),
         .w_data_ctrl    (w_data_ctrl),
         .w_priv         (w_priv),
         .w_satp         (w_satp),
