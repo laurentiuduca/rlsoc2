@@ -17,9 +17,6 @@ module m_cpummu(
     output wire [31:0] w_data_wdata,
     input wire [31:0] w_data_data,
     input wire [63:0] w_mtime,
-    output wire [63:0] w_mtimecmp,
-    input wire [63:0] w_wmtimecmp,
-    input wire        w_clint_we,
     output wire [1:0]  w_tlb_req,
     output wire        w_tlb_busy,
     output wire [31:0] w_mip,
@@ -44,6 +41,10 @@ module m_cpummu(
     wire [31:0] w_data_addr;
     wire [2:0]  w_data_ctrl;
     wire        w_proc_data_we;
+
+    wire [63:0] w_mtimecmp;
+    wire [63:0] w_wmtimecmp;
+    wire        w_clint_we;
 
     wire [31:0] w_priv, w_satp, w_mstatus;
     wire [31:0] w_pagefault;
@@ -77,6 +78,9 @@ module m_cpummu(
         .w_tlb_flush    (w_tlb_flush),
         .w_proc_busy    (w_proc_busy),
 
+        .w_mtimecmp     (w_mtimecmp),
+        .w_wmtimecmp    (w_wmtimecmp),
+        .w_clint_we     (w_clint_we),
         //-------------------------------------------------------------------------------------------------------//
         .w_mem_paddr(w_mem_paddr),
         .w_tlb_busy(w_tlb_busy),

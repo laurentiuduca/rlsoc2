@@ -116,7 +116,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg         reserved       = 0;            // For aomic LR/SC
     reg   [1:0] priv           = `PRIV_M;      // Mode
     //reg  [63:0] w_mtime          = 1;            // w_mtime
-    reg  [63:0] mtimecmp       = 1;            // w_mtime
+    reg  [63:0] mtimecmp       = 64'hffffffffffffffff; 
     reg  r_was_clint_we        = 0;
     reg  [31:0] pending_tval   = 0;            //
     reg  [31:0] pending_exception = ~0;        //

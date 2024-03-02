@@ -35,6 +35,10 @@ module m_mmu(
     input  wire  [1:0]  w_tlb_req,
     input  wire         w_tlb_flush,
     output wire         w_proc_busy,
+
+    input wire [63:0] w_mtimecmp,
+    output wire [63:0] w_wmtimecmp,
+    output wire        w_clint_we,
     //--------------------------------------------------------------------------------------------//
     output wire [31:0]  w_mem_paddr,
     output wire         w_tlb_busy,
@@ -352,8 +356,21 @@ module m_mmu(
 
     //assign w_proc_busy = w_tlb_busy || w_dram_busy;
     assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy || (w_data_busy) || !w_tx_ready;
-/**************************************************************************************************/
+    /**************************************************************************************************/
     
+    assign w_wmtimecmp  = (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0 && w_grant == w_hart_id) && w_data_we != 0) ?
+                                {w_mtimecmp[63:32], w_data_wdata} :
+                           (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0 && w_grant == w_hart_id) && w_data_we != 0) ?
+                                {w_data_wdata, w_mtimecmp[31:0]} : 
+                           (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1 && w_grant == w_hart_id) && w_data_we != 0) ?
+                                {w_mtimecmp[63:32], w_data_wdata} :
+                           (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1 && w_grant == w_hart_id) && w_data_we != 0) ?
+                                {w_data_wdata, w_mtimecmp[31:0]} : 0;
+    assign w_clint_we   = (w_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+                           ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0 && w_grant == w_hart_id)) ||
+                           (w_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+                           ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1 && w_grant == w_hart_id));
+
 endmodule
 /**************************************************************************************************/
 /*** Simple Direct Mapped Cache for TLB                                                         ***/

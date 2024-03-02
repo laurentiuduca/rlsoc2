@@ -125,7 +125,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(r_data_busy),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0), .w_wmtimecmp(w_wmtimecmp0), .w_clint_we(w_clint_we0),
+        .w_mtime(w_mtime),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
@@ -139,7 +139,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(r_data_busy),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
-        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1), .w_wmtimecmp(w_wmtimecmp1), .w_clint_we(w_clint_we1),
+        .w_mtime(w_mtime),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
@@ -311,6 +311,7 @@ module m_topsim(CLK, RST_X);
         end
     end
 
+    `ifdef laur0
     // shortcut to w_data_we because we do not use microcontroller
     assign w_wmtimecmp0  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0) && w_data_we != 0) ?
                                 {w_mtimecmp0[63:32], w_data_wdata} :
@@ -324,7 +325,7 @@ module m_topsim(CLK, RST_X);
                            ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0);
     assign w_clint_we1   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
                            ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1);
-
+    `endif
     /**********************************************************************************************/
     // OUTPUT CHAR
     UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
