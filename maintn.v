@@ -191,7 +191,7 @@ module m_topsim(CLK, RST_X);
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
     always@(posedge pll_clk) begin
         if(r_data_busy == 0) begin
-            if(!w_tlb_busy) begin
+            //if(!w_tlb_busy) begin
                 r_dev   <= w_dev;
                 r_virt  <= w_virt;
                 r_mem_paddr <= w_mem_paddr;
@@ -200,7 +200,7 @@ module m_topsim(CLK, RST_X);
                 if(//(w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR) &&
                     (w_data_we || w_data_le))
                     r_data_busy <= 1;
-            end
+            //end
         end else if(r_data_busy < 2)
             r_data_busy <= 2;
         else begin
