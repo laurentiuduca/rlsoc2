@@ -185,6 +185,7 @@ module m_topsim(CLK, RST_X);
     wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
     reg   [31:0] r_mem_paddr= 0;
     reg   r_data_le = 0;
+    reg   r_data_we = 0;
     reg   [3:0] r_data_busy = 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
     reg   [3:0] r_virt      = 0;// & 32'h0f000000;
@@ -195,14 +196,18 @@ module m_topsim(CLK, RST_X);
                 r_virt  <= w_virt;
                 r_mem_paddr <= w_mem_paddr;
                 r_data_le <= w_data_le;
+                r_data_we <= w_data_we;
                 if((w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR) &&
                     (w_data_we || w_data_le))
                     r_data_busy <= 1;
             end
         end else if(r_data_busy < 2)
             r_data_busy <= 2;
-        else
+        else begin
+            r_data_le <= 0;
+            r_data_we <= 0;
             r_data_busy <= 0;
+        end
     end
 
     /***********************************          OUTPUT        ***********************************/
@@ -250,7 +255,7 @@ module m_topsim(CLK, RST_X);
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c)) ? w_mtimecmp1[63:32] : 0;
         
         // ipi
-        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && w_data_we != 0 && (r_data_busy==2)) begin
+        if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && r_data_we != 0 && (r_data_busy==2)) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
 `ifdef SIM_MODE
@@ -312,18 +317,18 @@ module m_topsim(CLK, RST_X);
     end
 
     `ifdef laur0
-    // shortcut to w_data_we because we do not use microcontroller
-    assign w_wmtimecmp0  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0) && w_data_we != 0) ?
+    // shortcut to r_data_we because we do not use microcontroller
+    assign w_wmtimecmp0  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0) && r_data_we != 0) ?
                                 {w_mtimecmp0[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0) && w_data_we != 0) ?
+                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0) && r_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp0[31:0]} : 0;
-    assign w_wmtimecmp1  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1) && w_data_we != 0) ?
+    assign w_wmtimecmp1  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1) && r_data_we != 0) ?
                                 {w_mtimecmp1[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1) && w_data_we != 0) ?
+                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1) && r_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp1[31:0]} : 0;
-    assign w_clint_we0   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+    assign w_clint_we0   = r_dev == `CLINT_BASE_TADDR && r_data_we != 0 && 
                            ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0);
-    assign w_clint_we1   = r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+    assign w_clint_we1   = r_dev == `CLINT_BASE_TADDR && r_data_we != 0 && 
                            ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1);
     `endif
     /**********************************************************************************************/
@@ -343,7 +348,7 @@ module m_topsim(CLK, RST_X);
         else
             r_wait_ready <= 0;
         // optimisation instead of w_mem_wdata put w_data_wdata
-        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
+        if((w_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
 `ifdef LAUR_MEM_RB
@@ -356,7 +361,7 @@ module m_topsim(CLK, RST_X);
             r_uart_data <= 0;
         end
         // Finish Simulation
-        if((w_mem_paddr==`TOHOST_ADDR && w_data_we) && (w_data_wdata[31:16]==`CMD_POWER_OFF)) begin
+        if((w_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_POWER_OFF)) begin
             r_finish = 1;
         end
     end
@@ -811,7 +816,7 @@ begin
                 else
                     $fwrite(file, "dram_wr %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state);
             end else if ((r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
-                         r_dev == `HVC_BASE_TADDR) && w_data_we == 0) begin
+                         r_dev == `HVC_BASE_TADDR) && r_data_le) begin
                 dstate <= 0;
                 if(r_plic_aces_t) begin
                     if(r_was_read)
@@ -837,7 +842,7 @@ begin
                     end
                 end
             end else if((r_dev == `CLINT_BASE_TADDR || r_dev == `PLIC_BASE_TADDR || 
-                         r_dev == `HVC_BASE_TADDR || r_dev==4'h4/*`TOHOST_ADDR*/) && w_data_we == 1) begin
+                         r_dev == `HVC_BASE_TADDR || r_dev==4'h4/*`TOHOST_ADDR*/) && r_data_we == 1) begin
                 $fwrite(file, "data_we %x %x %x %x\n", w_mem_paddr, w_data_wdata, w_pc0, core0.p.state);
                 dstate <= 6;
             end else
@@ -882,8 +887,8 @@ begin
         end 
 
         if (w_mtime >= 70000000) begin
-                $display("finish ram trace with dstate=%x dram_con.o_busy=%x dram_con.i_rd_en=%x r_dev=%x w_data_we=%x", 
-                    dstate, dram_con.o_busy, dram_con.i_rd_en, dram_con.i_wr_en, r_dev, w_data_we);
+                $display("finish ram trace with dstate=%x dram_con.o_busy=%x dram_con.i_rd_en=%x r_dev=%x r_data_we=%x", 
+                    dstate, dram_con.o_busy, dram_con.i_rd_en, dram_con.i_wr_en, r_dev, r_data_we);
                 $fclose(file);
                 dstate <= 400;
                 $finish;
