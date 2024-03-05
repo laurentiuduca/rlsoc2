@@ -197,7 +197,7 @@ module m_topsim(CLK, RST_X);
                 r_mem_paddr <= w_mem_paddr;
                 r_data_le <= w_data_le;
                 r_data_we <= w_data_we;
-                if((w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR) &&
+                if(//(w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR) &&
                     (w_data_we || w_data_le))
                     r_data_busy <= 1;
             end
