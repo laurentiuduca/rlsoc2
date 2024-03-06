@@ -316,12 +316,12 @@ module m_mmu(
     wire  [3:0] w_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire [27:0] w_offset    = w_mem_paddr & 28'h7ffffff;
-    reg [3:0] r_dev=0;
-    reg r_data_we=0;
+    //reg [3:0] r_dev=0;
+    //reg r_data_we=0;
     always@(posedge CLK) 
         if(!w_tlb_busy) begin
-            r_dev <= w_dev; 
-            r_data_we <= w_data_we;
+            //r_dev <= w_dev; 
+            //r_data_we <= w_data_we;
         end
 
     assign w_dram_wdata         = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
@@ -363,17 +363,17 @@ module m_mmu(
     assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy || (w_data_busy) || !w_tx_ready;
     /**************************************************************************************************/
     
-    assign w_wmtimecmp  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0 && w_grant == w_hart_id) && w_data_we != 0) ?
+    assign w_wmtimecmp  = (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0 && w_grant == w_hart_id) && w_proc_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
-                           (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0 && w_grant == w_hart_id) && w_data_we != 0) ?
+                           (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0 && w_grant == w_hart_id) && w_proc_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 
-                           (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1 && w_grant == w_hart_id) && w_data_we != 0) ?
+                           (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1 && w_grant == w_hart_id) && w_proc_data_we != 0) ?
                                 {w_mtimecmp[63:32], w_data_wdata} :
-                           (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1 && w_grant == w_hart_id) && w_data_we != 0) ?
+                           (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1 && w_grant == w_hart_id) && w_proc_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    assign w_clint_we   = (r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+    assign w_clint_we   = (w_dev == `CLINT_BASE_TADDR && w_proc_data_we != 0 && 
                            ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0 && w_grant == w_hart_id)) ||
-                           (r_dev == `CLINT_BASE_TADDR && w_data_we != 0 && 
+                           (w_dev == `CLINT_BASE_TADDR && w_proc_data_we != 0 && 
                            ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1 && w_grant == w_hart_id));
 
 endmodule
