@@ -316,13 +316,6 @@ module m_mmu(
     wire  [3:0] w_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire [27:0] w_offset    = w_mem_paddr & 28'h7ffffff;
-    //reg [3:0] r_dev=0;
-    //reg r_data_we=0;
-    always@(posedge CLK) 
-        if(!w_tlb_busy) begin
-            //r_dev <= w_dev; 
-            //r_data_we <= w_data_we;
-        end
 
     assign w_dram_wdata         = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
     

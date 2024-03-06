@@ -203,7 +203,7 @@ module m_topsim(CLK, RST_X);
             //end
         end else if(r_data_busy < 2)
             r_data_busy <= 2;
-        else begin
+        else if(w_tx_ready) begin
             r_data_le <= 0;
             r_data_we <= 0;
             r_data_busy <= 0;
