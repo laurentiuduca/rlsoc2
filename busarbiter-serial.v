@@ -7,7 +7,8 @@ module busarbiter(
     // here we do not keep the w_ notation for wire
     input wire CLK, RST_X, output wire [31:0] w_grant,
     input wire w_init_done, input wire w_tx_ready,
-    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le, input wire [3:0] w_data_busy,
+    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le, 
+    input wire [3:0] w_data_busy, output reg [3:0] bus_data_busy0, output reg [3:0] bus_data_busy1,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
     input wire [63:0] w_mtime,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
@@ -39,89 +40,82 @@ module busarbiter(
     assign w_grant=grant;
 
     reg [7:0] state=0;
+    integer i;
+    reg [7:0] cnt=0, r_max_cnt=1;
+
     
     wire w_sys_busy = w_dram_busy || !w_tx_ready || w_data_busy;
 
 `ifdef USE_SINGLE_CORE
-    always@(posedge CLK) 
-    begin
-        if(w_init_done)
-        if(state == 0 && !w_sys_busy) begin
-            if(bus_dram_le0) begin
-                bus_dram_busy0 <= 1;
-                // set control signals
-                r_ba_dram_le0 <= 1;
-                r_ba_dram_we_t0 <= 0
-                r_ba_data_le0 <= 0;
-                r_ba_data_we0 <= 0;
-                // get dram signals
-                r_bus_dram_addr0 <= bus_dram_addr0;
-                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
-                state <= 1;
-            end else if (bus_dram_we_t0) begin
-                bus_dram_busy0 <= 1;
-                // set control signals
-                r_ba_dram_le0 <= 0;
-                r_ba_dram_we_t0 <= 1;
-                r_ba_data_le0 <= 0;
-                r_ba_data_we0 <= 0;
-                // get dram signals
-                r_bus_dram_addr0 <= bus_dram_addr0;
-                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
-                r_bus_dram_wdata0 <= bus_dram_wdata0;
-                state <= 10;
-            end else if(bus_data_le0) begin
-                bus_data_busy0 <= 1;
-                // set control signals
-                r_ba_dram_le0 <= 0;
-                r_ba_dram_we_t0 <= 1;
-                r_ba_data_le0 <= 0;
-                r_ba_data_we0 <= 0;
-                // get data signals
-                state <= 20;
-            end else if(bus_data_we0) begin
-            end
-        end else if(state == 1) begin // dram read
-            if(w_sys_busy)
+    wire a_w_dram_busy = w_sys_busy;
+`else
+    wire a_w_dram_busy = (state == 0) ? w_sys_busy :
+                         (state == 1) ? 1 : 
+                         (state == 2) ? 1 : w_sys_busy;
+
+    wire no_req = (w_bus_cpustate == `S_ID);
+    
+    always @(posedge CLK) begin
+        if(!RST_X) begin
+            grant <= 0;
+            cnt <= 0;
+        end else if(w_init_done) begin
+            if(state == 0) begin
+                if(no_req) begin
+                    state <= 1;
+                end
+            end else if(state == 1) begin
+                // must signal busy to current core
+                grant <= (grant + 1) & (`NCORES-1);
                 state <= 2;
-        end else if(state == 2) begin
-            if(!w_sys_busy) begin
-                // collect dram data
-                r_bus_dram_odata0 <= w_dram_odata;
-                bus_dram_busy0 <= 0;
-                state <= 0;
+            end else if(state == 2) begin
+                // grant has just changed so signal busy to the new core
+                state <= 3;
+                cnt <= 0;
+            end else if(state == 3) begin
+                // allow this core to execute its instruction
+                if(cnt < r_max_cnt)
+                    cnt <= cnt + 1;
+                else
+                    state <= 0;
             end
-        end else if(state == 10) begin // dram write
-             if(w_sys_busy)
-                state <= 20;
-        end else if(state == 20) begin
-            if(!w_sys_busy) begin 
-                bus_dram_busy0 <= 0;
-                state <= 0;
-            end
-        end else if(state == 20) begin // data read
 
         end
     end
-
-r_bus_data_data0  <= w_data_data;
+`endif
 
     always @(*) begin
         if(grant == 0) begin
+            bus_data_data0  <= w_data_data;
             bus_wmip0 <= w_wmip; 
             bus_plic_we0 <= w_plic_we;
-            bus_dram_odata0 = r_bus_dram_odata0;
-        end
-    end    
-
-`else
-`endif
-
-`ifdef laur0
-        wire a_w_dram_busy = w_sys_busy;
-
-
+            bus_dram_odata0 <= w_dram_odata;
+            bus_dram_busy0  <= a_w_dram_busy;
+            bus_data_busy0 <= w_data_busy;
             
+            bus_data_data1  <= 0;
+            bus_wmip1 <= 0; 
+            bus_plic_we1 <= 0;
+            bus_dram_odata1 <= 0;
+            bus_dram_busy1  <= 1;
+            bus_data_busy1 <= 1;            
+        end else begin
+            bus_data_data1  <= w_data_data;
+            bus_wmip1 <= w_wmip; 
+            bus_plic_we1 <= w_plic_we;
+            bus_dram_odata1 <= w_dram_odata;
+            bus_dram_busy1  <= a_w_dram_busy;
+            bus_data_busy1 <= w_data_busy;
+
+            bus_data_data0  <= 0;
+            bus_wmip0 <= 0; 
+            bus_plic_we0 <= 0;
+            bus_dram_odata0 <= 0;
+            bus_dram_busy0  <= 1;
+            bus_data_busy0 <= 1;
+        end
+    end
+
     assign w_mem_paddr  = grant == 0 ? bus_mem_paddr0 : bus_mem_paddr1;
     assign w_data_we    = grant == 0 ? bus_data_we0 : bus_data_we1;
     assign w_data_le    = grant == 0 ? bus_data_le0 : bus_data_le1;
@@ -136,5 +130,4 @@ r_bus_data_data0  <= w_data_data;
     assign w_dram_le    = grant == 0 ? bus_dram_le0 : bus_dram_le1;
     wire [31:0] w_core_ir = grant == 0 ? bus_core_ir0 : bus_core_ir1;
     wire [3:0] w_bus_cpustate = grant == 0 ? bus_cpustate0 : bus_cpustate1;
-`endif
 endmodule

@@ -82,6 +82,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] w_mem_paddr, bus_mem_paddr0, bus_mem_paddr1;
     wire w_data_we, bus_data_we0, bus_data_we1;
     wire w_data_le, bus_data_le0, bus_data_le1;
+    wire [3:0] bus_data_busy0, bus_data_busy1;
     wire [31:0] w_data_wdata, bus_data_wdata0, bus_data_wdata1;
     wire [31:0] w_data_data, bus_data_data0, bus_data_data1;
     wire [63:0] w_mtimecmp0, w_mtimecmp1, w_wmtimecmp0, w_wmtimecmp1;
@@ -123,7 +124,7 @@ module m_topsim(CLK, RST_X);
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(r_data_busy),
+        .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(bus_data_busy0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
         .w_mtime(w_mtime),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
@@ -137,7 +138,7 @@ module m_topsim(CLK, RST_X);
      m_cpummu core1(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(1), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_1), .w_state(bus_cpustate1),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(r_data_busy),
+        .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(bus_data_busy1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
         .w_mtime(w_mtime),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
@@ -150,7 +151,8 @@ module m_topsim(CLK, RST_X);
 
     busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
-        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le), .w_data_busy(r_data_busy),
+        .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le), 
+        .w_data_busy(r_data_busy), .bus_data_busy0(bus_data_busy0), .bus_data_busy1(bus_data_busy1), 
         .w_data_wdata(w_data_wdata), .w_data_data(w_data_data),
         .w_mtime(w_mtime),
         .w_tlb_req(w_tlb_req), .w_tlb_busy(w_tlb_busy),
