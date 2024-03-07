@@ -7,7 +7,8 @@ module busarbiter(
     // here we do not keep the w_ notation for wire
     input wire CLK, RST_X, output wire [31:0] w_grant,
     input wire w_init_done, input wire w_tx_ready,
-    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le, input wire [3:0] w_data_busy,
+    output wire [31:0] w_mem_paddr, output wire w_data_we, output wire w_data_le, 
+    input wire [3:0] w_data_busy, output reg [3:0] bus_data_busy0, output reg [3:0] bus_data_busy1,
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
     input wire [63:0] w_mtime,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
@@ -69,21 +70,34 @@ module busarbiter(
                 r_bus_dram_addr0 <= bus_dram_addr0;
                 r_bus_dram_ctrl0 <= bus_dram_ctrl0;
                 r_bus_dram_wdata0 <= bus_dram_wdata0;
-                state <= 10;
+                state <= 11;
             end else if(bus_data_le0) begin
                 bus_data_busy0 <= 1;
                 // set control signals
                 r_ba_dram_le0 <= 0;
-                r_ba_dram_we_t0 <= 1;
-                r_ba_data_le0 <= 0;
+                r_ba_dram_we_t0 <= 0;
+                r_ba_data_le0 <= 1;
                 r_ba_data_we0 <= 0;
                 // get data signals
-                state <= 20;
+                r_bus_mem_paddr0 <= bus_mem_paddr0;
+                state <= 21;
             end else if(bus_data_we0) begin
+                bus_data_busy0 <= 1;
+                // set control signals
+                r_ba_dram_le0 <= 0;
+                r_ba_dram_we_t0 <= 0;
+                r_ba_data_le0 <= 0;
+                r_ba_data_we0 <= 1;
+                // get data signals
+                r_bus_mem_paddr0 <= bus_mem_paddr0;
+                r_bus_data_wdata0 <= bus_data_wdata0;
+                state <= 31;
             end
         end else if(state == 1) begin // dram read
-            if(w_sys_busy)
+            if(w_sys_busy) begin
+                r_ba_dram_le0 <=0;
                 state <= 2;
+            end
         end else if(state == 2) begin
             if(!w_sys_busy) begin
                 // collect dram data
@@ -91,20 +105,39 @@ module busarbiter(
                 bus_dram_busy0 <= 0;
                 state <= 0;
             end
-        end else if(state == 10) begin // dram write
-             if(w_sys_busy)
-                state <= 20;
-        end else if(state == 20) begin
+        end else if(state == 11) begin // dram write
+             if(w_sys_busy) begin
+                r_ba_dram_we_t0 <= 0;
+                state <= 12;
+            end
+        end else if(state == 12) begin
             if(!w_sys_busy) begin 
                 bus_dram_busy0 <= 0;
                 state <= 0;
             end
-        end else if(state == 20) begin // data read
-
+        end else if(state == 21) begin // data read
+             if(w_sys_busy) begin
+                r_ba_data_le0 <= 0;
+                state <= 22;
+            end
+        end else if(state == 22) begin
+            if(!w_sys_busy) begin
+                r_bus_data_data0 <= w_data_data;
+                bus_data_busy0 <= 0;
+                state <= 0;
+            end
+        end else if(state == 31) begin // data write
+            if(w_sys_busy) begin
+                r_ba_data_we0 <= 0;
+                state <= 32;
+            end
+        end else if(state == 32) begin
+            if(!w_sys_busy) begin
+                bus_data_busy0 <= 0;
+                state <= 0;
+            end
         end
     end
-
-r_bus_data_data0  <= w_data_data;
 
     always @(*) begin
         if(grant == 0) begin
@@ -114,6 +147,11 @@ r_bus_data_data0  <= w_data_data;
         end
     end    
 
+    reg [31:0] r_bus_mem_paddr1=0;
+    assign w_mem_paddr  = grant == 0 ? r_bus_mem_paddr0 : r_bus_mem_paddr1;
+    assign w_data_we    = grant == 0 ? bus_data_we0 : bus_data_we1;
+    assign w_data_le    = grant == 0 ? bus_data_le0 : bus_data_le1;
+
 `else
 `endif
 
@@ -122,9 +160,7 @@ r_bus_data_data0  <= w_data_data;
 
 
             
-    assign w_mem_paddr  = grant == 0 ? bus_mem_paddr0 : bus_mem_paddr1;
-    assign w_data_we    = grant == 0 ? bus_data_we0 : bus_data_we1;
-    assign w_data_le    = grant == 0 ? bus_data_le0 : bus_data_le1;
+    
     assign w_data_wdata = grant == 0 ? bus_data_wdata0 : bus_data_wdata1;
     assign w_tlb_req    = grant == 0 ? bus_tlb_req0 : bus_tlb_req1;
     assign w_tlb_busy   = grant == 0 ? bus_tlb_busy0 : bus_tlb_busy1;
