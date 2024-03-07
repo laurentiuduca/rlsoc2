@@ -44,6 +44,7 @@ module busarbiter(
     wire w_sys_busy = w_dram_busy || !w_tx_ready || w_data_busy;
 
 `ifdef USE_SINGLE_CORE
+
     always@(posedge CLK) 
     begin
         if(w_init_done)
@@ -144,33 +145,45 @@ module busarbiter(
             bus_wmip0 <= w_wmip; 
             bus_plic_we0 <= w_plic_we;
             bus_dram_odata0 = r_bus_dram_odata0;
+            bus_data_data0  <= r_bus_data_data0;
+
+            bus_wmip0 <= w_wmip; 
+            bus_plic_we0 <= w_plic_we;
         end
     end    
 
-    reg [31:0] r_bus_mem_paddr1=0;
-    assign w_mem_paddr  = grant == 0 ? r_bus_mem_paddr0 : r_bus_mem_paddr1;
-    assign w_data_we    = grant == 0 ? bus_data_we0 : bus_data_we1;
-    assign w_data_le    = grant == 0 ? bus_data_le0 : bus_data_le1;
+    assign w_dram_addr  = grant == 0 ? r_bus_dram_addr0 : bus_dram_addr1;
+    assign w_dram_wdata = grant == 0 ? r_bus_dram_wdata0 : bus_dram_wdata1;
+    assign w_dram_we_t  = grant == 0 ? r_ba_dram_we_t0 : bus_dram_we_t1;
+    assign w_dram_le    = grant == 0 ? r_ba_dram_le0 : bus_dram_le1;
+    assign w_dram_ctrl  = grant == 0 ? r_bus_dram_ctrl0 : bus_dram_ctrl1; 
 
-`else
-`endif
+    assign w_mem_paddr  = grant == 0 ? r_bus_mem_paddr0 : bus_mem_paddr1;
+    assign w_data_we    = grant == 0 ? r_ba_data_we0 : bus_data_we1;
+    assign w_data_le    = grant == 0 ? r_ba_data_le0 : bus_data_le1;
+    assign w_data_wdata = grant == 0 ? r_bus_data_wdata0 : bus_data_wdata1;
 
-`ifdef laur0
-        wire a_w_dram_busy = w_sys_busy;
-
-
-            
-    
-    assign w_data_wdata = grant == 0 ? bus_data_wdata0 : bus_data_wdata1;
     assign w_tlb_req    = grant == 0 ? bus_tlb_req0 : bus_tlb_req1;
     assign w_tlb_busy   = grant == 0 ? bus_tlb_busy0 : bus_tlb_busy1;
     assign w_mip        = grant == 0 ? bus_mip0 : bus_mip1;
-    assign w_dram_addr  = grant == 0 ? bus_dram_addr0 : bus_dram_addr1;
-    assign w_dram_wdata = grant == 0 ? bus_dram_wdata0 : bus_dram_wdata1;
-    assign w_dram_we_t  = grant == 0 ? bus_dram_we_t0 : bus_dram_we_t1;
-    assign w_dram_ctrl  = grant == 0 ? bus_dram_ctrl0 : bus_dram_ctrl1; 
-    assign w_dram_le    = grant == 0 ? bus_dram_le0 : bus_dram_le1;
+
     wire [31:0] w_core_ir = grant == 0 ? bus_core_ir0 : bus_core_ir1;
     wire [3:0] w_bus_cpustate = grant == 0 ? bus_cpustate0 : bus_cpustate1;
+
+    reg [31:0] r_bus_dram_addr0=0;
+    reg [31:0] r_bus_dram_wdata0=0;
+    reg r_ba_dram_we_t0=0;
+    reg r_ba_dram_le0=0;
+    reg [2:0] r_bus_dram_ctrl0=0; 
+
+    reg [31:0] r_bus_mem_paddr0=0;
+    reg r_ba_data_we0=0;
+    reg r_ba_data_le0=0;
+    reg [31:0] r_bus_data_wdata0=0;
+
+`else
 `endif
+    
+    
+
 endmodule
