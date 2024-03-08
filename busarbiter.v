@@ -53,7 +53,7 @@ module busarbiter(
                 bus_dram_busy0 <= 1;
                 // set control signals
                 r_ba_dram_le0 <= 1;
-                r_ba_dram_we_t0 <= 0
+                r_ba_dram_we_t0 <= 0;
                 r_ba_data_le0 <= 0;
                 r_ba_data_we0 <= 0;
                 // get dram signals
@@ -174,12 +174,14 @@ module busarbiter(
     reg [31:0] r_bus_dram_wdata0=0;
     reg r_ba_dram_we_t0=0;
     reg r_ba_dram_le0=0;
-    reg [2:0] r_bus_dram_ctrl0=0; 
+    reg [2:0] r_bus_dram_ctrl0=0;
+    reg [31:0] r_bus_dram_odata0=0;
 
     reg [31:0] r_bus_mem_paddr0=0;
     reg r_ba_data_we0=0;
     reg r_ba_data_le0=0;
     reg [31:0] r_bus_data_wdata0=0;
+    reg [31:0] r_bus_data_data0=0;
 
 `else
 `endif
