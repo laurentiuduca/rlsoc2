@@ -3,7 +3,7 @@
 
 `include "define.vh"
 
-module busarbiter(
+module busarbiterser(
     // here we do not keep the w_ notation for wire
     input wire CLK, RST_X, output wire [31:0] w_grant,
     input wire w_init_done, input wire w_tx_ready,

@@ -47,8 +47,10 @@ module busarbiter(
 
     always@(posedge CLK) 
     begin
-        if(w_init_done)
-        if(state == 0 && !w_sys_busy) begin
+        if(w_init_done) begin
+        if(state == 0) begin
+            if(w_sys_busy)
+                $display("------------- sys-busy in state0");
             if(bus_dram_le0) begin
                 bus_dram_busy0 <= 1;
                 // set control signals
@@ -59,7 +61,10 @@ module busarbiter(
                 // get dram signals
                 r_bus_dram_addr0 <= bus_dram_addr0;
                 r_bus_dram_ctrl0 <= bus_dram_ctrl0;
+                //$display("dram rd addr=%x", bus_dram_addr0);
                 state <= 1;
+                if(/*bus_dram_le0 || */bus_dram_we_t0 || bus_data_le0 || bus_data_we0)
+                    $display("------------- two on bus for dram-rd");
             end else if (bus_dram_we_t0) begin
                 bus_dram_busy0 <= 1;
                 // set control signals
@@ -71,7 +76,10 @@ module busarbiter(
                 r_bus_dram_addr0 <= bus_dram_addr0;
                 r_bus_dram_ctrl0 <= bus_dram_ctrl0;
                 r_bus_dram_wdata0 <= bus_dram_wdata0;
+                $display("dram wr addr=%x data=%x", bus_dram_addr0, bus_dram_wdata0);
                 state <= 11;
+                if(bus_dram_le0 || /*bus_dram_we_t0 ||*/ bus_data_le0 || bus_data_we0)
+                    $display("---------------- two on bus for dram-wr");
             end else if(bus_data_le0) begin
                 bus_data_busy0 <= 1;
                 // set control signals
@@ -81,6 +89,7 @@ module busarbiter(
                 r_ba_data_we0 <= 0;
                 // get data signals
                 r_bus_mem_paddr0 <= bus_mem_paddr0;
+                $display("data rd addr=%x", bus_mem_paddr0);
                 state <= 21;
             end else if(bus_data_we0) begin
                 bus_data_busy0 <= 1;
@@ -92,6 +101,7 @@ module busarbiter(
                 // get data signals
                 r_bus_mem_paddr0 <= bus_mem_paddr0;
                 r_bus_data_wdata0 <= bus_data_wdata0;
+                $display("data wr addr=%x data=%x", bus_mem_paddr0, bus_data_wdata0);
                 state <= 31;
             end
         end else if(state == 1) begin // dram read
@@ -137,7 +147,8 @@ module busarbiter(
                 bus_data_busy0 <= 0;
                 state <= 0;
             end
-        end
+        end 
+        end // init_done
     end
 
     always @(*) begin

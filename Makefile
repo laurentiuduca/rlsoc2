@@ -11,7 +11,7 @@
 #TOPSOURCE = top.v
 TOPSOURCE = maintn.v
 TOPSOURCE-SIM-MAIN = main.v dram.v
-OTHERSOURCE = rvcorem.v busarbiter.v cpummu.v memsim.v mmu.v loader.v read_file.v memorytn.v
+OTHERSOURCE = rvcorem.v busarbiter.v cpummu.v memsim.v mmu.v loader.v read_file.v memorytn.v busarbiter-serial.v
 OLDSOURCE = disk.v microc.v debug.v
 
 
