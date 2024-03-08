@@ -831,16 +831,9 @@ begin
                     $fwrite(file, "dram_wr %x %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state, mmustate);
                 else
                     $fwrite(file, "dram_wr %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state);
-            end else if (r_data_le && r_data_busy == 0) begin
+            end else if (r_data_le) begin
                 dstate <= 6;
-                if(r_mem_paddr != old_mem_paddr || r_data_data != old_data_data || w_pc0 != old_pc0) begin
-                    old_mem_paddr <= r_mem_paddr;
-                    old_data_data <= r_data_data;
-                    old_pc0 <= w_pc0;
-                    $fwrite(file, "data_le %x %x %x %x %x\n", 
-                        r_mem_paddr, r_data_data, w_pc0, core0.p.state, mmustate);
-                end
-            end else if(r_data_we && r_data_busy == 0) begin
+            end else if(r_data_we) begin
                 $fwrite(file, "data_we %x %x %x %x\n", w_mem_paddr, w_data_wdata, w_pc0, core0.p.state);
                 dstate <= 8;
             end else
@@ -880,13 +873,16 @@ begin
             if(dram_con.o_busy == 0)
                 ramtrace;
         end else if (dstate == 6) begin
-            if(r_data_busy == 1)
+            if(r_data_busy)
                 dstate <= 7;
         end else if (dstate == 7) begin
-            if(r_data_busy == 0)    
+            if(r_data_busy == 0) begin
+                $fwrite(file, "data_le %x %x %x %x %x\n", 
+                        r_mem_paddr, r_data_data, w_pc0, core0.p.state, mmustate);   
                 ramtrace;
+            end
         end else if (dstate == 8) begin
-            if(r_data_busy == 1)
+            if(r_data_busy)
                 dstate <= 9;
         end else if (dstate == 9) begin
             if(r_data_busy == 0)

@@ -47,7 +47,9 @@ module busarbiter(
 
     always@(posedge CLK) 
     begin
-        if(w_init_done) begin
+        if(!RST_X) begin
+            grant <= 0;
+        end else if(w_init_done) begin
         if(state == 0) begin
             if(w_sys_busy)
                 $display("------------- sys-busy in state0");
@@ -155,11 +157,8 @@ module busarbiter(
         if(grant == 0) begin
             bus_wmip0 <= w_wmip; 
             bus_plic_we0 <= w_plic_we;
-            bus_dram_odata0 = r_bus_dram_odata0;
+            bus_dram_odata0 <= r_bus_dram_odata0;
             bus_data_data0  <= r_bus_data_data0;
-
-            bus_wmip0 <= w_wmip; 
-            bus_plic_we0 <= w_plic_we;
         end
     end    
 
