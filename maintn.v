@@ -354,7 +354,7 @@ module m_topsim(CLK, RST_X);
         if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
-            $display("tohost data wr %x", w_data_wdata);
+            //$display("tohost data wr %x", w_data_wdata);
 `ifdef LAUR_MEM_RB
 	    end else if(r_rb_uart_we) begin
 		    r_uart_we <= 1;
@@ -818,7 +818,7 @@ begin
 end
 `endif
 
-`define RAM_TRACE
+//`define RAM_TRACE
 `ifdef RAM_TRACE
 task ramtrace;
 begin
@@ -848,6 +848,11 @@ reg [31:0] daddr=0, dstart=0;
 wire [3:0] mmustate=core0.mmu.r_pw_state;
 always @(posedge pll_clk)
 begin
+    `ifdef laur0
+    if(ba.r_bus_dram_odata0 == 32'h40008000) begin
+        $display("--- console a4=%x", core0.p.regs.mem[14]);
+    end
+    `endif
     if(dstart == 0) begin
             dstart <= 1;
             $sformat(filename, "serial%0d.out", 1);
@@ -888,8 +893,8 @@ begin
             if(r_data_busy == 0)
                 ramtrace;
         end 
-
-        if (w_mtime >= 2000) begin
+        
+        if (w_mtime >= 20000) begin
                 $display("finish ram trace with dstate=%x dram_con.o_busy=%x dram_con.i_rd_en=%x r_dev=%x r_data_we=%x", 
                     dstate, dram_con.o_busy, dram_con.i_rd_en, dram_con.i_wr_en, r_dev, r_data_we);
                 $fclose(file);

@@ -78,7 +78,7 @@ module busarbiter(
                 r_bus_dram_addr0 <= bus_dram_addr0;
                 r_bus_dram_ctrl0 <= bus_dram_ctrl0;
                 r_bus_dram_wdata0 <= bus_dram_wdata0;
-                $display("dram wr addr=%x data=%x", bus_dram_addr0, bus_dram_wdata0);
+                //$display("dram wr addr=%x data=%x", bus_dram_addr0, bus_dram_wdata0);
                 state <= 11;
                 if(bus_dram_le0 || /*bus_dram_we_t0 ||*/ bus_data_le0 || bus_data_we0)
                     $display("---------------- two on bus for dram-wr");
@@ -91,7 +91,7 @@ module busarbiter(
                 r_ba_data_we0 <= 0;
                 // get data signals
                 r_bus_mem_paddr0 <= bus_mem_paddr0;
-                $display("data rd addr=%x", bus_mem_paddr0);
+                //$display("data rd addr=%x", bus_mem_paddr0);
                 state <= 21;
             end else if(bus_data_we0) begin
                 bus_data_busy0 <= 1;
@@ -103,7 +103,7 @@ module busarbiter(
                 // get data signals
                 r_bus_mem_paddr0 <= bus_mem_paddr0;
                 r_bus_data_wdata0 <= bus_data_wdata0;
-                $display("data wr addr=%x data=%x", bus_mem_paddr0, bus_data_wdata0);
+                //$display("data wr addr=%x data=%x", bus_mem_paddr0, bus_data_wdata0);
                 state <= 31;
             end
         end else if(state == 1) begin // dram read
@@ -114,7 +114,8 @@ module busarbiter(
         end else if(state == 2) begin
             if(!w_sys_busy) begin
                 // collect dram data
-                r_bus_dram_odata0 <= w_dram_odata;
+                r_bus_dram_odata0 <= w_dram_odata; // mmu
+                r_bus_data_data0 <= w_dram_odata; // cpu
                 bus_dram_busy0 <= 0;
                 state <= 0;
             end
