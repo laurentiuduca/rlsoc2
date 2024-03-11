@@ -51,10 +51,11 @@ module busarbiter(
             grant <= 0;
         end else if(w_init_done) begin
         if(state == 0) begin
-            if(w_sys_busy)
+            if(w_sys_busy) begin
                 $display("------------- sys-busy in state0");
-            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
-                
+                $finish;
+            end
+            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin                
                 // set control signals
                 r_ba_dram_le0 <= bus_dram_le0;
                 r_ba_dram_we_t0 <= bus_dram_we_t0;
