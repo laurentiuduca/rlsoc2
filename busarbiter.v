@@ -94,7 +94,7 @@ module busarbiter(
         end // init_done
     end
 
-`else
+`else // dual core
 
     always@(posedge CLK) 
     begin
@@ -106,36 +106,36 @@ module busarbiter(
                 $display("------------- sys-busy in state0");
                 $finish;
             end
-            if(grant == 0 && r_core_ir0[6:0]==`OPCODE_AMO_____) begin
+            if(grant == 0 && bus_core_ir0[6:0]==`OPCODE_AMO_____) begin
                 if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
                     prepare_exec0;
                     state <= 1;
                 end
-                check_pending1;
-            end else if(grant == 1 && r_core_ir1[6:0]==`OPCODE_AMO_____) begin
+                check_request1;
+            end else if(grant == 1 && bus_core_ir1[6:0]==`OPCODE_AMO_____) begin
                 if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
                     prepare_exec1;
                     state <= 1;
                 end
-                check_pending0;
+                check_request0;
             end else if(r_pending_req0) begin
                 grant <= 0;
                 state <= 1;
-                check_pending1;
+                check_request1;
             end else if(r_pending_req1) begin
                 grant <= 1;
                 state <= 1;
-                check_pending0;
+                check_request0;
             end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
                 grant <= 0;
                 prepare_exec0;
                 state <= 1;
-                check_pending1;
+                check_request1;
             end else if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
                 grant <= 1;
                 preapare_exec1;
                 state <= 1;
-                check_pending0;
+                check_request0;
             end
         end else if(state == 1) begin // dram read
             if(w_sys_busy) begin
@@ -154,9 +154,9 @@ module busarbiter(
                 end
             end
             if(grant == 0)
-                check_pending1;
+                check_request1;
             else
-                check_pending0;
+                check_request0;
         end else if(state == 2) begin
             if(!w_sys_busy) begin
                 if(grant == 0) begin
@@ -176,15 +176,15 @@ module busarbiter(
                 end
             end
             if(grant == 0)
-                check_pending1;
+                check_request1;
             else
-                check_pending0;
+                check_request0;
         end 
         end // init_done
     end
 `endif
 
-task check_pending0;
+task check_request0;
 begin
     if((bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) && !r_pending_req0) begin
         r_pending_req0 <= 1;
@@ -193,7 +193,7 @@ begin
 end
 endtask
 
-task check_pending1;
+task check_request1;
 begin
     if((bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) && !r_pending_req1) begin
         r_pending_req1 <= 1;
@@ -280,20 +280,17 @@ endtask
     wire [31:0] w_core_ir = grant == 0 ? bus_core_ir0 : bus_core_ir1;
     wire [3:0] w_bus_cpustate = grant == 0 ? bus_cpustate0 : bus_cpustate1;
 
-    reg [31:0] r_bus_dram_addr0=0;
-    reg [31:0] r_bus_dram_wdata0=0;
-    reg r_ba_dram_we_t0=0;
-    reg r_ba_dram_le0=0;
-    reg [2:0] r_bus_dram_ctrl0=0;
-    reg [31:0] r_bus_dram_odata0=0;
+    reg [31:0] r_bus_dram_addr0=0, r_bus_dram_addr0=0;
+    reg [31:0] r_bus_dram_wdata0=0, r_bus_dram_wdata0=0;
+    reg r_ba_dram_we_t0=0, r_ba_dram_we_t0=0;
+    reg r_ba_dram_le0=0, r_ba_dram_le0=0;
+    reg [2:0] r_bus_dram_ctrl0=0, r_bus_dram_ctrl0=0;
+    reg [31:0] r_bus_dram_odata0=0, r_bus_dram_odata0=0;
 
-    reg [31:0] r_bus_mem_paddr0=0;
-    reg r_ba_data_we0=0;
-    reg r_ba_data_le0=0;
-    reg [31:0] r_bus_data_wdata0=0;
-    reg [31:0] r_bus_data_data0=0;
-
-    
-    
+    reg [31:0] r_bus_mem_paddr0=0, r_bus_mem_paddr0=0;
+    reg r_ba_data_we0=0, r_ba_data_we0=0;
+    reg r_ba_data_le0=0, r_ba_data_le0=0;
+    reg [31:0] r_bus_data_wdata0=0, r_bus_data_wdata0=0;
+    reg [31:0] r_bus_data_data0=0, r_bus_data_data0=0;
 
 endmodule
