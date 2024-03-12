@@ -106,21 +106,13 @@ module busarbiter(
                 $display("------------- sys-busy in state0");
                 $finish;
             end
-            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin      
-                // set control signals
-                r_ba_dram_le0 <= bus_dram_le0;
-                r_ba_dram_we_t0 <= bus_dram_we_t0;
-                r_ba_data_le0 <= bus_data_le0;
-                r_ba_data_we0 <= bus_data_we0;
-                // dram read or write
-                bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
-                r_bus_dram_addr0 <= bus_dram_addr0;
-                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
-                r_bus_dram_wdata0 <= bus_dram_wdata0;
-                // data read or write
-                bus_data_busy0 <= bus_data_le0 | bus_data_we0;
-                r_bus_mem_paddr0 <= bus_mem_paddr0;
-                r_bus_data_wdata0 <= bus_data_wdata0;
+            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+                grant <= 0;
+                prepare_exec0;
+                state <= 1;
+            end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+                grant <= 1;
+                preapare_exec1;
                 state <= 1;
             end
         end else if(state == 1) begin // dram read
@@ -162,6 +154,44 @@ module busarbiter(
     end
 
 `endif
+
+task prepare_exec0;
+begin
+                // set control signals
+                r_ba_dram_le0 <= bus_dram_le0;
+                r_ba_dram_we_t0 <= bus_dram_we_t0;
+                r_ba_data_le0 <= bus_data_le0;
+                r_ba_data_we0 <= bus_data_we0;
+                // dram read or write
+                bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
+                r_bus_dram_addr0 <= bus_dram_addr0;
+                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
+                r_bus_dram_wdata0 <= bus_dram_wdata0;
+                // data read or write
+                bus_data_busy0 <= bus_data_le0 | bus_data_we0;
+                r_bus_mem_paddr0 <= bus_mem_paddr0;
+                r_bus_data_wdata0 <= bus_data_wdata0;
+end
+endtask 
+
+task prepare_exec1;
+begin
+                // set control signals
+                r_ba_dram_le1 <= bus_dram_le1;
+                r_ba_dram_we_t1 <= bus_dram_we_t1;
+                r_ba_data_le1 <= bus_data_le1;
+                r_ba_data_we1 <= bus_data_we1;
+                // dram read or write
+                bus_dram_busy1 <= bus_dram_le1 | bus_dram_we_t1;
+                r_bus_dram_addr1 <= bus_dram_addr1;
+                r_bus_dram_ctrl1 <= bus_dram_ctrl1;
+                r_bus_dram_wdata1 <= bus_dram_wdata1;
+                // data read or write
+                bus_data_busy1 <= bus_data_le1 | bus_data_we1;
+                r_bus_mem_paddr1 <= bus_mem_paddr1;
+                r_bus_data_wdata1 <= bus_data_wdata1;
+end
+endtask 
 
     always @(*) begin
         if(grant == 0) begin
