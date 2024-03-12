@@ -106,14 +106,36 @@ module busarbiter(
                 $display("------------- sys-busy in state0");
                 $finish;
             end
-            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+            if(grant == 0 && r_core_ir0[6:0]==`OPCODE_AMO_____) begin
+                if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+                    prepare_exec0;
+                    state <= 1;
+                end
+                check_pending1;
+            end else if(grant == 1 && r_core_ir1[6:0]==`OPCODE_AMO_____) begin
+                if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
+                    prepare_exec1;
+                    state <= 1;
+                end
+                check_pending0;
+            end else if(r_pending_req0) begin
+                grant <= 0;
+                state <= 1;
+                check_pending1;
+            end else if(r_pending_req1) begin
+                grant <= 1;
+                state <= 1;
+                check_pending0;
+            end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
                 grant <= 0;
                 prepare_exec0;
                 state <= 1;
-            end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+                check_pending1;
+            end else if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
                 grant <= 1;
                 preapare_exec1;
                 state <= 1;
+                check_pending0;
             end
         end else if(state == 1) begin // dram read
             if(w_sys_busy) begin
@@ -131,6 +153,10 @@ module busarbiter(
                     state <= 2;
                 end
             end
+            if(grant == 0)
+                check_pending1;
+            else
+                check_pending0;
         end else if(state == 2) begin
             if(!w_sys_busy) begin
                 if(grant == 0) begin
@@ -149,11 +175,32 @@ module busarbiter(
                     r_pending_req1 <= 0;
                 end
             end
+            if(grant == 0)
+                check_pending1;
+            else
+                check_pending0;
         end 
         end // init_done
     end
-
 `endif
+
+task check_pending0;
+begin
+    if((bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) && !r_pending_req0) begin
+        r_pending_req0 <= 1;
+        prepare_exec0;
+    end
+end
+endtask
+
+task check_pending1;
+begin
+    if((bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) && !r_pending_req1) begin
+        r_pending_req1 <= 1;
+        prepare_exec1;
+    end
+end
+endtask
 
 task prepare_exec0;
 begin
@@ -199,19 +246,32 @@ endtask
             bus_plic_we0 <= w_plic_we;
             bus_dram_odata0 <= r_bus_dram_odata0;
             bus_data_data0  <= r_bus_data_data0;
+            bus_wmip1 <= 0;
+            bus_plic_we1 <= 0;
+            bus_dram_odata1 <= 0;
+            bus_data_data1  <= 0;
+        end else begin
+            bus_wmip0 <= 0; 
+            bus_plic_we0 <= 0;
+            bus_dram_odata0 <= 0;
+            bus_data_data0  <= 0;
+            bus_wmip1 <= w_wmip; 
+            bus_plic_we1 <= w_plic_we;
+            bus_dram_odata1 <= r_bus_dram_odata1;
+            bus_data_data1  <= r_bus_data_data1;
         end
     end    
 
-    assign w_dram_addr  = grant == 0 ? r_bus_dram_addr0 : bus_dram_addr1;
-    assign w_dram_wdata = grant == 0 ? r_bus_dram_wdata0 : bus_dram_wdata1;
-    assign w_dram_we_t  = grant == 0 ? r_ba_dram_we_t0 : bus_dram_we_t1;
-    assign w_dram_le    = grant == 0 ? r_ba_dram_le0 : bus_dram_le1;
-    assign w_dram_ctrl  = grant == 0 ? r_bus_dram_ctrl0 : bus_dram_ctrl1; 
+    assign w_dram_addr  = grant == 0 ? r_bus_dram_addr0 : r_bus_dram_addr1;
+    assign w_dram_wdata = grant == 0 ? r_bus_dram_wdata0 : r_bus_dram_wdata1;
+    assign w_dram_we_t  = grant == 0 ? r_ba_dram_we_t0 : r_bus_dram_we_t1;
+    assign w_dram_le    = grant == 0 ? r_ba_dram_le0 : r_bus_dram_le1;
+    assign w_dram_ctrl  = grant == 0 ? r_bus_dram_ctrl0 : r_bus_dram_ctrl1; 
 
-    assign w_mem_paddr  = grant == 0 ? r_bus_mem_paddr0 : bus_mem_paddr1;
-    assign w_data_we    = grant == 0 ? r_ba_data_we0 : bus_data_we1;
-    assign w_data_le    = grant == 0 ? r_ba_data_le0 : bus_data_le1;
-    assign w_data_wdata = grant == 0 ? r_bus_data_wdata0 : bus_data_wdata1;
+    assign w_mem_paddr  = grant == 0 ? r_bus_mem_paddr0 : r_bus_mem_paddr1;
+    assign w_data_we    = grant == 0 ? r_ba_data_we0 : r_bus_data_we1;
+    assign w_data_le    = grant == 0 ? r_ba_data_le0 : r_bus_data_le1;
+    assign w_data_wdata = grant == 0 ? r_bus_data_wdata0 : r_bus_data_wdata1;
 
     assign w_tlb_req    = grant == 0 ? bus_tlb_req0 : bus_tlb_req1;
     assign w_tlb_busy   = grant == 0 ? bus_tlb_busy0 : bus_tlb_busy1;
