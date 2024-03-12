@@ -198,16 +198,21 @@ endtask
 task save_exec0;
 begin
                 // set control signals
+                r_ba_dram_le0 <= 0;
+                r_ba_dram_we_t0 <= 0;
+                r_ba_data_le0 <= 0;
+                r_ba_data_we0 <= 0;
                 r_ba_dram_le0_aux <= bus_dram_le0;
                 r_ba_dram_we_t0_aux <= bus_dram_we_t0;
                 r_ba_data_le0_aux <= bus_data_le0;
                 r_ba_data_we0_aux <= bus_data_we0;
                 bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
                 bus_data_busy0 <= bus_data_le0 | bus_data_we0;
+                save_bus_signals0;
 end
 endtask
 
-task exec0;
+task save_bus_signals0;
 begin
                 // dram read or write
                 r_bus_dram_addr0 <= bus_dram_addr0;
@@ -226,13 +231,6 @@ begin
                 r_ba_dram_we_t0 <= r_ba_dram_we_t0_aux;
                 r_ba_data_le0 <= r_ba_data_le0_aux;
                 r_ba_data_we0 <= r_ba_data_we0_aux;
-                // dram read or write
-                r_bus_dram_addr0 <= bus_dram_addr0;
-                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
-                r_bus_dram_wdata0 <= bus_dram_wdata0;
-                // data read or write
-                r_bus_mem_paddr0 <= bus_mem_paddr0;
-                r_bus_data_wdata0 <= bus_data_wdata0; 
 end
 endtask
 
@@ -245,7 +243,7 @@ begin
                 r_ba_data_we0 <= bus_data_we0;
                 bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
                 bus_data_busy0 <= bus_data_le0 | bus_data_we0;
-                exec0;
+                save_bus_signals0;
 end
 endtask 
 
@@ -261,16 +259,21 @@ endtask
 task save_exec1;
 begin
                 // set control signals
+                r_ba_dram_le1 <= 0;
+                r_ba_dram_we_t1 <= 0;
+                r_ba_data_le1 <= 0;
+                r_ba_data_we1 <= 0;
                 r_ba_dram_le1_aux <= bus_dram_le1;
                 r_ba_dram_we_t1_aux <= bus_dram_we_t1;
                 r_ba_data_le1_aux <= bus_data_le1;
                 r_ba_data_we1_aux <= bus_data_we1;
                 bus_dram_busy1 <= bus_dram_le1 | bus_dram_we_t1;
                 bus_data_busy1 <= bus_data_le1 | bus_data_we1;
+                save_bus_signals1;
 end
 endtask
 
-task exec1;
+task save_bus_signals1;
 begin
                 // dram read or write
                 r_bus_dram_addr1 <= bus_dram_addr1;
@@ -289,13 +292,6 @@ begin
                 r_ba_dram_we_t1 <= r_ba_dram_we_t1_aux;
                 r_ba_data_le1 <= r_ba_data_le1_aux;
                 r_ba_data_we1 <= r_ba_data_we1_aux;
-                // dram read or write
-                r_bus_dram_addr1 <= bus_dram_addr1;
-                r_bus_dram_ctrl1 <= bus_dram_ctrl1;
-                r_bus_dram_wdata1 <= bus_dram_wdata1;
-                // data read or write
-                r_bus_mem_paddr1 <= bus_mem_paddr1;
-                r_bus_data_wdata1 <= bus_data_wdata1; 
 end
 endtask
 
@@ -308,7 +304,7 @@ begin
                 r_ba_data_we1 <= bus_data_we1;
                 bus_dram_busy1 <= bus_dram_le1 | bus_dram_we_t1;
                 bus_data_busy1 <= bus_data_le1 | bus_data_we1;
-                exec1;
+                save_bus_signals1;
 end
 endtask 
 
