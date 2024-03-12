@@ -137,7 +137,7 @@ module busarbiter(
                 state <= 1;
                 check_request0;
             end
-        end else if(state == 1) begin // dram read
+        end else if(state == 1) begin
             if(w_sys_busy) begin
                 if(grant == 0) begin
                     r_ba_dram_le0 <=0;
@@ -188,17 +188,49 @@ task check_request0;
 begin
     if((bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) && !r_pending_req0) begin
         r_pending_req0 <= 1;
-        prepare_exec0;
+        save_exec0;
     end
 end
 endtask
 
-task check_request1;
+task save_exec0;
 begin
-    if((bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) && !r_pending_req1) begin
-        r_pending_req1 <= 1;
-        prepare_exec1;
-    end
+                // set control signals
+                r_ba_dram_le0_aux <= bus_dram_le0;
+                r_ba_dram_we_t0_aux <= bus_dram_we_t0;
+                r_ba_data_le0_aux <= bus_data_le0;
+                r_ba_data_we0_aux <= bus_data_we0;
+                bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
+                bus_data_busy0 <= bus_data_le0 | bus_data_we0;
+end
+endtask
+
+task exec0;
+begin
+                // dram read or write
+                r_bus_dram_addr0 <= bus_dram_addr0;
+                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
+                r_bus_dram_wdata0 <= bus_dram_wdata0;
+                // data read or write
+                r_bus_mem_paddr0 <= bus_mem_paddr0;
+                r_bus_data_wdata0 <= bus_data_wdata0; 
+end
+endtask
+
+task exec0_aux;
+begin
+                // set control signals
+                r_ba_dram_le0 <= r_ba_dram_le0_aux;
+                r_ba_dram_we_t0 <= r_ba_dram_we_t0_aux;
+                r_ba_data_le0 <= r_ba_data_le0_aux;
+                r_ba_data_we0 <= r_ba_data_we0_aux;
+                // dram read or write
+                r_bus_dram_addr0 <= bus_dram_addr0;
+                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
+                r_bus_dram_wdata0 <= bus_dram_wdata0;
+                // data read or write
+                r_bus_mem_paddr0 <= bus_mem_paddr0;
+                r_bus_data_wdata0 <= bus_data_wdata0; 
 end
 endtask
 
@@ -209,17 +241,61 @@ begin
                 r_ba_dram_we_t0 <= bus_dram_we_t0;
                 r_ba_data_le0 <= bus_data_le0;
                 r_ba_data_we0 <= bus_data_we0;
-                // dram read or write
                 bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
-                r_bus_dram_addr0 <= bus_dram_addr0;
-                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
-                r_bus_dram_wdata0 <= bus_dram_wdata0;
-                // data read or write
                 bus_data_busy0 <= bus_data_le0 | bus_data_we0;
-                r_bus_mem_paddr0 <= bus_mem_paddr0;
-                r_bus_data_wdata0 <= bus_data_wdata0;
+                exec0;
 end
 endtask 
+
+task check_request1;
+begin
+    if((bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) && !r_pending_req1) begin
+        r_pending_req1 <= 1;
+        save_exec1;
+    end
+end
+endtask
+
+task save_exec1;
+begin
+                // set control signals
+                r_ba_dram_le1_aux <= bus_dram_le1;
+                r_ba_dram_we_t1_aux <= bus_dram_we_t1;
+                r_ba_data_le1_aux <= bus_data_le1;
+                r_ba_data_we1_aux <= bus_data_we1;
+                bus_dram_busy1 <= bus_dram_le1 | bus_dram_we_t1;
+                bus_data_busy1 <= bus_data_le1 | bus_data_we1;
+end
+endtask
+
+task exec1;
+begin
+                // dram read or write
+                r_bus_dram_addr1 <= bus_dram_addr1;
+                r_bus_dram_ctrl1 <= bus_dram_ctrl1;
+                r_bus_dram_wdata1 <= bus_dram_wdata1;
+                // data read or write
+                r_bus_mem_paddr1 <= bus_mem_paddr1;
+                r_bus_data_wdata1 <= bus_data_wdata1;
+end
+endtask
+
+task exec1_aux;
+begin
+                // set control signals
+                r_ba_dram_le1 <= r_ba_dram_le1_aux;
+                r_ba_dram_we_t1 <= r_ba_dram_we_t1_aux;
+                r_ba_data_le1 <= r_ba_data_le1_aux;
+                r_ba_data_we1 <= r_ba_data_we1_aux;
+                // dram read or write
+                r_bus_dram_addr1 <= bus_dram_addr1;
+                r_bus_dram_ctrl1 <= bus_dram_ctrl1;
+                r_bus_dram_wdata1 <= bus_dram_wdata1;
+                // data read or write
+                r_bus_mem_paddr1 <= bus_mem_paddr1;
+                r_bus_data_wdata1 <= bus_data_wdata1; 
+end
+endtask
 
 task prepare_exec1;
 begin
@@ -228,15 +304,9 @@ begin
                 r_ba_dram_we_t1 <= bus_dram_we_t1;
                 r_ba_data_le1 <= bus_data_le1;
                 r_ba_data_we1 <= bus_data_we1;
-                // dram read or write
                 bus_dram_busy1 <= bus_dram_le1 | bus_dram_we_t1;
-                r_bus_dram_addr1 <= bus_dram_addr1;
-                r_bus_dram_ctrl1 <= bus_dram_ctrl1;
-                r_bus_dram_wdata1 <= bus_dram_wdata1;
-                // data read or write
                 bus_data_busy1 <= bus_data_le1 | bus_data_we1;
-                r_bus_mem_paddr1 <= bus_mem_paddr1;
-                r_bus_data_wdata1 <= bus_data_wdata1;
+                exec1;
 end
 endtask 
 
@@ -282,14 +352,14 @@ endtask
 
     reg [31:0] r_bus_dram_addr0=0, r_bus_dram_addr1=0;
     reg [31:0] r_bus_dram_wdata0=0, r_bus_dram_wdata1=0;
-    reg r_ba_dram_we_t0=0, r_ba_dram_we_t1=0;
-    reg r_ba_dram_le0=0, r_ba_dram_le1=0;
+    reg r_ba_dram_we_t0=0, r_ba_dram_we_t1=0, r_ba_dram_we_t0_aux=0, r_ba_dram_we_t1_aux=0;
+    reg r_ba_dram_le0=0, r_ba_dram_le1=0, r_ba_dram_le0_aux=0, r_ba_dram_le1_aux=0;
     reg [2:0] r_bus_dram_ctrl0=0, r_bus_dram_ctrl1=0;
     reg [31:0] r_bus_dram_odata0=0, r_bus_dram_odata1=0;
 
     reg [31:0] r_bus_mem_paddr0=0, r_bus_mem_paddr1=0;
-    reg r_ba_data_we0=0, r_ba_data_we1=0;
-    reg r_ba_data_le0=0, r_ba_data_le1=0;
+    reg r_ba_data_we0=0, r_ba_data_we1=0, r_ba_data_we0_aux=0, r_ba_data_we1_aux=0;
+    reg r_ba_data_le0=0, r_ba_data_le1=0, r_ba_data_le0_aux=0, r_ba_data_le1_aux=0;
     reg [31:0] r_bus_data_wdata0=0, r_bus_data_wdata1=0;
     reg [31:0] r_bus_data_data0=0, r_bus_data_data1=0;
 
