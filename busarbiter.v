@@ -133,7 +133,7 @@ module busarbiter(
                 check_request1;
             end else if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
                 grant <= 1;
-                preapare_exec1;
+                prepare_exec1;
                 state <= 1;
                 check_request0;
             end
@@ -145,7 +145,7 @@ module busarbiter(
                     r_ba_data_le0 <= 0;
                     r_ba_data_we0 <= 0;
                     state <= 2;
-                else begin
+                end else begin
                     r_ba_dram_le1 <=0;
                     r_ba_dram_we_t1 <= 0;
                     r_ba_data_le1 <= 0;
@@ -264,13 +264,13 @@ endtask
 
     assign w_dram_addr  = grant == 0 ? r_bus_dram_addr0 : r_bus_dram_addr1;
     assign w_dram_wdata = grant == 0 ? r_bus_dram_wdata0 : r_bus_dram_wdata1;
-    assign w_dram_we_t  = grant == 0 ? r_ba_dram_we_t0 : r_bus_dram_we_t1;
-    assign w_dram_le    = grant == 0 ? r_ba_dram_le0 : r_bus_dram_le1;
+    assign w_dram_we_t  = grant == 0 ? r_ba_dram_we_t0 : r_ba_dram_we_t1;
+    assign w_dram_le    = grant == 0 ? r_ba_dram_le0 : r_ba_dram_le1;
     assign w_dram_ctrl  = grant == 0 ? r_bus_dram_ctrl0 : r_bus_dram_ctrl1; 
 
     assign w_mem_paddr  = grant == 0 ? r_bus_mem_paddr0 : r_bus_mem_paddr1;
-    assign w_data_we    = grant == 0 ? r_ba_data_we0 : r_bus_data_we1;
-    assign w_data_le    = grant == 0 ? r_ba_data_le0 : r_bus_data_le1;
+    assign w_data_we    = grant == 0 ? r_ba_data_we0 : r_ba_data_we1;
+    assign w_data_le    = grant == 0 ? r_ba_data_le0 : r_ba_data_le1;
     assign w_data_wdata = grant == 0 ? r_bus_data_wdata0 : r_bus_data_wdata1;
 
     assign w_tlb_req    = grant == 0 ? bus_tlb_req0 : bus_tlb_req1;
@@ -280,17 +280,17 @@ endtask
     wire [31:0] w_core_ir = grant == 0 ? bus_core_ir0 : bus_core_ir1;
     wire [3:0] w_bus_cpustate = grant == 0 ? bus_cpustate0 : bus_cpustate1;
 
-    reg [31:0] r_bus_dram_addr0=0, r_bus_dram_addr0=0;
-    reg [31:0] r_bus_dram_wdata0=0, r_bus_dram_wdata0=0;
-    reg r_ba_dram_we_t0=0, r_ba_dram_we_t0=0;
-    reg r_ba_dram_le0=0, r_ba_dram_le0=0;
-    reg [2:0] r_bus_dram_ctrl0=0, r_bus_dram_ctrl0=0;
-    reg [31:0] r_bus_dram_odata0=0, r_bus_dram_odata0=0;
+    reg [31:0] r_bus_dram_addr0=0, r_bus_dram_addr1=0;
+    reg [31:0] r_bus_dram_wdata0=0, r_bus_dram_wdata1=0;
+    reg r_ba_dram_we_t0=0, r_ba_dram_we_t1=0;
+    reg r_ba_dram_le0=0, r_ba_dram_le1=0;
+    reg [2:0] r_bus_dram_ctrl0=0, r_bus_dram_ctrl1=0;
+    reg [31:0] r_bus_dram_odata0=0, r_bus_dram_odata1=0;
 
-    reg [31:0] r_bus_mem_paddr0=0, r_bus_mem_paddr0=0;
-    reg r_ba_data_we0=0, r_ba_data_we0=0;
-    reg r_ba_data_le0=0, r_ba_data_le0=0;
-    reg [31:0] r_bus_data_wdata0=0, r_bus_data_wdata0=0;
-    reg [31:0] r_bus_data_data0=0, r_bus_data_data0=0;
+    reg [31:0] r_bus_mem_paddr0=0, r_bus_mem_paddr1=0;
+    reg r_ba_data_we0=0, r_ba_data_we1=0;
+    reg r_ba_data_le0=0, r_ba_data_le1=0;
+    reg [31:0] r_bus_data_wdata0=0, r_bus_data_wdata1=0;
+    reg [31:0] r_bus_data_data0=0, r_bus_data_data1=0;
 
 endmodule
