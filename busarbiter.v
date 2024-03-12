@@ -316,13 +316,13 @@ endtask
             bus_data_data0  <= r_bus_data_data0;
             bus_wmip1 <= 0;
             bus_plic_we1 <= 0;
-            bus_dram_odata1 <= 0;
-            bus_data_data1  <= 0;
+            //bus_dram_odata1 <= 0;
+            //bus_data_data1  <= 0;
         end else begin
             bus_wmip0 <= 0; 
             bus_plic_we0 <= 0;
-            bus_dram_odata0 <= 0;
-            bus_data_data0  <= 0;
+            //bus_dram_odata0 <= 0;
+            //bus_data_data0  <= 0;
             bus_wmip1 <= w_wmip; 
             bus_plic_we1 <= w_plic_we;
             bus_dram_odata1 <= r_bus_dram_odata1;
