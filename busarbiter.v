@@ -43,6 +43,8 @@ module busarbiter(
     
     wire w_sys_busy = w_dram_busy || !w_tx_ready || w_data_busy;
 
+    reg r_pending_req0=0, r_pending_req1=0;
+
 `ifdef USE_SINGLE_CORE
 
     always@(posedge CLK) 
@@ -55,7 +57,7 @@ module busarbiter(
                 $display("------------- sys-busy in state0");
                 $finish;
             end
-            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin                
+            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin      
                 // set control signals
                 r_ba_dram_le0 <= bus_dram_le0;
                 r_ba_dram_we_t0 <= bus_dram_we_t0;
@@ -91,6 +93,75 @@ module busarbiter(
         end 
         end // init_done
     end
+
+`else
+
+    always@(posedge CLK) 
+    begin
+        if(!RST_X) begin
+            grant <= 0;
+        end else if(w_init_done) begin
+        if(state == 0) begin
+            if(w_sys_busy) begin
+                $display("------------- sys-busy in state0");
+                $finish;
+            end
+            if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin      
+                // set control signals
+                r_ba_dram_le0 <= bus_dram_le0;
+                r_ba_dram_we_t0 <= bus_dram_we_t0;
+                r_ba_data_le0 <= bus_data_le0;
+                r_ba_data_we0 <= bus_data_we0;
+                // dram read or write
+                bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
+                r_bus_dram_addr0 <= bus_dram_addr0;
+                r_bus_dram_ctrl0 <= bus_dram_ctrl0;
+                r_bus_dram_wdata0 <= bus_dram_wdata0;
+                // data read or write
+                bus_data_busy0 <= bus_data_le0 | bus_data_we0;
+                r_bus_mem_paddr0 <= bus_mem_paddr0;
+                r_bus_data_wdata0 <= bus_data_wdata0;
+                state <= 1;
+            end
+        end else if(state == 1) begin // dram read
+            if(w_sys_busy) begin
+                if(grant == 0) begin
+                    r_ba_dram_le0 <=0;
+                    r_ba_dram_we_t0 <= 0;
+                    r_ba_data_le0 <= 0;
+                    r_ba_data_we0 <= 0;
+                    state <= 2;
+                else begin
+                    r_ba_dram_le1 <=0;
+                    r_ba_dram_we_t1 <= 0;
+                    r_ba_data_le1 <= 0;
+                    r_ba_data_we1 <= 0;
+                    state <= 2;
+                end
+            end
+        end else if(state == 2) begin
+            if(!w_sys_busy) begin
+                if(grant == 0) begin
+                    r_bus_dram_odata0 <= w_dram_odata;
+                    r_bus_data_data0 <= w_data_data;
+                    bus_dram_busy0 <= 0;
+                    bus_data_busy0 <= 0;
+                    state <= 0;
+                    r_pending_req0 <= 0;
+                end else begin
+                    r_bus_dram_odata1 <= w_dram_odata;
+                    r_bus_data_data1 <= w_data_data;
+                    bus_dram_busy1 <= 0;
+                    bus_data_busy1 <= 0;
+                    state <= 0;
+                    r_pending_req1 <= 0;
+                end
+            end
+        end 
+        end // init_done
+    end
+
+`endif
 
     always @(*) begin
         if(grant == 0) begin
@@ -132,8 +203,6 @@ module busarbiter(
     reg [31:0] r_bus_data_wdata0=0;
     reg [31:0] r_bus_data_data0=0;
 
-`else
-`endif
     
     
 
