@@ -20,6 +20,8 @@ module m_mmu(
     input  wire         CLK, RST_X,
     input wire [31:0] w_hart_id,
     input wire [31:0] w_grant,
+    input wire [31:0] w_pc,
+    input wire [31:0] w_ir,
     input wire w_tx_ready,
     input  wire [31:0]  w_insn_addr,
     input  wire [31:0]  w_data_addr,
@@ -232,7 +234,8 @@ module m_mmu(
                         r_dram_was_busy <= 0;
                     end
                     if(page_walk_fail) begin
-                        $display("~ fault=%x ia=%x da=%x vaddr=%x", w_pagefault, w_insn_addr, w_data_addr, v_addr);
+                        $display("~ fault=%x ia=%x da=%x vaddr=%x grant=%x pc=%x ir=%x", 
+                            w_pagefault, w_insn_addr, w_data_addr, v_addr, w_grant, w_pc, w_ir);
                         if(w_pte_we) begin
                             $display("-----pte-we in pagefault-----");
                             //$finish;
