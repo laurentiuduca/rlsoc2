@@ -121,10 +121,12 @@ module busarbiter(
             end else if(r_pending_req0) begin
                 grant <= 0;
                 state <= 1;
+                exec0_aux;
                 check_request1;
             end else if(r_pending_req1) begin
                 grant <= 1;
                 state <= 1;
+                exec1_aux;
                 check_request0;
             end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
                 grant <= 0;
