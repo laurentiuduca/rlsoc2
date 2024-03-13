@@ -220,7 +220,7 @@ module m_topsim(CLK, RST_X);
             `CLINT_BASE_TADDR : r_data_data <= r_clint_odata;
             `PLIC_BASE_TADDR  : r_data_data <= r_plic_odata;
             `HVC_BASE_TADDR  : if(r_mem_paddr == `HVC_BASE_ADDR) begin
-                                    //$display("HVC_BASE_ADDR %x", r_consf_cnts);
+                                    //$display("HVC_BASE_ADDR %x grant=%x", r_consf_cnts, w_grant);
                                     r_data_data <= {24'h0, /*8-$clog2(`KEYBOARD_QUEUE_SIZE)-1*/2'h0, r_consf_cnts /*r_consf_en*/};
                                 end else if(r_mem_paddr == (`HVC_BASE_ADDR + 4)) begin
                                     //$display("HVC_BASE_ADDR+4 r_char_value %x", r_char_value);
@@ -791,6 +791,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
     assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl ? w_pc1 : w_sd_checksum;
+    //assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc1 : w_pc0;
 
     reg [31:0] rdbg=0;
     reg raux=0;
