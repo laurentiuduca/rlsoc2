@@ -341,7 +341,7 @@ module m_mmu(
                     (!w_dram_aces) ? 0 :
                     (r_mc_mode!=0) ? (w_mc_aces==`ACCESS_READ && w_mc_addr[31:28] != 0) :
                     (w_priv == `PRIV_M || w_satp[31] == 0) ? (w_iscode || w_isread) :
-                    (r_tlb_use[2:1]!=0) ? 1 :
+                    (r_tlb_use[2:1]!=0 && !w_tlb_busy) ? 1 :
                     (w_tlb_busy && !w_tlb_hit && (r_pw_state == 0 || r_pw_state==2)) ? 1 : 0;
 
     
