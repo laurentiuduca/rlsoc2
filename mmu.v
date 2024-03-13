@@ -248,18 +248,21 @@ module m_mmu(
                 end
         end
         else if(r_pw_state == 6) begin
-            if(w_dram_aces) begin
-                if(w_dram_busy && r_dram_took_cmd) begin
+            if(w_dram_aces && (w_dram_le || w_dram_we)) begin
+                if(w_dram_busy) begin
                     r_pw_state <= 7;
                     r_tlb_use <= 0;
-                end else if(!w_dram_busy)
                     r_dram_took_cmd <= 1;
-            end else begin
-                if(w_data_busy != 0) begin
+                end
+            end else if(w_data_le || w_data_we) begin
+                if(w_data_busy) begin
                     r_pw_state <= 7;
                     r_tlb_use <= 0;
                     r_data_was_busy <= 1;
                 end
+            end else begin
+                $display("mmu state 6 and nothing to do");
+                $finish();
             end
         end
         else if(r_pw_state == 7 && 
