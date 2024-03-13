@@ -2,6 +2,7 @@
 set_device -name GW2AR-18C GW2AR-LV18QN88C8/I7
 
 add_file busarbiter.v
+add_file busarbiter-serial.v
 add_file console.v
 add_file cpummu.v
 add_file define.vh
