@@ -117,9 +117,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     
     output reg  [31:0] load_res= 0;            // For aomic LR/SC
     output reg  reserved       = 0;            // For aomic LR/SC
-    output wire hart_sc        = r_op_AMO_SC;
-    input wire oh_reserved, oh_sc;
-    input wire [31:0] oh_load_res;
+    output wire hart_sc           ;
+    input wire oh_reserved, oh_sc ;
+    input wire [31:0] oh_load_res ;
+    assign hart_sc = r_op_AMO_SC;
 
     reg   [1:0] priv           = `PRIV_M;      // Mode
     //reg  [63:0] w_mtime          = 1;            // w_mtime
