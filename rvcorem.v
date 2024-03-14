@@ -415,7 +415,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire [31:0] w_mem_rdata = w_data_data;
     always@(posedge CLK) begin
 
-        if(reserved && oh_load_res == load_res && oh_sc && oh_reserved) begin
+        if(reserved && (oh_load_res == load_res) && oh_sc && oh_reserved) begin
             reserved <= 0;
             $display("-------- reserved disabled for mhartid=%1x load_res=%x", mhartid, load_res);
         end else if(state == `S_COM && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
