@@ -56,7 +56,10 @@ endmodule
 module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
-                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir);
+                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir
+                `ifndef USE_SINGLE_CORE
+                , reserved, load_res, hart_sc, oh_reserved, oh_load_res, oh_sc
+                `endif);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -112,8 +115,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg  [31:0] satp           = 0;            //
     reg  [31:0] scounteren     = 0;            //
     
-    reg  [31:0] load_res       = 0;            // For aomic LR/SC
-    reg         reserved       = 0;            // For aomic LR/SC
+    output reg  [31:0] load_res= 0;            // For aomic LR/SC
+    output reg  reserved       = 0;            // For aomic LR/SC
+    output wire hart_sc        = r_op_AMO_SC;
+    input wire oh_reserved, oh_sc;
+    input wire [31:0] oh_load_res;
+
     reg   [1:0] priv           = `PRIV_M;      // Mode
     //reg  [63:0] w_mtime          = 1;            // w_mtime
     reg  [63:0] mtimecmp       = 64'hffffffffffffffff; 
@@ -407,13 +414,18 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     
     wire [31:0] w_mem_rdata = w_data_data;
     always@(posedge CLK) begin
-//        if(state == `S_WB && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
-        if(state == `S_COM && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
+
+        if(reserved && oh_load_res == load_res && oh_sc && oh_reserved) begin
+            reserved <= 0;
+            $display("-------- reserved disabled for mhartid=%1x load_res=%x", mhartid, load_res);
+        end else if(state == `S_COM && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
             load_res <= r_mem_addr;
             reserved <= 1;
-        end
+            //$display("-------- amo-lr mhartid=%1x r_mem_addr=%x", mhartid, r_mem_addr);
+        end else
         if(state == `S_WB && r_op_AMO && r_op_AMO_SC && !r_wb_data[0] && !w_busy) begin
             reserved <= 0;
+            //$display("-------- amo-sc mhartid=%1x load_res=%x", mhartid, load_res);
         end
     end
 
