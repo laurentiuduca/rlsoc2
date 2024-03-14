@@ -418,7 +418,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
         if(reserved && (oh_load_res == load_res) && oh_sc && oh_reserved) begin
             reserved <= 0;
-            $display("-------- reserved disabled for mhartid=%1x load_res=%x", mhartid, load_res);
+            $display("-------- reserved disabled for mhartid=%1x pc=%x load_res=%x", mhartid, pc, load_res);
         end else if(state == `S_COM && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
             load_res <= r_mem_addr;
             reserved <= 1;
