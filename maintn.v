@@ -165,7 +165,7 @@ module m_topsim(CLK, RST_X);
 `endif
 
 
-    busarbiterser ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
+    busarbiter ba(.CLK(pll_clk), .RST_X(RST_X), .w_grant(w_grant),
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(w_mem_paddr), .w_data_we(w_data_we), .w_data_le(w_data_le), 
         .w_data_busy(r_data_busy), .bus_data_busy0(bus_data_busy0), .bus_data_busy1(bus_data_busy1), 
