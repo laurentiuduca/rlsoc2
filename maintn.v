@@ -140,7 +140,8 @@ module m_topsim(CLK, RST_X);
         `ifndef USE_SINGLE_CORE
         ,
         .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
-        .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1)
+        .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1),
+        .w_oh_pc(w_pc1)
         `endif
     );
 //`endif
@@ -159,7 +160,8 @@ module m_topsim(CLK, RST_X);
         `ifndef USE_SINGLE_CORE
         ,
         .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
-        .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0)
+        .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0),
+        .w_oh_pc(w_pc0)
         `endif
     );
 `endif

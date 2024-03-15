@@ -41,7 +41,8 @@ module m_cpummu(
     output wire w_hart_sc, 
     input wire w_oh_reserved,
     input wire [31:0] w_oh_load_res, 
-    input wire w_oh_sc
+    input wire w_oh_sc,
+    input wire [31:0] w_oh_pc
     `endif
     );
 
@@ -147,9 +148,10 @@ module m_cpummu(
         .reserved(w_reserved),
         .load_res(w_load_res), 
         .hart_sc(w_hart_sc), 
-        .oh_reserved(w_oh_reserved), 
-        .oh_load_res(w_oh_load_res), 
-        .oh_sc(w_oh_sc)
+        .w_oh_reserved(w_oh_reserved), 
+        .w_oh_load_res(w_oh_load_res), 
+        .w_oh_sc(w_oh_sc),
+        .w_oh_pc(w_oh_pc)
         `endif
     );
 
