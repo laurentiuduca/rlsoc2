@@ -422,13 +422,13 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             reserved <= 0;
             $display("-------- reserved disabled for mhartid=%1x pc=%x lrpc=%x oh_pc=%x load_res=%x", 
                 mhartid, pc, r_lrpc, w_oh_pc, load_res);
-        end else if(state == `S_COM && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
+        end else if(state == `S_COM && (r_op_AMO && r_op_AMO_LR)/* && !w_busy*/) begin
             load_res <= r_mem_addr;
             reserved <= 1;
             r_lrpc <= pc;
             //$display("-------- amo-lr mhartid=%1x r_mem_addr=%x", mhartid, r_mem_addr);
         end else
-        if(state == `S_WB && r_op_AMO && r_op_AMO_SC && !r_wb_data[0] && !w_busy) begin
+        if(state == `S_WB && r_op_AMO && r_op_AMO_SC /*&& !r_wb_data[0] && !w_busy*/) begin
             reserved <= 0;
             //$display("-------- amo-sc mhartid=%1x load_res=%x", mhartid, load_res);
         end
