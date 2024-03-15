@@ -420,7 +420,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
         if(reserved && (w_oh_load_res == load_res) && w_oh_sc && w_oh_reserved) begin
             reserved <= 0;
-            $display("-------- reserved disabled for mhartid=%1x pc=%x lrpc=%x oh_pc=%xload_res=%x", 
+            $display("-------- reserved disabled for mhartid=%1x pc=%x lrpc=%x oh_pc=%x load_res=%x", 
                 mhartid, pc, r_lrpc, w_oh_pc, load_res);
         end else if(state == `S_COM && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
             load_res <= r_mem_addr;
@@ -732,7 +732,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                             end
                             mip[3:0] <= mip[3:0] | `MIP_MSIP;
                         end
-                        r_ipi_taken <= 1; 
+                        r_ipi_taken <= 1;
+                        //if(!w_executing_wfi)
+                        //    $display("-------- %x: core%x received ipi while not w_executing_wfi pc=%x oh_pc=%x", w_mtime, mhartid, pc, w_oh_pc); 
                     end
                 end else begin
                     r_ipi_taken <= 0;

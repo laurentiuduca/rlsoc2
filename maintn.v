@@ -304,6 +304,8 @@ module m_topsim(CLK, RST_X);
                         r_ipi <= {r_ipi[31:17], 1'b1, r_ipi[15:1], 1'b1}; // S-priv
                     else
                         r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b1}; // M-priv
+                    if(r_ipi & 1)
+                        $display("-------- %x: core0 already had ipi pc0=%x pc1=%x", w_mtime, w_pc0, w_pc1);
                 end
             end else /*if(w_offset == 28'h4)*/ begin
                 if(w_data_wdata == 32'h0) begin
@@ -332,6 +334,8 @@ module m_topsim(CLK, RST_X);
                         r_ipi <= {r_ipi[31:18], 1'b1, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // S-priv
                     else
                         r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // M-priv
+                    if(r_ipi & (1<<1))
+                        $display("-------- %x: core1 already had ipi pc0=%x pc1=%x", w_mtime, w_pc0, w_pc1);
                 end
             end
         end
