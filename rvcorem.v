@@ -914,8 +914,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     // avoid latch warning
                     //r_tlb_flush <= 0;
                 end
-            end else if (r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct7==`FUNCT7_SFENCE_VMA) begin
-                //$display ("%08x, sfence.vma", w_mtime);
+            end else if ((r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct7==`FUNCT7_SFENCE_VMA))
+                         //(r_opcode == `OPCODE_MISC_MEM && (r_funct3 == `FUNCT3_FENCE_ || r_funct3 == `FUNCT3_FENCEI)))
+                begin
+                //if(r_opcode == `OPCODE_MISC_MEM)
+                    //$display ("%08x, fence opcode=%x", w_mtime, r_opcode);
                 // sfence.vma is called write after satp write in setup_vm_final by local_flush_tlb_all()
                 r_tlb_flush <= 1;
             end
