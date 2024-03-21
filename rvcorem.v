@@ -715,6 +715,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
                     mip[31:8] <= w_wmip[31:8];
                 end
+                if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
+                    if(w_mtime >= `ENABLE_TIMER - 10000000)
+                    $display("------ core%1x gets STIP", mhartid);
+                    //if(w_priv <= `PRIV_S)
+                        mip[7:4] <= `MIP_STIP >> 4;
+                    //else
+                        //mip[7:4] <= `MIP_MTIP >> 4;
+                    r_was_clint_we <= 0;
+                end
             //end
                 if(w_ipi & (1<<mhartid)) begin
                     if(r_ipi_taken == 0) begin
@@ -763,14 +772,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= r_was_clint_we + 1;
                 else
                     r_was_clint_we <= 1;
-            end else if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
-                    if(w_mtime >= `ENABLE_TIMER - 10000000)
-                    $display("------ core%1x gets STIP", mhartid);
-                    //if(w_priv <= `PRIV_S)
-                        mip[7:4] <= `MIP_STIP >> 4;
-                    //else
-                        //mip[7:4] <= `MIP_MTIP >> 4;
-                    r_was_clint_we <= 0;
             end
 
         //end
