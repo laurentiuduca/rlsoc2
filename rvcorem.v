@@ -728,12 +728,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
                     mip[31:8] <= w_wmip[31:8];
                 end
-                if(r_was_clint_we && (w_mtime >= mtimecmp)) begin
+                if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     //$display("core%1x gets MTIP", mhartid);
-                    if(w_priv <= `PRIV_S)
+                    //if(w_priv <= `PRIV_S)
                         mip[7:4] <= `MIP_STIP >> 4;
-                    else
-                        mip[7:4] <= `MIP_MTIP >> 4;
+                    //else
+                        //mip[7:4] <= `MIP_MTIP >> 4;
                     r_was_clint_we <= 0;
                 end
             //end
@@ -774,14 +774,17 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 mip[31:8]     <= w_wmip[31:8];
             end
         end
-        if(state == `S_SD && !w_busy) begin
+        //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
-                $display("------- %0d: core%1x sets mtimecmp=%x pc=%x", w_mtime, mhartid, w_wmtimecmp, pc);
+                $display("------- %0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
-                r_was_clint_we <= 1;
+                if(r_was_clint_we < 2)
+                    r_was_clint_we <= r_was_clint_we + 1;
+                else
+                    r_was_clint_we <= 1;
             end
-        end
+        //end
 
         if(state == `S_FIN && !w_busy) begin
             if(pending_exception != ~0) begin

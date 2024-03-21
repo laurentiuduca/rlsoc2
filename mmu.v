@@ -321,7 +321,7 @@ module m_mmu(
 
     wire  [3:0] w_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
-    wire [27:0] w_offset    = w_mem_paddr & 28'h7ffffff;
+    wire [27:0] w_offset    = w_mem_paddr & 32'h7ffffff;
 
     assign w_dram_wdata         = (r_pw_state == 5) ? w_pte_wdata : w_mem_wdata;
     
@@ -370,10 +370,16 @@ module m_mmu(
                                 {w_mtimecmp[63:32], w_data_wdata} :
                            (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1 && w_grant == w_hart_id) && w_proc_data_we != 0) ?
                                 {w_data_wdata, w_mtimecmp[31:0]} : 0;
-    assign w_clint_we   = (w_dev == `CLINT_BASE_TADDR && w_proc_data_we != 0 && 
-                           ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0 && w_grant == w_hart_id)) ||
-                           (w_dev == `CLINT_BASE_TADDR && w_proc_data_we != 0 && 
-                           ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1 && w_grant == w_hart_id));
+    assign w_clint_we   = ((w_dev == `CLINT_BASE_TADDR) && w_proc_data_we && 
+                           ((w_offset==28'h4000 || w_offset==28'h4004) && (w_grant == 0) && (w_grant == w_hart_id))) ||
+                           ((w_dev == `CLINT_BASE_TADDR) && w_proc_data_we && 
+                           ((w_offset==28'h4008 || w_offset==28'h400c) && (w_grant == 1) && (w_grant == w_hart_id)));
+
+    always @(posedge CLK)
+        if(w_dev == `CLINT_BASE_TADDR && w_offset[27:4]==24'h400) begin
+            $display("core%1x w_grant=%x sets mtimecmp=%x w_offset=%x w_proc_data_we=%x w_iswrite=%x, w_clint_we%x w_use_tlb=%1x w_proc_busy=%x r_pw_state=%x", 
+                w_hart_id, w_grant, w_wmtimecmp, w_offset, w_proc_data_we, w_iswrite, w_clint_we, w_use_tlb, w_proc_busy, r_pw_state);
+        end
 
 endmodule
 /**************************************************************************************************/
