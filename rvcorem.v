@@ -559,12 +559,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                       ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
     reg [31:0] r_oldpc;
     reg printed=0;
-    always @(*) begin
-        if(mip & mie & `MIP_STIP)
-            $display("mip & mie & `MIP_STIP");
-        if(mip & mie & `MIP_MTIP)
-            $display("mip & mie & `MIP_MTIP");
-    end
     always @(posedge CLK) begin /////// update program counter
         if(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)) begin
             $display("(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP))");
@@ -575,26 +569,19 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         else if(state==`S_FIN && !w_busy) begin
             r_oldpc <= pc;
             if(pending_exception != ~0)    begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
-            else if(w_interrupt_mask != 0 && !r_during_exception) begin pc <= (w_deleg) ? stvec : mtvec; 
-                if(printed == 1 && (pc >= 32'hc0002080 && pc <=32'hc00020bc) && w_executing_wfi) begin
-                    $display("%0d wfi interrupt mhartid=%x pc=%x oldpc=%x mip=%x mie=%x r_priv_t=%x w_interrupt_mask=%x", 
-                        w_mtime, mhartid, pc, r_oldpc, mip, mie, r_priv_t, w_interrupt_mask);
-                    printed <= 2;
-                end
-            end   // Interrupt HERE
+            else if(w_interrupt_mask != 0 && !r_during_exception) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
             else if(w_executing_wfi)  begin
                 if(w_exit_wfi) begin
-                    if(pc >= 32'hc0002080 && pc <=32'hc00020bc)
-                        $display("%0d exit wfi mhartid=%x pc=%x w_exit_wfi=%x mip=%x mie=%x priv=%x r_priv_t=%x", 
-                            w_mtime, mhartid, pc, w_exit_wfi, mip, mie, priv, r_priv_t);
+                    //if(pc >= 32'hc0002080 && pc <=32'hc00020bc)
+                    //    $display("%0d exit wfi mhartid=%x pc=%x w_exit_wfi=%x mip=%x mie=%x priv=%x r_priv_t=%x", 
+                    //        w_mtime, mhartid, pc, w_exit_wfi, mip, mie, priv, r_priv_t);
                     pc <= pc + 4; 
                     printed <= 0;
-                end else
-                if(!printed && (pc >= 32'hc0002080 && pc <=32'hc00020bc)) begin
-                    $display("%0d wfi arch_cpu_idle mhartid=%x pc=%x oldpc=%x mip=%x mie=%x priv=%x r_priv_t=%x", 
-                        w_mtime, mhartid, pc, r_oldpc, mip, mie, priv, r_priv_t);
-                    printed <= 1;
-                end
+                end //else if(!printed && (pc >= 32'hc0002080 && pc <=32'hc00020bc)) begin
+                    //$display("%0d wfi arch_cpu_idle mhartid=%x pc=%x oldpc=%x mip=%x mie=%x priv=%x r_priv_t=%x", 
+                    //    w_mtime, mhartid, pc, r_oldpc, mip, mie, priv, r_priv_t);
+                    //printed <= 1;
+                //end
             end else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0 && !r_during_exception) || (r_tkn) || (!r_cinsn));
         end
@@ -768,6 +755,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         end
         //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
+                if(w_mtime >= `ENABLE_TIMER - 10000000)
                 $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
@@ -776,6 +764,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 else
                     r_was_clint_we <= 1;
             end else if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
+                    if(w_mtime >= `ENABLE_TIMER - 10000000)
                     $display("------ core%1x gets STIP", mhartid);
                     //if(w_priv <= `PRIV_S)
                         mip[7:4] <= `MIP_STIP >> 4;
