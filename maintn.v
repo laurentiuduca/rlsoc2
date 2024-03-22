@@ -99,12 +99,9 @@ module m_topsim(CLK, RST_X);
     wire [2:0]   w_dram_ctrl, bus_dram_ctrl0, bus_dram_ctrl1;
     wire w_dram_le, bus_dram_le0, bus_dram_le1;
     wire [31:0] w_pc0, w_pc1, w_ir0, w_ir1;
-
-    `ifndef USE_SINGLE_CORE
     wire  [31:0] w_load_res0, w_load_res1;            // For aomic LR/SC
     wire  w_reserved0, w_reserved1;            // For aomic LR/SC
     wire w_hart_sc0, w_hart_sc1;
-    `endif
 
     wire [31:0] w_grant;
     wire [31:0] bus_ipi;
@@ -136,13 +133,10 @@ module m_topsim(CLK, RST_X);
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
-        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0)
-        `ifndef USE_SINGLE_CORE
-        ,
+        .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0),
         .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
         .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1),
         .w_oh_pc(w_pc1)
-        `endif
     );
 //`endif
 
@@ -156,13 +150,10 @@ module m_topsim(CLK, RST_X);
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
-        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1)
-        `ifndef USE_SINGLE_CORE
-        ,
+        .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1),
         .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
         .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0),
         .w_oh_pc(w_pc0)
-        `endif
     );
 `endif
 
@@ -829,20 +820,9 @@ module m_topsim(CLK, RST_X);
 `ifdef SIM_MODE
 reg [31:0] old_mem_paddr=0, old_data_data = 0, old_pc0 = 0, rcnt=0;
 
-`ifdef laur0
-reg was0=1;
-always @(posedge pll_clk) 
-begin
-    if(old_pc0 != w_pc0 || was0) begin
-        $display("%8d: pc0=%x ir0=%x", w_mtime, w_pc0, w_ir0);
-        old_pc0 <= w_pc0;
-        was0 <= 0;
-    end
-end
-`endif
-
 //`define RAM_TRACE
 `ifdef RAM_TRACE
+`ifdef USE_SINGLE_CORE
 task ramtrace;
 begin
             if (dram_con.i_rd_en && dram_con.o_busy == 0) begin
@@ -926,6 +906,7 @@ begin
         end
 
 end
+`endif
 `endif // RAM_TRACE
 `endif // SIM_MODE
 endmodule

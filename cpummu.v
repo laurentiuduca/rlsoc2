@@ -32,10 +32,8 @@ module m_cpummu(
     output wire         w_dram_le,
     input wire        w_init_done,
     output wire [31:0] w_pc,
-    output wire [31:0] w_ir
+    output wire [31:0] w_ir,
     
-    `ifndef USE_SINGLE_CORE
-    ,
     output wire w_reserved,
     output wire [31:0] w_load_res, 
     output wire w_hart_sc, 
@@ -43,7 +41,6 @@ module m_cpummu(
     input wire [31:0] w_oh_load_res, 
     input wire w_oh_sc,
     input wire [31:0] w_oh_pc
-    `endif
     );
 
     wire w_halt;
@@ -141,10 +138,8 @@ module m_cpummu(
         .w_init_stage   (),
         .state(w_state),
         .pc(w_pc),
-        .r_ir(w_ir)
+        .r_ir(w_ir),
 
-        `ifndef USE_SINGLE_CORE
-        ,
         .reserved(w_reserved),
         .load_res(w_load_res), 
         .hart_sc(w_hart_sc), 
@@ -152,7 +147,6 @@ module m_cpummu(
         .w_oh_load_res(w_oh_load_res), 
         .w_oh_sc(w_oh_sc),
         .w_oh_pc(w_oh_pc)
-        `endif
     );
 
     /**********************************************************************************************/
