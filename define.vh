@@ -13,8 +13,8 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
-`define USE_SINGLE_CORE
+`define SIM_MODE
+//`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 
 //`define SIM_MAIN // for xsim
@@ -90,9 +90,9 @@ error
     `endif
 `else
 `ifdef USE_SINGLE_CORE
-    `define ENABLE_TIMER 64'd0650000000 // for 104 Mhz in dts
+    `define ENABLE_TIMER 64'd1100000000 // for 104 Mhz in dts
 `else
-    `define ENABLE_TIMER 64'd1160000000 // for 104 Mhz in dts
+    `define ENABLE_TIMER 64'd0970000000 // for 104 Mhz in dts
 `endif
 `endif
 

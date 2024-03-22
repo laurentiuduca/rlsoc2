@@ -1,5 +1,5 @@
-/* author Laurentiu-Cristian Duca, 2023-10-28
- * - implemented a controller with unaligned ld/sw and refresh for tang nano
+/* author Laurentiu-Cristian Duca, 20240322
+// spdx license identifier MIT
  */
 /**************************************************************************************************/
 /**************************************************************************************************/

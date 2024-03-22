@@ -1,12 +1,6 @@
-// author: Laurentiu-Cristian Duca, date: 2023-05-25
-// - removed microcontroller and moved peripheral logic outside
+// modified: Laurentiu-Cristian Duca, date: 20240322
 // spdx license identifier MIT
-/* Modified by Laurentiu-Cristian Duca, 2021-12-20
- * - LAUR_MEM_RB memory read-back flag after BBL write
- * - SIM_MAIN flag for simulation in XSIM
- * - read_file module instantiation for interactive shell in SIM_MODE
- * - debug mc_mode code under the flag LAUR_SHOW_MC_MODE
- */
+
 /**************************************************************************************************/
 /**** RVSoC (Mini Kuroda/RISC-V)                       since 2018-08-07   ArchLab. TokyoTech   ****/
 /**** Memory Controller v0.01                                                                  ****/

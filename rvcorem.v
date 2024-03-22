@@ -1,13 +1,6 @@
-// modified: Laurentiu-Cristian Duca, date: 2023-10-28
-// bug correction for wfi and ipi and added tlb flush when FUNCT7_SFENCE_VMA
-// modified: Laurentiu-Cristian Duca, date: 2023-05-25
-// - ipi support
-// - wfi
+// modified: Laurentiu-Cristian Duca, date: 20240322
 // spdx license identifier MIT
-/* Modified by Laurentiu-Cristian Duca, 2021-12-20
- * - LAUR_DEBUG_AFTER_CSRW_SATP flag 
- * for debuging physical to virtual memory switch
- */
+
 
 /**************************************************************************************************/
 /**** RVSoC                                            since 2018-08-07   ArchLab. TokyoTech   ****/
