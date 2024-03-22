@@ -557,8 +557,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
                       ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
                       ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
-    reg [31:0] r_oldpc;
-    reg printed=0;
     always @(posedge CLK) begin /////// update program counter
         if(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)) begin
             $display("(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP))");
@@ -567,21 +565,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
         else if(w_pagefault != ~32'h0) begin  pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
         else if(state==`S_FIN && !w_busy) begin
-            r_oldpc <= pc;
             if(pending_exception != ~0)    begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
             else if(w_interrupt_mask != 0 && !r_during_exception) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
             else if(w_executing_wfi)  begin
                 if(w_exit_wfi) begin
-                    //if(pc >= 32'hc0002080 && pc <=32'hc00020bc)
-                    //    $display("%0d exit wfi mhartid=%x pc=%x w_exit_wfi=%x mip=%x mie=%x priv=%x r_priv_t=%x", 
-                    //        w_mtime, mhartid, pc, w_exit_wfi, mip, mie, priv, r_priv_t);
                     pc <= pc + 4; 
-                    printed <= 0;
-                end //else if(!printed && (pc >= 32'hc0002080 && pc <=32'hc00020bc)) begin
-                    //$display("%0d wfi arch_cpu_idle mhartid=%x pc=%x oldpc=%x mip=%x mie=%x priv=%x r_priv_t=%x", 
-                    //    w_mtime, mhartid, pc, r_oldpc, mip, mie, priv, r_priv_t);
-                    //printed <= 1;
-                //end
+                end
             end else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
             r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0 && !r_during_exception) || (r_tkn) || (!r_cinsn));
         end
