@@ -548,6 +548,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
                       ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
                       ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
+
     always @(posedge CLK) begin /////// update program counter
         if(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)) begin
             $display("(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP))");
@@ -688,21 +689,33 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
+    reg [31:0] rim=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
-        if(state == `S_IF) begin
-            //if(w_mtime > `ENABLE_TIMER) begin
-                if(w_plic_we) begin // KEYBOARD INPUT
-                    $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
-                    mip[31:8] <= w_wmip[31:8];
-                end
-                if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
-                    //if(w_mtime >= `ENABLE_TIMER - 10000000)
-                    //    $display("------ core%1x gets STIP", mhartid);
+        `ifdef laur0
+        if(w_mtime >= 240994653 && mip[7:4]) begin
+            //if(rim != w_interrupt_mask) begin
+                $display("w_interrupt_mask=%x and stip mie=%x r_priv_t=%x w_mstatus_nxt=%x mideleg=%x pc=%x", 
+                    w_interrupt_mask, mie, r_priv_t, w_mstatus_nxt, mideleg, pc);
+                rim <= w_interrupt_mask;
+            //end
+        end
+        `endif
+        if(state == `S_OF && !r_op_ECALL) begin
+                if(r_was_clint_we==2 && (w_mtime >= mtimecmp) && (r_priv_t <= `PRIV_S)) begin
+                    //if(w_mtime >= 460000000)
+                    //    $display("core%1x gets STIP", mhartid);
                     //if(w_priv <= `PRIV_S)
                         mip[7:4] <= `MIP_STIP >> 4;
                     //else
                         //mip[7:4] <= `MIP_MTIP >> 4;
                     r_was_clint_we <= 0;
+                end
+        end
+        if(state == `S_IF) begin
+            //if(w_mtime > `ENABLE_TIMER) begin
+                if(w_plic_we) begin // KEYBOARD INPUT
+                    $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
+                    mip[31:8] <= w_wmip[31:8];
                 end
             //end
                 if(w_ipi & (1<<mhartid)) begin
@@ -710,13 +723,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                         if((w_ipi >> 16) & (1<<mhartid)) begin
                             if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
-                                $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x time=%x", mhartid, w_ipi, priv, mie, mtvec, w_mtime);
+                                $display("core%1x got ipi=%x ssip priv=%x mie=%x mtvec=%x time=%x pc=%x", 
+                                    mhartid, w_ipi, priv, mie, mtvec, w_mtime, pc);
                             end
                             mip[3:0] <= mip[3:0] | `MIP_SSIP;
                         end else begin
                             if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
-                                $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x", mhartid, w_ipi, priv, mie, mtvec);
+                                $display("core%1x got ipi=%x msip priv=%x mie=%x mtvec=%x pc=%x", 
+                                    mhartid, w_ipi, priv, mie, mtvec, pc);
                             end
                             mip[3:0] <= mip[3:0] | `MIP_MSIP;
                         end
@@ -744,7 +759,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         end
         //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
-                //if(w_mtime >= `ENABLE_TIMER - 10000000)
+                //if(w_mtime >= 460000000)
                 //    $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
