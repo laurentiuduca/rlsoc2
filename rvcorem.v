@@ -460,6 +460,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     reg [31:0] r_mstatus_t = 0;
     reg  [1:0] r_priv_t    = `PRIV_M;
+    reg  [1:0] r_clint_priv    = `PRIV_M;
 
     always@(posedge CLK) begin
         if(state==`S_INI) r_mstatus_t <= mstatus;
@@ -691,31 +692,20 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
-        `ifdef laur0
-        if(w_mtime >= 240994653 && mip[7:4]) begin
-            //if(rim != w_interrupt_mask) begin
-                $display("w_interrupt_mask=%x and stip mie=%x r_priv_t=%x w_mstatus_nxt=%x mideleg=%x pc=%x", 
-                    w_interrupt_mask, mie, r_priv_t, w_mstatus_nxt, mideleg, pc);
-                rim <= w_interrupt_mask;
-            //end
-        end
-        `endif
-        if(state == `S_OF && !r_op_ECALL) begin
-                if(r_was_clint_we==2 && (w_mtime >= mtimecmp) && (r_priv_t <= `PRIV_S)) begin
-                    //if(w_mtime >= 460000000)
-                    //    $display("core%1x gets STIP", mhartid);
-                    //if(w_priv <= `PRIV_S)
-                        mip[7:4] <= `MIP_STIP >> 4;
-                    //else
-                        //mip[7:4] <= `MIP_MTIP >> 4;
-                    r_was_clint_we <= 0;
-                end
-        end
         if(state == `S_IF) begin
             //if(w_mtime > `ENABLE_TIMER) begin
                 if(w_plic_we) begin // KEYBOARD INPUT
                     $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
                     mip[31:8] <= w_wmip[31:8];
+                end
+                if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
+                    //if(w_mtime >= 460000000)
+                    //    $display("core%1x gets STIP", mhartid);
+                    if(r_clint_priv <= `PRIV_S)
+                        mip[7:4] <= `MIP_STIP >> 4;
+                    else
+                        mip[7:4] <= `MIP_MTIP >> 4;
+                    r_was_clint_we <= 0;
                 end
             //end
                 if(w_ipi & (1<<mhartid)) begin
