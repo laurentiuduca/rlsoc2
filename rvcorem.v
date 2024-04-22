@@ -460,7 +460,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     reg [31:0] r_mstatus_t = 0;
     reg  [1:0] r_priv_t    = `PRIV_M;
-    reg  [1:0] r_clint_priv    = `PRIV_M;
 
     always@(posedge CLK) begin
         if(state==`S_INI) r_mstatus_t <= mstatus;
@@ -699,12 +698,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     mip[31:8] <= w_wmip[31:8];
                 end
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
-                    //if(w_mtime >= 460000000)
-                    //    $display("core%1x gets STIP", mhartid);
-                    if(r_clint_priv <= `PRIV_S)
-                        mip[7:4] <= `MIP_STIP >> 4;
-                    else
-                        mip[7:4] <= `MIP_MTIP >> 4;
+                    mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
                 end
             //end
@@ -757,7 +751,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= r_was_clint_we + 1;
                 else
                     r_was_clint_we <= 1;
-                r_clint_priv <= r_priv_t;
             end
 
         //end
