@@ -318,13 +318,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             pending_exception <= ~0;
             r_tkn             <= 0;
         end
-        else if(state == `S_FIN && !w_busy) begin
-            `ifdef laur0
-            if(w_interrupt_mask != 0 && !r_during_exception) begin
-                pending_exception <= `CAUSE_INTERRUPT | irq_num;
-            end
-            `endif
-        end
         else if(state == `S_EX1) begin
             case(r_opcode)
                 `OPCODE_LUI_____ : begin r_wb_data  <= r_imm;          end
@@ -558,31 +551,19 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         else if(w_pagefault != ~32'h0) begin  pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
         else if(state==`S_FIN && !w_busy) begin
             if(pending_exception != ~0)    begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
-            else if(w_interrupt_mask != 0 && !r_during_exception) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
+            else if(w_interrupt_mask)      begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
             else if(w_executing_wfi)  begin
                 if(w_exit_wfi) begin
                     pc <= pc + 4; 
                 end
             end else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
-            r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask != 0 && !r_during_exception) || (r_tkn) || (!r_cinsn));
+            r_ir16_v    <= !((pending_exception != ~0) || w_interrupt_mask || (r_tkn) || (!r_cinsn));
         end
         else if(state==`S_INI) begin
             pending_tval <= 0;
         end
     end
 
-    reg r_during_exception=0;
-    `ifdef laur0
-    always@(posedge CLK) begin
-        if(pending_exception != ~0 && !(pending_exception & `CAUSE_INTERRUPT)) begin
-            r_during_exception <= 1;
-        end else if(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ &&
-                (r_funct12 == `FUNCT12_URET__ || r_funct12 == `FUNCT12_SRET__ || r_funct12 == `FUNCT12_MRET__) &&
-                state==`S_FIN && !w_busy) begin
-            r_during_exception <= 0;
-        end
-    end
-    `endif
     /***********************************           FIN          ***********************************/
     always@(posedge CLK) begin
         if(state == `S_FIN && !w_busy) begin 
@@ -747,7 +728,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= r_was_clint_we + 1;
                 else
                     r_was_clint_we <= 1;
-            end else         if(state == `S_IF) begin
+            end else if(state == `S_IF) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
@@ -772,7 +753,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     priv    <= `PRIV_M;
                 end
             end
-            else if(w_interrupt_mask != 0 && !r_during_exception) begin
+            else if(w_interrupt_mask) begin
                 if(w_deleg) begin
                     scause  <= cause;
                     sepc    <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4;
@@ -886,7 +867,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     always@(*) begin
         if(state==`S_COM && !w_busy) begin
-            if(pending_exception != ~0 || (w_interrupt_mask != 0 && ~r_during_exception)) r_tlb_flush <= 1;
+            if(pending_exception != ~0 || w_interrupt_mask) r_tlb_flush <= 1;
             else if(r_op_SRET || r_op_MRET) r_tlb_flush <= 1;
             else if(r_op_CSR_MSTA) begin
                 if((w_mod & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0 ||
