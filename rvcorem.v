@@ -728,7 +728,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= r_was_clint_we + 1;
                 else
                     r_was_clint_we <= 1;
-            end else if(state == `S_IF) begin
+                if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp)
+                    $display("warning: w_mtime > w_wmtimecmp");
+            end else if(state == `S_OF && r_priv_t <= `PRIV_S) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
