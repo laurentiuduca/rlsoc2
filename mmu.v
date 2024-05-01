@@ -223,10 +223,6 @@ module m_mmu(
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
-                    if(r_dram_was_busy) begin
-                        $display("---- !dram_busy in pw_state 5");
-                        r_dram_was_busy <= 0;
-                    end
                     if(page_walk_fail) begin
                         $display("~ fault=%x ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x", 
                             w_pagefault, w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir);
@@ -235,10 +231,6 @@ module m_mmu(
                             //$finish;
                         end
                     end
-                end else
-                if(w_dram_busy && !(w_priv == `PRIV_M || w_satp[31] == 0)) begin
-                    $display("dram_busy in pw_state 5");
-                    r_dram_was_busy <= 1;
                 end
         end
         else if(r_pw_state == 6) begin
