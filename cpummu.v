@@ -33,6 +33,7 @@ module m_cpummu(
     input wire        w_init_done,
     output wire [31:0] w_pc,
     output wire [31:0] w_ir,
+    output wire [31:0] w_pc_stip,
     
     output wire w_reserved,
     output wire [31:0] w_load_res, 
@@ -139,6 +140,7 @@ module m_cpummu(
         .state(w_state),
         .pc(w_pc),
         .r_ir(w_ir),
+        .pc_stip(w_pc_stip),
 
         .reserved(w_reserved),
         .load_res(w_load_res), 

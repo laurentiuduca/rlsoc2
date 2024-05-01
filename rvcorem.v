@@ -49,7 +49,7 @@ endmodule
 module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
-                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir,
+                w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir, pc_stip,
                 reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
@@ -84,6 +84,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     /***** registers and CPU architecture state ***************************************************/
     output reg   [3:0] state   = 0;            // State for Multi cycle Processor
     output reg  [31:0] pc             = `D_START_PC;  // Program Counter
+    output reg [31:0] pc_stip = 0;
 
     reg  [31:0] mstatus        = 0;            ///// CSRs
     reg  [31:0] mtvec          = 0;            //
@@ -730,7 +731,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= 1;
                 if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp)
                     $display("warning: w_mtime > w_wmtimecmp");
-            end else if(state == `S_OF && r_priv_t <= `PRIV_S && !r_op_ECALL) begin
+            end else if(state == `S_OF && priv <= `PRIV_S && !r_op_ECALL && 
+                !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__)) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
@@ -741,6 +743,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
         if(state == `S_FIN && !w_busy) begin
             if(pending_exception != ~0) begin
+                //if(!r_op_ECALL)
+                //    $display("pending exception");
                 if(w_deleg) begin
                     scause  <= cause;
                     sepc    <= pc;
@@ -756,6 +760,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
             end
             else if(w_interrupt_mask) begin
+                if(irq_num == 5/*`MIP_STIP*/)
+                    pc_stip <= pc;
                 if(w_deleg) begin
                     scause  <= cause;
                     sepc    <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4;
@@ -782,6 +788,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                                     (mstatus[`MSTATUS_SPIE_SHIFT] << mstatus[`MSTATUS_SPP_SHIFT])) 
                                     | `MSTATUS_SPIE) & ~`MSTATUS_SPP;
                         priv    <= mstatus[`MSTATUS_SPP_SHIFT];
+                        //$display("sret--------");
                     end
                     `FUNCT12_MRET__ : begin
                         mstatus <= (((mstatus & ~(1 << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT])) |
