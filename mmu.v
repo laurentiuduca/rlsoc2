@@ -219,7 +219,7 @@ module m_mmu(
         end
         // Update pte
         else if(r_pw_state == 5) begin
-                if(page_walk_fail || !w_pte_we || !w_dram_busy) begin
+                if(page_walk_fail || !w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
@@ -230,6 +230,14 @@ module m_mmu(
                             $display("-----pte-we in pagefault-----");
                             //$finish;
                         end
+                    end
+                end else begin
+                    if(w_dram_busy)
+                        r_dram_was_busy <= 1;
+                    else if(r_dram_was_busy) begin
+                        r_pw_state      <= 0;
+                        physical_addr   <= 0;
+                        page_walk_fail  <= 0;                        
                     end
                 end
         end
