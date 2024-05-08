@@ -766,7 +766,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             else if(w_interrupt_mask) begin
                 if(irq_num == 5/*`MIP_STIP*/) begin
                     //$display("stip pc=%x hart=%x", pc, w_hart_id);
+                    `ifndef USE_SINGLE_CORE
                     if(w_hart_id == 1) begin
+                    `else
+                    begin
+                    `endif
                         $fwrite(f, "%x\n", pc);
                     end
                     pc_stip <= pc;
