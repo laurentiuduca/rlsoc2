@@ -735,8 +735,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= 1;
                 if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp)
                     $display("warning: w_mtime > w_wmtimecmp");
-            end else if(state == `S_OF && priv <= `PRIV_S && !r_op_ECALL && 
-                !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__)) begin
+            end else if(state == `S_OF && priv <= `PRIV_S && !r_op_ECALL) begin
+                //&& !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__)) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
@@ -765,14 +765,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             end
             else if(w_interrupt_mask) begin
                 if(irq_num == 5/*`MIP_STIP*/) begin
-                    $display("stip pc=%x hart=%x", pc, w_hart_id);
+                    //$display("stip pc=%x hart=%x", pc, w_hart_id);
                     if(w_hart_id == 1) begin
-                        if(w_mtime < 200000000)
-                            $fwrite(f, "%x\n", pc);
-                        else begin
-                            $fclose(f);
-                            $finish;
-                        end
+                        $fwrite(f, "%x\n", pc);
                     end
                     pc_stip <= pc;
                 end
@@ -790,6 +785,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     priv    <= `PRIV_M;
                 end
             end
+        end
+        if(w_mtime > 200000000) begin
+            $fclose(f);
+            $finish;
         end
 
         else if(state == `S_COM && !w_busy) begin /***** COM stage *****/
