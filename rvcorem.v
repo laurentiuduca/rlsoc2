@@ -669,6 +669,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg [31:0] old_insn_addr;
 `endif
 
+    integer f;
+    initial begin
+        f = $fopen("stip.txt", "w");
+    end
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
@@ -760,8 +764,18 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
             end
             else if(w_interrupt_mask) begin
-                if(irq_num == 5/*`MIP_STIP*/)
+                if(irq_num == 5/*`MIP_STIP*/) begin
+                    $display("stip pc=%x hart=%x", pc, w_hart_id);
+                    if(w_hart_id == 1) begin
+                        if(w_mtime < 200000000)
+                            $fwrite(f, "%x\n", pc);
+                        else begin
+                            $fclose(f);
+                            $finish;
+                        end
+                    end
                     pc_stip <= pc;
+                end
                 if(w_deleg) begin
                     scause  <= cause;
                     sepc    <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4;
@@ -788,7 +802,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                                     (mstatus[`MSTATUS_SPIE_SHIFT] << mstatus[`MSTATUS_SPP_SHIFT])) 
                                     | `MSTATUS_SPIE) & ~`MSTATUS_SPP;
                         priv    <= mstatus[`MSTATUS_SPP_SHIFT];
-                        //$display("sret--------");
+                        //$display("sret priv<=%x pc=%x", mstatus[`MSTATUS_SPP_SHIFT], pc);
                     end
                     `FUNCT12_MRET__ : begin
                         mstatus <= (((mstatus & ~(1 << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT])) |
