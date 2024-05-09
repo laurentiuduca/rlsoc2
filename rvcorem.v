@@ -675,7 +675,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         f = $fopen("stip.txt", "w");
     end
     `endif
-    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL : !r_op_ECALL;
+    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL 
+        /*&& !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__) */: 1;
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
@@ -739,7 +740,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp)
                     $display("warning: w_mtime > w_wmtimecmp");
             end else if(state == `S_IF) begin
-                //&& !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__)) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
@@ -776,7 +776,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     `else
                     begin
                     `endif
-                        $fwrite(f, "%x\n", pc);
+                        if(w_mtime < `ENABLE_TIMER) begin
+                            $fwrite(f, "%x\n", pc);
                     end
                     `endif
                     pc_stip <= pc;
@@ -797,7 +798,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             end
         end
         `ifdef SIM_MODE
-        if(w_mtime > 200000000) begin
+        if(w_mtime > `ENABLE_TIMER) begin
             $fclose(f);
         end
         `endif
@@ -970,7 +971,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
          
     reg       r_data_we=0;
     reg       r_data_en=0; /* memory, read enable */
-    reg [2:0] r_tlb_req=0;
+    reg [1:0] r_tlb_req=0;
     always @(posedge CLK) begin
         r_data_we <= w_d_we_t;
         r_data_en <= w_d_en_t;

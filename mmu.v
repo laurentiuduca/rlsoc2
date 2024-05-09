@@ -147,7 +147,6 @@ module m_mmu(
                             (w_iswrite && w_tlb_data_w_oe));
 
     reg r_dram_was_busy=0, r_dram_took_cmd=0, r_data_was_busy=0;
-
     // PAGE WALK state
     always@(posedge CLK) begin
         if(r_pw_state == 0) begin
@@ -214,6 +213,9 @@ module m_mmu(
             else if(L0_xwr) begin
                 physical_addr   <= (L0_success) ? L0_p_addr : 0;
                 page_walk_fail  <= (L0_success) ? 0 : 1;
+            end else begin
+                $display("r_pw_state == 4 and no if met");
+                $finish;
             end
             r_pw_state  <= 5;
         end
@@ -230,6 +232,8 @@ module m_mmu(
                             $display("-----pte-we in pagefault-----");
                             //$finish;
                         end
+                        //if(w_hart_id == 0 && w_grant == 0 && w_pc == 32'hc0001d08)
+                        //    $finish;
                     end
                 end else begin
                     if(w_dram_busy)
@@ -237,7 +241,8 @@ module m_mmu(
                     else if(r_dram_was_busy) begin
                         r_pw_state      <= 0;
                         physical_addr   <= 0;
-                        page_walk_fail  <= 0;                        
+                        page_walk_fail  <= 0;
+                        r_dram_was_busy <= 0;
                     end
                 end
         end
