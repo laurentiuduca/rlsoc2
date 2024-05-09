@@ -456,6 +456,8 @@ error
 `define MSTATUS_SUM_SHIFT    18
 `define MSTATUS_MXR_SHIFT    19
 
+`define MIP_STIP_SHIFT  5
+
 `define MSTATUS_MASK    32'h000e79bb
 `define SSTATUS_MASK0   32'h000de133
 `define SSTATUS_MASK    `SSTATUS_MASK0

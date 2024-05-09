@@ -551,14 +551,14 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
         else if(w_pagefault != ~32'h0) begin  pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
         else if(state==`S_FIN && !w_busy) begin
-            if(pending_exception != ~0)    begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
-            else if(w_interrupt_mask)      begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
+            if(pending_exception != ~0)             begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
+            else if(w_interrupt_mask && w_take_int) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
             else if(w_executing_wfi)  begin
                 if(w_exit_wfi) begin
                     pc <= pc + 4; 
                 end
             end else                      begin pc <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4; end
-            r_ir16_v    <= !((pending_exception != ~0) || w_interrupt_mask || (r_tkn) || (!r_cinsn));
+            r_ir16_v    <= !((pending_exception != ~0) || (w_interrupt_mask && w_take_int) || (r_tkn) || (!r_cinsn));
         end
         else if(state==`S_INI) begin
             pending_tval <= 0;
@@ -673,6 +673,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     initial begin
         f = $fopen("stip.txt", "w");
     end
+    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL : !r_op_ECALL;
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
@@ -735,11 +736,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= 1;
                 if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp)
                     $display("warning: w_mtime > w_wmtimecmp");
-            end else if(state == `S_OF && priv <= `PRIV_S && !r_op_ECALL) begin
+            end else if(state == `S_IF) begin
                 //&& !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__)) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
+                    //$display("%0d: core%1x sets stip pc=%x state=%x", w_mtime, mhartid, pc, state);
                 end
             end
 
@@ -763,8 +765,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     priv    <= `PRIV_M;
                 end
             end
-            else if(w_interrupt_mask) begin
-                if(irq_num == 5/*`MIP_STIP*/) begin
+            else if(w_interrupt_mask && w_take_int) begin
+                if(irq_num == `MIP_STIP_SHIFT) begin
                     //$display("stip pc=%x hart=%x", pc, w_hart_id);
                     `ifndef USE_SINGLE_CORE
                     if(w_hart_id == 1) begin
@@ -893,7 +895,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     always@(*) begin
         if(state==`S_COM && !w_busy) begin
-            if(pending_exception != ~0 || w_interrupt_mask) r_tlb_flush <= 1;
+            if(pending_exception != ~0 || (w_interrupt_mask && w_take_int)) r_tlb_flush <= 1;
             else if(r_op_SRET || r_op_MRET) r_tlb_flush <= 1;
             else if(r_op_CSR_MSTA) begin
                 if((w_mod & (`MSTATUS_MPRV | `MSTATUS_SUM | `MSTATUS_MXR)) != 0 ||
