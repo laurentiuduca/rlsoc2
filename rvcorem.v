@@ -669,10 +669,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg [31:0] old_insn_addr;
 `endif
 
+    `ifdef SIM_MODE
     integer f;
     initial begin
         f = $fopen("stip.txt", "w");
     end
+    `endif
     wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL : !r_op_ECALL;
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
@@ -768,6 +770,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             else if(w_interrupt_mask && w_take_int) begin
                 if(irq_num == `MIP_STIP_SHIFT) begin
                     //$display("stip pc=%x hart=%x", pc, w_hart_id);
+                    `ifdef SIM_MODE
                     `ifndef USE_SINGLE_CORE
                     if(w_hart_id == 1) begin
                     `else
@@ -775,6 +778,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     `endif
                         $fwrite(f, "%x\n", pc);
                     end
+                    `endif
                     pc_stip <= pc;
                 end
                 if(w_deleg) begin
@@ -792,10 +796,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
             end
         end
+        `ifdef SIM_MODE
         if(w_mtime > 200000000) begin
             $fclose(f);
-            $finish;
         end
+        `endif
 
         else if(state == `S_COM && !w_busy) begin /***** COM stage *****/
             if(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__) begin
