@@ -232,8 +232,6 @@ module m_mmu(
                             $display("-----pte-we in pagefault-----");
                             //$finish;
                         end
-                        //if(w_hart_id == 0 && w_grant == 0 && w_pc == 32'hc0001d08)
-                        //    $finish;
                     end
                 end else begin
                     if(w_dram_busy)
