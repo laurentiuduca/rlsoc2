@@ -462,7 +462,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 case (r_funct12)
                     `FUNCT12_SRET__ : begin
                         r_mstatus_t <= (((mstatus & ~(1<<mstatus[8])) | (mstatus[5] << mstatus[8])) | 32'h20) & ~32'h100;
-                        r_priv_t    <= mstatus[8];
+                        r_priv_t    <= mstatus[`MSTATUS_SPP_SHIFT];
                     end
                     `FUNCT12_MRET__ : begin
                         r_mstatus_t <= (((mstatus & ~(1 << mstatus[`MSTATUS_MPP_SHIFT+1:`MSTATUS_MPP_SHIFT])) 
@@ -676,7 +676,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     end
     `endif
     wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL 
-        /*&& !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__)*/ : 1;
+        && !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__) : 1;
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
@@ -798,6 +798,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     mtval   <= pending_tval;
                     mstatus <= w_mstatus_t3;
                     priv    <= `PRIV_M;
+                    if(irq_num == `MIP_STIP_SHIFT) begin
+                        $display("irq_num `MIP_STIP_SHIFT will be in privm");
+                        $finish;
+                    end
                 end
             end
         end
