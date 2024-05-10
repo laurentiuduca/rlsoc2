@@ -675,8 +675,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         f = $fopen("stip.txt", "w");
     end
     `endif
-    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL 
-        && !(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct12 == `FUNCT12_SRET__) : 1;
+    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET : 1;
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
