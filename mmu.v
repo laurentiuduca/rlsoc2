@@ -221,7 +221,7 @@ module m_mmu(
         end
         // Update pte
         else if(r_pw_state == 5) begin
-                if(page_walk_fail || !w_pte_we) begin
+                //if(page_walk_fail || !w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
@@ -233,16 +233,12 @@ module m_mmu(
                             //$finish;
                         end
                     end
-                end else begin
-                    if(w_dram_busy)
-                        r_dram_was_busy <= 1;
-                    else if(r_dram_was_busy) begin
-                        r_pw_state      <= 0;
-                        physical_addr   <= 0;
-                        page_walk_fail  <= 0;
-                        r_dram_was_busy <= 0;
-                    end
+                //end
+                if(w_dram_busy) begin
+                    $display("dram busy in r_pw_state 5");
+                    $finish;
                 end
+                       
         end
         else if(r_pw_state == 6) begin
             if(w_dram_aces && (w_dram_le || w_dram_we)) begin
