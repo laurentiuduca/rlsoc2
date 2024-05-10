@@ -744,6 +744,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= 0;
                     //$display("%0d: core%1x sets stip pc=%x state=%x", w_mtime, mhartid, pc, state);
                 end
+            end else if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
+                        w_interrupt_mask && w_take_int && irq_num == `MIP_STIP_SHIFT) begin
+                    mip[7:4] <= 0;
             end
 
         //end
