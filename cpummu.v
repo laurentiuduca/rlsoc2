@@ -148,7 +148,7 @@ module m_cpummu(
         .w_oh_reserved(w_oh_reserved), 
         .w_oh_load_res(w_oh_load_res), 
         .w_oh_sc(w_oh_sc),
-        .w_oh_pc(w_oh_pc)
+        .w_oh_pc(w_oh_pc), .w_grant(w_grant)
     );
 
     /**********************************************************************************************/

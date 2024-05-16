@@ -50,7 +50,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir, pc_stip,
-                reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc);
+                reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc, w_grant);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -113,6 +113,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     input wire w_oh_reserved, w_oh_sc;
     input wire [31:0] w_oh_load_res;
     input wire [31:0] w_oh_pc;
+    input wire [31:0] w_grant;
     assign hart_sc = r_op_AMO_SC;
 
     reg   [1:0] priv           = `PRIV_M;      // Mode
@@ -670,12 +671,13 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 `endif
 
     `ifdef SIM_MODE
+    reg [31:0] laurpc=0;
     integer f, closed=0;
     initial begin
         f = $fopen("stip.txt", "w");
     end
     `endif
-    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET : 1;
+    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 1;
     reg [31:0] r_ipi_max_displays=0;
     reg r_ipi_taken=0;
     reg [31:0] rim=0;
@@ -746,10 +748,19 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
             end else if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
                         w_interrupt_mask && w_take_int && irq_num == `MIP_STIP_SHIFT) begin
-                    mip[7:4] <= 0;
+                    mip[7:4] <= 0; // however is disabled by w_sstatus_t3
             end
 
         //end
+
+        // test_bit
+        if(/*pc >= 32'hc00276b8 && pc <= 32'hc00276d4*/
+            pc == 32'hc00276bc && w_hart_id == 0 /*&& laurpc != pc*/ && regs.mem[1] == 32'hc002b5dc
+            && w_mtime >= 170000000) begin
+            $display("test_bit div pc=%x a0=%x a1=%x a5=%x grant=%x state=%x", 
+                pc, regs.mem[10], regs.mem[11], regs.mem[15], w_grant, state);
+            laurpc <= pc;
+        end
 
         if(state == `S_FIN && !w_busy) begin
             if(pending_exception != ~0) begin
@@ -774,12 +785,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     //$display("stip pc=%x hart=%x", pc, w_hart_id);
                     `ifdef SIM_MODE
                     `ifndef USE_SINGLE_CORE
-                    if(w_hart_id == 1) begin
+                    if(w_hart_id == 0) begin
                     `else
                     begin
                     `endif
-                        if(w_mtime < `ENABLE_TIMER)
-                            $fwrite(f, "%x\n", pc);
+                        if(w_mtime < 200000000/*`ENABLE_TIMER*/)
+                            $fwrite(f, "%0d %x\n", w_mtime,    pc);
                         else if(!closed) begin
                             closed <= 1;
                             $fclose(f);
