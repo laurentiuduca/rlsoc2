@@ -149,9 +149,9 @@ module m_mmu(
     reg r_dram_was_busy=0, r_dram_took_cmd=0, r_data_was_busy=0;
     // PAGE WALK state
     always@(posedge CLK) begin
-        if(v_addr == 32'hc0701200)
-            $display("#ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x", 
-                w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir);
+        //if(v_addr == 32'hc0701200)
+        //    $display("#ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x", 
+        //       w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir);
         if(r_pw_state == 0) begin
             // PAGE WALK START
             if(!w_dram_busy && w_use_tlb) begin
