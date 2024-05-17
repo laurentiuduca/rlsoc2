@@ -753,18 +753,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
         //end
 
-        `ifdef SIM_MODE
-        `ifdef laur0
-        // test_bit
-        if(/*pc >= 32'hc00276b8 && pc <= 32'hc00276d4*/
-            pc == 32'hc00276bc && w_hart_id == 0 /*&& laurpc != pc*/ && regs.mem[1] == 32'hc002b5dc
-            && w_mtime >= 170000000 && w_mtime <= 180000000) begin
-            $display("%0d: test_bit div pc=%x a0=%x a1=%x a5=%x grant=%0x w_tlb_req=%x w_busy=%x w_ex1_busy=%x w_alu_im_rslt=%x state=%x", 
-                w_mtime, pc, regs.mem[10], regs.mem[11], regs.mem[15], w_grant, w_tlb_req, w_busy, w_ex1_busy, w_alu_im_rslt, state);
-        end
-        `endif
-        `endif
-
         if(state == `S_FIN && !w_busy) begin
             if(pending_exception != ~0) begin
                 //if(!r_op_ECALL)

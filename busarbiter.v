@@ -209,12 +209,6 @@ begin
                 bus_dram_busy0 <= bus_dram_le0 | bus_dram_we_t0;
                 bus_data_busy0 <= bus_data_le0 | bus_data_we0;
                 save_bus_signals0;
-                `ifdef laur0
-                if(w_mtime >= 172152000 && w_mtime <= 172153000 && (bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0)) begin
-                    $display("bus_dram_le0=%x bus_dram_we_t0=%x bus_data_le0=%x bus_data_we0=%x w_busy<=1", 
-                        bus_dram_le0, bus_dram_we_t0, bus_data_le0, bus_data_we0);
-                end
-                `endif
 end
 endtask
 
