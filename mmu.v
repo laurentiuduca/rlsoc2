@@ -149,9 +149,6 @@ module m_mmu(
     reg r_dram_was_busy=0, r_dram_took_cmd=0, r_data_was_busy=0;
     // PAGE WALK state
     always@(posedge CLK) begin
-        //if(v_addr == 32'hc0701200)
-        //    $display("#ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x", 
-        //       w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir);
         if(r_pw_state == 0) begin
             // PAGE WALK START
             if(!w_dram_busy && w_use_tlb) begin
@@ -355,7 +352,7 @@ module m_mmu(
     assign w_dram_we_t =   w_pte_we || w_dram_we;
 
     //assign w_proc_busy = w_tlb_busy || w_dram_busy;
-    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy || (w_data_busy) || !w_tx_ready;
+    assign w_proc_busy = (w_use_tlb && (r_pw_state < 7)) || w_dram_busy || (w_data_busy);
     /**************************************************************************************************/
     
     assign w_wmtimecmp  = (w_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_hart_id == 0) && w_proc_data_we) ?

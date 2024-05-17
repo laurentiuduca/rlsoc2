@@ -754,13 +754,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         //end
 
         `ifdef SIM_MODE
+        `ifdef laur0
         // test_bit
         if(/*pc >= 32'hc00276b8 && pc <= 32'hc00276d4*/
             pc == 32'hc00276bc && w_hart_id == 0 /*&& laurpc != pc*/ && regs.mem[1] == 32'hc002b5dc
             && w_mtime >= 170000000 && w_mtime <= 180000000) begin
-            $display("test_bit div pc=%x a0=%x a1=%x a5=%x grant=%x w_tlb_req=%x w_busy=%x w_ex1_busy=%x w_alu_im_rslt=%x state=%x", 
-                pc, regs.mem[10], regs.mem[11], regs.mem[15], w_grant, w_tlb_req, w_busy, w_ex1_busy, w_alu_im_rslt, state);
+            $display("%0d: test_bit div pc=%x a0=%x a1=%x a5=%x grant=%0x w_tlb_req=%x w_busy=%x w_ex1_busy=%x w_alu_im_rslt=%x state=%x", 
+                w_mtime, pc, regs.mem[10], regs.mem[11], regs.mem[15], w_grant, w_tlb_req, w_busy, w_ex1_busy, w_alu_im_rslt, state);
         end
+        `endif
         `endif
 
         if(state == `S_FIN && !w_busy) begin
@@ -967,7 +969,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     assign w_state = (!RST_X | r_halt)                                         ? 0      : // `S_INI
                      (w_com)                                                   ? `S_COM :
-                     ((w_busy && !w_ex1) || w_ex1_busy)                    ? state  :
+                     ((w_busy /*&& !w_ex1*/) || w_ex1_busy)                    ? state  :
                      (state==`S_FIN)                                           ? `S_INI :
                      (state==`S_IF  && w_nalign4 && r_if_state!=3)             ? `S_IF  : // Note
                      (state==`S_EX1 && !r_op_AMO && !r_op_LOAD && !r_op_STORE) ? `S_WB  :
