@@ -50,7 +50,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir, pc_stip,
-                reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc, w_grant);
+                reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc, w_grant, r_ipi_taken);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -679,7 +679,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     `endif
     wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 1;
     reg [31:0] r_ipi_max_displays=0;
-    reg r_ipi_taken=0;
+    output reg r_ipi_taken=0;
+    reg r_ipi_clear=0;
     reg [31:0] rim=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
@@ -712,7 +713,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     end
                 end else begin
                     r_ipi_taken <= 0;
-                    if(r_ipi_taken == 1) begin
+                    if(r_ipi_clear == 1) begin
                         mip[3:0] <= 0;
                         if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
@@ -738,8 +739,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     r_was_clint_we <= r_was_clint_we + 1;
                 else
                     r_was_clint_we <= 1;
-                if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp)
+                if(r_was_clint_we == 1 && w_mtime > w_wmtimecmp) begin
                     $display("warning: w_mtime=%0d > w_wmtimecmp=%0d", w_mtime, w_mtimecmp);
+                    //$finish;
+                end
             end else if(state == `S_IF) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
@@ -790,6 +793,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     `endif
                     pc_stip <= pc;
                 end
+                if(irq_num == `MIP_SSIP_SHIFT)
+                    r_ipi_clear <= 1;
+                else
+                    r_ipi_clear <= 0;
                 if(w_deleg) begin
                     scause  <= cause;
                     sepc    <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4;

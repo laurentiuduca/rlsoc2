@@ -105,6 +105,7 @@ module m_topsim(CLK, RST_X);
 
     wire [31:0] w_grant;
     wire [31:0] bus_ipi;
+    wire w_ipi_taken0, w_ipi_taken1;
 
     reg [63:0] mtime=0;
     wire [63:0] w_mtime=mtime;
@@ -135,8 +136,8 @@ module m_topsim(CLK, RST_X);
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0), .w_pc_stip(w_pc_stip0),
         .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
-        .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1),
-        .w_oh_pc(w_pc1)
+        .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1), .w_oh_pc(w_pc1), 
+        .w_ipi_taken(w_ipi_taken0)
     );
 //`endif
 
@@ -152,8 +153,8 @@ module m_topsim(CLK, RST_X);
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1), .w_pc_stip(w_pc_stip1),
         .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
-        .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0),
-        .w_oh_pc(w_pc0)
+        .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0), .w_oh_pc(w_pc0), 
+        .w_ipi_taken(w_ipi_taken1)
     );
 `endif
 
@@ -270,26 +271,26 @@ module m_topsim(CLK, RST_X);
         if(r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4) && r_data_we != 0 && (r_data_busy==2)) begin
             if(w_offset==28'h0) begin
                 if(w_data_wdata == 32'h0) begin
-`ifdef SIM_MODE
-`ifndef USE_SINGLE_CORE
+                    `ifdef SIM_MODE
+                    `ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
-`endif
-`endif
+                    `endif
+                    `endif
                     r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b0};
                 end else begin
-`ifdef SIM_MODE
-`ifndef USE_SINGLE_CORE
+                    `ifdef SIM_MODE
+                    `ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x send ipi to core0 w_data_wdata=%x w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_data_wdata, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
-`endif
-`endif
+                    `endif
+                    `endif
                      // signal core 0
                     if(w_data_wdata == 2)
                         r_ipi <= {r_ipi[31:17], 1'b1, r_ipi[15:1], 1'b1}; // S-priv
@@ -300,26 +301,26 @@ module m_topsim(CLK, RST_X);
                 end
             end else /*if(w_offset == 28'h4)*/ begin
                 if(w_data_wdata == 32'h0) begin
-`ifdef SIM_MODE
-`ifndef USE_SINGLE_CORE
+                    `ifdef SIM_MODE
+                    `ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
-`endif
-`endif
+                    `endif
+                    `endif
                     r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b0, r_ipi[0]};
                 end else begin
-`ifdef SIM_MODE
-`ifndef USE_SINGLE_CORE
+                    `ifdef SIM_MODE
+                    `ifndef USE_SINGLE_CORE
                     if(r_max_displays < `IPI_MAX_DISPLAYS) begin
                         $display("t=%8x send ipi to core1 w_data_wdata=%x w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_data_wdata, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
                     end
-`endif
-`endif
+                    `endif
+                    `endif
                      // signal core 1
                     if(w_data_wdata == 2)
                         r_ipi <= {r_ipi[31:18], 1'b1, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // S-priv
@@ -329,6 +330,28 @@ module m_topsim(CLK, RST_X);
                         $display("-------- %x: core1 already had ipi pc0=%x pc1=%x", w_mtime, w_pc0, w_pc1);
                 end
             end
+        end else if(w_ipi_taken0) begin
+                    `ifdef SIM_MODE
+                    `ifndef USE_SINGLE_CORE
+                    if(r_max_displays < `IPI_MAX_DISPLAYS) begin
+                        $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                            w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                        r_max_displays = r_max_displays + 1;
+                    end
+                    `endif
+                    `endif
+                    r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b0};
+        end else if(w_ipi_taken1) begin
+                    `ifdef SIM_MODE
+                    `ifndef USE_SINGLE_CORE
+                    if(r_max_displays < `IPI_MAX_DISPLAYS) begin
+                        $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
+                            w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
+                        r_max_displays = r_max_displays + 1;
+                    end
+                    `endif
+                    `endif
+                    r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b0, r_ipi[0]};
         end
     end
 
@@ -803,7 +826,7 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc_stip0 : w_btnl ? w_pc_stip1 : 0; //w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc_stip1 : w_btnl ? w_pc1 : 0; //w_sd_checksum;
     //assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc1 : w_pc0;
 
     reg [31:0] rdbg=0;

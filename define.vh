@@ -13,7 +13,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
+`define SIM_MODE
 //`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 
@@ -456,6 +456,7 @@ error
 `define MSTATUS_SUM_SHIFT    18
 `define MSTATUS_MXR_SHIFT    19
 
+`define MIP_SSIP_SHIFT  2
 `define MIP_STIP_SHIFT  5
 
 `define MSTATUS_MASK    32'h000e79bb
