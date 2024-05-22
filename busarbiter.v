@@ -106,39 +106,39 @@ module busarbiter(
                 $display("------------- sys-busy in state0");
                 $finish;
             end
-            if(grant == 0 && bus_core_ir0[6:0]==`OPCODE_AMO_____) begin
-                if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
-                    prepare_exec0;
-                    state <= 1;
-                end
-                check_request1;
-            end else if(grant == 1 && bus_core_ir1[6:0]==`OPCODE_AMO_____) begin
+            if(grant == 1 && bus_core_ir1[6:0]==`OPCODE_AMO_____) begin
                 if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
                     prepare_exec1;
                     state <= 1;
                 end
                 check_request0;
-            end else if(r_pending_req0) begin
-                grant <= 0;
-                state <= 1;
-                exec0_aux;
+            end else if(grant == 0 && bus_core_ir0[6:0]==`OPCODE_AMO_____) begin
+                if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+                    prepare_exec0;
+                    state <= 1;
+                end
                 check_request1;
             end else if(r_pending_req1) begin
                 grant <= 1;
                 state <= 1;
                 exec1_aux;
                 check_request0;
-            end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+            end else if(r_pending_req0) begin
                 grant <= 0;
-                prepare_exec0;
                 state <= 1;
+                exec0_aux;
                 check_request1;
             end else if(bus_dram_le1 | bus_dram_we_t1 | bus_data_le1 | bus_data_we1) begin
                 grant <= 1;
                 prepare_exec1;
                 state <= 1;
                 check_request0;
-            end
+            end else if(bus_dram_le0 | bus_dram_we_t0 | bus_data_le0 | bus_data_we0) begin
+                grant <= 0;
+                prepare_exec0;
+                state <= 1;
+                check_request1;
+            end 
         end else if(state == 1) begin
             if(w_sys_busy) begin
                 if(grant == 0) begin
