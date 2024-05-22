@@ -680,7 +680,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 1;
     reg [31:0] r_ipi_max_displays=0;
     output reg r_ipi_taken=0;
-    reg r_ipi_clear=0;
+    reg r_ipi_clear=0, r_cleared_ipi=0;
     reg [31:0] rim=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
@@ -713,13 +713,15 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     end
                 end else begin
                     r_ipi_taken <= 0;
-                    if(r_ipi_clear == 1) begin
+                    if(r_ipi_clear == 1 && !r_cleared_ipi) begin
                         mip[3:0] <= 0;
+                        r_cleared_ipi <= 1;
                         if(r_ipi_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_ipi_max_displays <= r_ipi_max_displays + 1;
                                 $display("core%1x got clear ipi", mhartid);
                         end
-                    end
+                    end else if(r_ipi_clear == 0)
+                        r_cleared_ipi <= 0;
                 end
         end
 
@@ -795,8 +797,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
                 if(irq_num == `MIP_SSIP_SHIFT || irq_num == `MIP_MSIP_SHIFT)
                     r_ipi_clear <= 1;
-                else
-                    r_ipi_clear <= 0;
+                if(irq_num == 2) begin
+                    $display("irq_num=2, pc=%x", pc);
+                    $finish;
+                end
                 if(w_deleg) begin
                     scause  <= cause;
                     sepc    <= (r_tkn) ? r_jmp_pc : (r_cinsn) ? pc + 2 : pc + 4;
@@ -815,7 +819,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     end
                 end
             end
-        end
+        end else if(state == `S_IF)
+            r_ipi_clear <= 0;
 
         else if(state == `S_COM && !w_busy) begin /***** COM stage *****/
             if(r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__) begin
