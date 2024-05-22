@@ -793,7 +793,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     `endif
                     pc_stip <= pc;
                 end
-                if(irq_num == `MIP_SSIP_SHIFT)
+                if(irq_num == `MIP_SSIP_SHIFT || irq_num == `MIP_MSIP_SHIFT)
                     r_ipi_clear <= 1;
                 else
                     r_ipi_clear <= 0;
