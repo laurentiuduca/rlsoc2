@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="m_maintn" Register="440" Alu="267" Lut="309" Ssram="4">
+    <SubModule name="pll_nes"/>
+    <SubModule name="core0">
+        <SubModule name="mmu" Register="126" Lut="456">
+            <SubModule name="TLB_inst_r" Register="74" Alu="15" Lut="103" Bsram="1"/>
+            <SubModule name="TLB_data_r" Register="53" Alu="15" Lut="103" Bsram="1"/>
+            <SubModule name="TLB_data_w" Register="33" Alu="15" Lut="103" Bsram="1"/>
+        </SubModule>
+        <SubModule name="p" Register="1106" Alu="226" Lut="2272" Dsp="3">
+            <SubModule name="decomp0" Register="32" Lut="193"/>
+            <SubModule name="imm_gen0" Lut="47"/>
+            <SubModule name="regs" Register="44" Lut="48" Bsram="2"/>
+            <SubModule name="ALU_IM" Register="1" Alu="111" Lut="384">
+                <SubModule name="divunit" Register="2" Lut="60">
+                    <SubModule name="divcore" Register="102" Alu="38" Lut="111"/>
+                </SubModule>
+            </SubModule>
+            <SubModule name="ALU_B" Alu="15"/>
+            <SubModule name="ALU_A" Alu="91"/>
+        </SubModule>
+    </SubModule>
+    <SubModule name="core1">
+        <SubModule name="mmu" Register="126" Lut="448">
+            <SubModule name="TLB_inst_r" Register="74" Alu="15" Lut="103" Bsram="1"/>
+            <SubModule name="TLB_data_r" Register="53" Alu="15" Lut="103" Bsram="1"/>
+            <SubModule name="TLB_data_w" Register="33" Alu="15" Lut="103" Bsram="1"/>
+        </SubModule>
+        <SubModule name="p" Register="1138" Alu="163" Lut="2284" Dsp="3">
+            <SubModule name="decomp0" Register="32" Lut="187"/>
+            <SubModule name="imm_gen0" Lut="47"/>
+            <SubModule name="regs" Register="44" Lut="48" Bsram="2"/>
+            <SubModule name="ALU_IM" Register="1" Alu="111" Lut="381">
+                <SubModule name="divunit" Register="2" Lut="59">
+                    <SubModule name="divcore" Register="102" Alu="38" Lut="112"/>
+                </SubModule>
+            </SubModule>
+            <SubModule name="ALU_B" Alu="15"/>
+            <SubModule name="ALU_A" Alu="92"/>
+        </SubModule>
+    </SubModule>
+    <SubModule name="ba" Register="397" Lut="138"/>
+    <SubModule name="UartTx0" Register="47" Lut="81"/>
+    <SubModule name="ploader">
+        <SubModule name="serc" Register="38" Alu="11" Lut="38"/>
+    </SubModule>
+    <SubModule name="sd_loader" Register="78" Alu="62" Lut="34" Bsram="4">
+        <SubModule name="u_sd_reader" Register="149" Lut="291">
+            <SubModule name="u_sdcmd_ctrl" Register="150" Alu="15" Lut="186"/>
+        </SubModule>
+    </SubModule>
+    <SubModule name="dram_con" Register="202" Alu="31" Lut="590">
+        <SubModule name="memory" Register="107" Lut="98">
+            <SubModule name="u_sdram" Register="80" Alu="14" Lut="89"/>
+        </SubModule>
+    </SubModule>
+    <SubModule name="max7219" Register="55" Lut="194"/>
+    <SubModule name="cd" Register="22" Alu="20" Lut="7"/>
+</Module>
