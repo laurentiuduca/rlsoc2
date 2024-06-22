@@ -106,6 +106,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] w_grant;
     wire [31:0] bus_ipi;
     wire w_ipi_taken0, w_ipi_taken1;
+    wire w_extint_taken0, w_extint_taken1;
 
     reg [63:0] mtime=0;
     wire [63:0] w_mtime=mtime;
@@ -137,7 +138,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0), .w_pc_stip(w_pc_stip0),
         .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
         .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1), .w_oh_pc(w_pc1), 
-        .w_ipi_taken(w_ipi_taken0)
+        .w_ipi_taken(w_ipi_taken0), .w_extint_taken(w_extint_taken0)
     );
 //`endif
 
@@ -154,7 +155,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1), .w_pc_stip(w_pc_stip1),
         .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
         .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0), .w_oh_pc(w_pc0), 
-        .w_ipi_taken(w_ipi_taken1)
+        .w_ipi_taken(w_ipi_taken1), .w_extint_taken(w_extint_taken1)
     );
 `endif
 
@@ -244,7 +245,7 @@ module m_topsim(CLK, RST_X);
     end
     assign w_data_data = r_data_data;
 
-    /*********************************          INTERRUPTS          *********************************/
+    /*********************************          IPI          *********************************/
     
     wire        w_isread        = (w_tlb_req == `ACCESS_READ);
     wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
