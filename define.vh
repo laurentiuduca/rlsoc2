@@ -459,6 +459,7 @@ error
 `define MIP_SSIP_SHIFT  1
 `define MIP_MSIP_SHIFT  3
 `define MIP_STIP_SHIFT  5
+`define MIP_SEIP_SHIFT  9
 
 `define MSTATUS_MASK    32'h000e79bb
 `define SSTATUS_MASK0   32'h000de133

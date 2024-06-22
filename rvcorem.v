@@ -672,23 +672,34 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     `ifdef SIM_MODE
     reg [31:0] laurpc=0;
-    integer f, closed=0;
-    initial begin
-        f = $fopen("stip.txt", "w");
-    end
-    `endif
-    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 1;
+    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 
+                      (irq_num == `MIP_SEIP_SHIFT) ?  (priv <= `PRIV_S) : 1;
     reg [31:0] r_ipi_max_displays=0;
-    output reg r_ipi_taken=0;
+    output reg r_ipi_taken=0, r_extint_taken=0;
     reg [31:0] rim=0;
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
-            //if(w_mtime > `ENABLE_TIMER) begin
-                if(w_plic_we) begin // KEYBOARD INPUT
-                    $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
-                    mip[31:8] <= w_wmip[31:8];
+            if(w_plic_we) begin
+                if(r_extint_taken == 0) begin
+                    if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
+                        r_extint_max_displays <= r_extint_max_displays + 1;
+                        $display("core%1x w_plic_we mip <= %x state=%x", mhartid, w_wmip, state);
+                    end
+                    mip[31:8] <= MIP_SEIP >> 8;
+                    r_extint_taken <= 1;
                 end
-            //end
+            end else
+                r_extint_taken <= 0;
+        end else if((state == `S_FIN && !w_busy) && (w_interrupt_mask && w_take_int) &&
+                    (irq_num == `MIP_SEIP_SHIFT)) begin
+                        mip[31:8] <= 0;
+                        if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
+                                r_extint_max_displays <= r_extint_max_displays + 1;
+                                $display("core%1x got clear extint", mhartid);
+                        end
+        end
+
+        if(state == `S_IF) begin
                 if(w_ipi & (1<<mhartid)) begin
                     if(r_ipi_taken == 0) begin
                         if((w_ipi >> 16) & (1<<mhartid)) begin
@@ -723,12 +734,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         end
 
 
-        if(state == `S_EX2 || state == `S_WB) begin
+        /* if(state == `S_EX2 || state == `S_WB) begin
             if(w_plic_we) begin
                 $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
                 mip[31:8]     <= w_wmip[31:8];
             end
-        end
+        end */
         //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
                 //if(w_mtime >= 460000000)
@@ -777,20 +788,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             else if(w_interrupt_mask && w_take_int) begin
                 if(irq_num == `MIP_STIP_SHIFT) begin
                     //$display("stip pc=%x hart=%x", pc, w_hart_id);
-                    `ifdef SIM_MODE
-                    `ifndef USE_SINGLE_CORE
-                    if(w_hart_id == 0) begin
-                    `else
-                    begin
-                    `endif
-                        if(w_mtime < 200000000/*`ENABLE_TIMER*/)
-                            $fwrite(f, "%0d %x\n", w_mtime,    pc);
-                        else if(!closed) begin
-                            closed <= 1;
-                            $fclose(f);
-                        end
-                    end
-                    `endif
                     pc_stip <= pc;
                 end
                 if(irq_num == 2) begin
