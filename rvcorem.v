@@ -671,7 +671,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 
                       (irq_num == `MIP_SEIP_SHIFT) ?  (priv <= `PRIV_S) : 1;
-    reg [31:0] r_ipi_max_displays=0;
+    reg [31:0] r_ipi_max_displays=0, r_extint_max_displays=0;
     output reg r_ipi_taken=0, r_extint_taken=0;
 
     always@(posedge CLK) begin /***** write CSR registers *****/
@@ -682,7 +682,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                         r_extint_max_displays <= r_extint_max_displays + 1;
                         $display("core%1x w_plic_we mip <= seip", mhartid);
                     end
-                    mip[31:8] <= MIP_SEIP >> 8;
+                    mip[31:8] <= `MIP_SEIP >> 8;
                     r_extint_taken <= 1;
                 end
             end else
