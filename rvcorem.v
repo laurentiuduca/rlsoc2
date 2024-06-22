@@ -48,7 +48,7 @@ endmodule
 /**************************************************************************************************/
 module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_data_addr, w_insn_data, w_data_data,
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
-                w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_wmip, w_plic_we, w_busy, w_pagefault,
+                w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir, pc_stip,
                 reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc, w_grant, r_ipi_taken, r_extint_taken);
     input  wire         CLK, RST_X, w_stall;
@@ -57,7 +57,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     input  wire [31:0]  w_insn_data, w_data_data;
     input  wire [63:0]  w_wmtimecmp;
     input  wire         w_clint_we;
-    input  wire [31:0]  w_wmip;
     input  wire         w_plic_we;
     input  wire         w_busy;
     input  wire [31:0]  w_pagefault;
@@ -670,20 +669,18 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg [31:0] old_insn_addr;
 `endif
 
-    `ifdef SIM_MODE
-    reg [31:0] laurpc=0;
     wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 
                       (irq_num == `MIP_SEIP_SHIFT) ?  (priv <= `PRIV_S) : 1;
     reg [31:0] r_ipi_max_displays=0;
     output reg r_ipi_taken=0, r_extint_taken=0;
-    reg [31:0] rim=0;
+
     always@(posedge CLK) begin /***** write CSR registers *****/
         if(state == `S_IF) begin
             if(w_plic_we) begin
                 if(r_extint_taken == 0) begin
                     if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                         r_extint_max_displays <= r_extint_max_displays + 1;
-                        $display("core%1x w_plic_we mip <= %x state=%x", mhartid, w_wmip, state);
+                        $display("core%1x w_plic_we mip <= seip", mhartid);
                     end
                     mip[31:8] <= MIP_SEIP >> 8;
                     r_extint_taken <= 1;

@@ -12,7 +12,7 @@ module busarbiter(
     output wire [31:0] w_data_wdata, input wire [31:0] w_data_data,
     input wire [63:0] w_mtime,
     output wire [1:0]  w_tlb_req, output wire w_tlb_busy,
-    output wire [31:0] w_mip, input wire [31:0] w_wmip, input wire w_plic_aces, input wire r_plic_aces_t, input wire w_plic_we,
+    output wire [31:0] w_mip,
     output wire [31:0] w_dram_addr, output wire [31:0] w_dram_wdata, input wire [31:0] w_dram_odata, output wire w_dram_we_t,
     input wire w_dram_busy, output wire [2:0] w_dram_ctrl, output wire w_dram_le,
 
