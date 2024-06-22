@@ -333,7 +333,7 @@ module m_topsim(CLK, RST_X);
         end else if(w_ipi_taken0) begin
                     `ifdef SIM_MODE
                     `ifndef USE_SINGLE_CORE
-                    if(r_max_displays < `IPI_MAX_DISPLAYS) begin
+                    if(r_max_displays < `IPI_MAX_DISPLAYS && (r_ipi & {16'h1, 16'h1})) begin
                         $display("t=%8x clear ipi core0 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
@@ -344,10 +344,11 @@ module m_topsim(CLK, RST_X);
         end else if(w_ipi_taken1) begin
                     `ifdef SIM_MODE
                     `ifndef USE_SINGLE_CORE
-                    if(r_max_displays < `IPI_MAX_DISPLAYS) begin
+                    if(r_max_displays < `IPI_MAX_DISPLAYS && (r_ipi & {16'h2, 16'h2})) begin
                         $display("t=%8x clear ipi core1 w_grant=%1x c0pc=%x c0ir=%x c1pc=%x c1ir=%x", 
                             w_mtime, w_grant, core0.p.r_cpc, core0.p.r_ir, core1.p.r_cpc, core1.p.r_ir);
                         r_max_displays = r_max_displays + 1;
+
                     end
                     `endif
                     `endif
