@@ -90,7 +90,6 @@ module m_topsim(CLK, RST_X);
     wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
     wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
     wire [31:0] w_mip, w_wmip, bus_mip0, bus_wmip0, bus_mip1, bus_wmip1;
-    wire w_plic_we, bus_plic_we0, bus_plic_we1;
     wire [31:0] w_dram_addr, bus_dram_addr0, bus_dram_addr1;
     wire [31:0] w_dram_wdata, bus_dram_wdata0, bus_dram_wdata1;
     wire [31:0] w_dram_odata, bus_dram_odata0, bus_dram_odata1;
@@ -133,7 +132,7 @@ module m_topsim(CLK, RST_X);
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
         .w_mtime(w_mtime),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
-        .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(bus_plic_we0),
+        .w_mip(bus_mip0), .w_wmip(bus_wmip0), .w_plic_we(r_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0), .w_pc_stip(w_pc_stip0),
         .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
@@ -150,7 +149,7 @@ module m_topsim(CLK, RST_X);
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
         .w_mtime(w_mtime),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
-        .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(bus_plic_we1),
+        .w_mip(bus_mip1), .w_wmip(bus_wmip1), .w_plic_we(r_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1), .w_pc_stip(w_pc_stip1),
         .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
@@ -175,7 +174,7 @@ module m_topsim(CLK, RST_X);
         .bus_mem_paddr0(bus_mem_paddr0), .bus_data_we0(bus_data_we0), .bus_data_le0(bus_data_le0),
         .bus_data_wdata0(bus_data_wdata0), .bus_data_data0(bus_data_data0),
         .bus_tlb_req0(bus_tlb_req0), .bus_tlb_busy0(bus_tlb_busy0),
-        .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0), .bus_plic_we0(bus_plic_we0),
+        .bus_mip0(bus_mip0), .bus_wmip0(bus_wmip0),
         .bus_dram_addr0(bus_dram_addr0), .bus_dram_wdata0(bus_dram_wdata0), .bus_dram_odata0(bus_dram_odata0), .bus_dram_we_t0(bus_dram_we_t0),
         .bus_dram_busy0(bus_dram_busy0), .bus_dram_ctrl0(bus_dram_ctrl0), .bus_dram_le0(bus_dram_le0),
 
@@ -183,7 +182,7 @@ module m_topsim(CLK, RST_X);
         .bus_mem_paddr1(bus_mem_paddr1), .bus_data_we1(bus_data_we1), .bus_data_le1(bus_data_le1),
         .bus_data_wdata1(bus_data_wdata1), .bus_data_data1(bus_data_data1),
         .bus_tlb_req1(bus_tlb_req1), .bus_tlb_busy1(bus_tlb_busy1),
-        .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1), .bus_plic_we1(bus_plic_we1),
+        .bus_mip1(bus_mip1), .bus_wmip1(bus_wmip1),
         .bus_dram_addr1(bus_dram_addr1), .bus_dram_wdata1(bus_dram_wdata1), .bus_dram_odata1(bus_dram_odata1), .bus_dram_we_t1(bus_dram_we_t1),
         .bus_dram_busy1(bus_dram_busy1), .bus_dram_ctrl1(bus_dram_ctrl1), .bus_dram_le1(bus_dram_le1)
     );
@@ -245,14 +244,20 @@ module m_topsim(CLK, RST_X);
     end
     assign w_data_data = r_data_data;
 
+    /*********************************          PLIC          *********************************/
+
+    reg r_plic_we0=0, r_plic_we1=0;
+    assign w_wmip  = 0;
+`ifdef SIM_MODE
+    reg [31:0] r_plic_displays=0;
+`endif
+
+    always@(posedge pll_clk) begin
+        if(w_extint_taken0) begin
+        end
+    end
     /*********************************          IPI          *********************************/
     
-    wire        w_isread        = (w_tlb_req == `ACCESS_READ);
-    wire        w_iswrite       = (w_tlb_req == `ACCESS_WRITE);
-
-    assign w_plic_we      = 0;
-    assign w_wmip  = 0;
-
 `ifdef SIM_MODE
     reg [31:0] r_max_displays=0;
 `endif
