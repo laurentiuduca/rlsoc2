@@ -200,12 +200,10 @@ module m_topsim(CLK, RST_X);
     reg   r_data_we = 0;
     reg   [3:0] r_data_busy = 0;
     reg   [3:0] r_dev       = 0;// & 32'hf0000000;
-    reg   [3:0] r_virt      = 0;// & 32'h0f000000;
     always@(posedge pll_clk) begin
         if(r_data_busy == 0) begin
             //if(!w_tlb_busy) begin
                 r_dev   <= w_dev;
-                r_virt  <= w_virt;
                 r_mem_paddr <= w_mem_paddr;
                 r_data_le <= w_data_le;
                 r_data_we <= w_data_we;
@@ -247,17 +245,22 @@ module m_topsim(CLK, RST_X);
     /*********************************          PLIC          *********************************/
 
     reg r_plic_we0=0, r_plic_we1=0;
+    reg r_plic_armed=0;
     assign w_wmip  = 0;
 `ifdef SIM_MODE
     reg [31:0] r_plic_displays=0;
 `endif
 
     always@(posedge pll_clk) begin
-        if(w_extint_taken0) begin
-            r_plic_we0 <= 0;
+        if(r_dev == `PLIC_BASE_TADDR) begin
+            $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x w_data_wdata=%x", 
+                            w_mtime, w_grant, r_mem_paddr, w_data_wdata);
         end
-        if(w_extint_taken1) begin
-            r_plic_we1 <= 0;
+        if(r_plic_armed) begin
+            if(w_extint_taken0)
+                r_plic_we0 <= 0;
+            if(w_extint_taken1)
+                r_plic_we1 <= 0;
         end
     end
     /*********************************          IPI          *********************************/
@@ -366,21 +369,6 @@ module m_topsim(CLK, RST_X);
         end
     end
 
-    `ifdef laur0
-    // shortcut to r_data_we because we do not use microcontroller
-    assign w_wmtimecmp0  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4000 && w_grant == 0) && r_data_we != 0) ?
-                                {w_mtimecmp0[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4004 && w_grant == 0) && r_data_we != 0) ?
-                                {w_data_wdata, w_mtimecmp0[31:0]} : 0;
-    assign w_wmtimecmp1  = (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h4008 && w_grant == 1) && r_data_we != 0) ?
-                                {w_mtimecmp1[63:32], w_data_wdata} :
-                                (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h400c && w_grant == 1) && r_data_we != 0) ?
-                                {w_data_wdata, w_mtimecmp1[31:0]} : 0;
-    assign w_clint_we0   = r_dev == `CLINT_BASE_TADDR && r_data_we != 0 && 
-                           ((w_offset==28'h4000 || w_offset==28'h4004) && w_grant == 0);
-    assign w_clint_we1   = r_dev == `CLINT_BASE_TADDR && r_data_we != 0 && 
-                           ((w_offset==28'h4008 || w_offset==28'h400c) && w_grant == 1);
-    `endif
     /**********************************************************************************************/
     // OUTPUT CHAR
     UartTx UartTx0(pll_clk, RST_X, r_uart_data, r_uart_we, w_txd, w_tx_ready);
