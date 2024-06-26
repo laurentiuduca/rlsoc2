@@ -195,7 +195,8 @@ module m_topsim(CLK, RST_X);
     wire  [3:0] w_dev       = w_mem_paddr[31:28];// & 32'hf0000000;
     wire  [3:0] w_virt      = w_mem_paddr[27:24];// & 32'h0f000000;
     wire  [27:0] w_offset   = w_mem_paddr & 28'h7ffffff;
-    reg   [31:0] r_mem_paddr= 0;
+    reg   [31:0] r_mem_paddr = 0;
+    reg   [31:0] r_data_wdata = 0;
     reg   r_data_le = 0;
     reg   r_data_we = 0;
     reg   [3:0] r_data_busy = 0;
@@ -207,6 +208,7 @@ module m_topsim(CLK, RST_X);
                 r_mem_paddr <= w_mem_paddr;
                 r_data_le <= w_data_le;
                 r_data_we <= w_data_we;
+                r_data_wdata <= w_data_wdata;
                 if(//(w_dev == `CLINT_BASE_TADDR || w_dev == `PLIC_BASE_TADDR || w_dev == `HVC_BASE_TADDR) &&
                     (w_data_we || w_data_le))
                     r_data_busy <= 1;
@@ -245,22 +247,36 @@ module m_topsim(CLK, RST_X);
     /*********************************          PLIC          *********************************/
 
     reg r_plic_we0=0, r_plic_we1=0;
-    reg r_plic_armed=0;
+    reg r_plic_armed=0, plicaux1=0;
     assign w_wmip  = 0;
 `ifdef SIM_MODE
     reg [31:0] r_plic_displays=0;
 `endif
 
     always@(posedge pll_clk) begin
-        if(r_dev == `PLIC_BASE_TADDR) begin
-            $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x w_data_wdata=%x", 
-                            w_mtime, w_grant, r_mem_paddr, w_data_wdata);
+        if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
+            $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
+                            w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
+            if(w_grant == 1 && r_data_le && r_data_busy == 1 && plicaux1==0 && r_plic_armed) begin
+                r_plic_odata <= 1;
+                plicaux1 <= 1;
+            end else
+                r_plic_odata <= 0;
+        end
+        if(r_mem_paddr == 32'h3ffffffc && (r_data_le || r_data_we) && r_data_busy == 1) begin
+            $display("interrupt ack");
         end
         if(r_plic_armed) begin
             if(w_extint_taken0)
                 r_plic_we0 <= 0;
             if(w_extint_taken1)
                 r_plic_we1 <= 0;
+        end else begin
+            if(w_mtime >= 80000000) begin
+                r_plic_we0 <= 1;
+                r_plic_we1 <= 1;
+                r_plic_armed <= 1;
+            end
         end
     end
     /*********************************          IPI          *********************************/
