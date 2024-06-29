@@ -248,11 +248,14 @@ module m_topsim(CLK, RST_X);
 
     reg r_plic_we0=0, r_plic_we1=0;
     reg r_plic_armed=0, plicaux1=0;
+    reg r_plictest_started=0;
     assign w_wmip  = 0;
 `ifdef SIM_MODE
     reg [31:0] r_plic_displays=0;
 `endif
 
+`define SIM_PLIC
+`ifdef SIM_PLIC
     always@(posedge pll_clk) begin
         if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
             $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
@@ -264,7 +267,11 @@ module m_topsim(CLK, RST_X);
                 r_plic_odata <= 0;
         end
         if(r_mem_paddr == 32'h3ffffffc && (r_data_le || r_data_we) && r_data_busy == 1) begin
-            $display("interrupt ack");
+            if(r_data_wdata == 1000) begin
+                $display("------- started plictest");
+                r_plictest_started <= 1;
+            end else
+                $display("interrupt ack");
         end
         if(r_plic_armed) begin
             if(w_extint_taken0)
@@ -272,13 +279,14 @@ module m_topsim(CLK, RST_X);
             if(w_extint_taken1)
                 r_plic_we1 <= 0;
         end else begin
-            if(w_mtime >= 80000000) begin
+            if(/*w_mtime >= 80000000*/r_plictest_started) begin
                 r_plic_we0 <= 1;
                 r_plic_we1 <= 1;
                 r_plic_armed <= 1;
             end
         end
     end
+`endif
     /*********************************          IPI          *********************************/
     
 `ifdef SIM_MODE
