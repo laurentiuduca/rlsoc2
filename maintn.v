@@ -245,48 +245,82 @@ module m_topsim(CLK, RST_X);
     assign w_data_data = r_data_data;
 
     /*********************************          PLIC          *********************************/
-
+    `ifdef SIM_PLIC
+    wire w_extint1=r_extint1;
+    reg r_extint1=0;
+    `endif
+    wire [7:0] w_extint={7'd0, w_extint1};
+    reg [7:0] r_enabled_extint=0;
+    reg [7:0] r_extint_num=0;
+    wire [7:0] w_irq_t;
+    assign w_irq_t = w_extint & (~w_extint+1) & r_enabled_extint;
+    always@(posedge pll_clk) begin
+            case (w_irq_t)
+                32'h00000001: r_extint_num <= 1;
+                32'h00000002: r_extint_num <= 2;
+                32'h00000004: r_extint_num <= 3;
+                32'h00000008: r_extint_num <= 4;
+                32'h00000010: r_extint_num <= 5;
+                32'h00000020: r_extint_num <= 6;
+                32'h00000040: r_extint_num <= 7;
+                32'h00000080: r_extint_num <= 8;
+                default:      r_extint_num <= 0;
+            endcase
+        end
+    end
     reg r_plic_we0=0, r_plic_we1=0;
-    reg r_plic_armed=0, plicaux1=0;
+    reg r_plic_armed=0, plic_handler_start=0;
     reg r_plictest_started=0;
     assign w_wmip  = 0;
-`ifdef SIM_MODE
-    reg [31:0] r_plic_displays=0;
-`endif
 
-`define SIM_PLIC
-`ifdef SIM_PLIC
     always@(posedge pll_clk) begin
-        if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
-            $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
-                            w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
-            if(w_grant == 1 && r_data_le && r_data_busy == 1 && plicaux1==0 && r_plic_armed) begin
-                r_plic_odata <= 1;
-                plicaux1 <= 1;
-            end else
-                r_plic_odata <= 0;
-        end
-        if(r_mem_paddr == 32'h3ffffffc && (r_data_le || r_data_we) && r_data_busy == 1) begin
-            if(r_data_wdata == 1000) begin
-                $display("------- started plictest");
-                r_plictest_started <= 1;
-            end else
-                $display("interrupt ack");
-        end
         if(r_plic_armed) begin
+            if(r_mem_paddr == `EXTINT_ACK_ADDR && r_data_we && r_data_busy == 1) begin
+                $display("interrupt ack");
+                `ifdef SIM_PLIC
+                r_extint1 <= 0;
+                `endif                    
+                if(r_extint_start == 1)
+                    r_extint1_ack <= 1;
+            end
+            if(w_extint1 == 0) begin
+                r_extint1_ack <= 0;
+                r_plic_armed <= 0;
+            end
+            if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
+                $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
+                            w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
+                if(r_data_le && r_data_busy == 1 && plic_handler_start==0 && r_plic_armed) begin
+                    r_plic_odata <= {24'h0, r_extint_num};
+                    plic_handler_start <= 1;
+                end else if(r_data_we)
+                    plic_handler_start <= 0;
+                else
+                    r_plic_odata <= 0;
+            end
+
             if(w_extint_taken0)
                 r_plic_we0 <= 0;
             if(w_extint_taken1)
                 r_plic_we1 <= 0;
         end else begin
-            if(/*w_mtime >= 80000000*/r_plictest_started) begin
+            `ifdef SIM_PLIC
+            if(r_mem_paddr == `EXTINT_ACK_ADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
+                if(r_data_wdata == 1000) begin
+                    $display("started plictest");
+                    r_extint1 <= 1;
+                end
+            end
+            `endif
+            if(r_extint_num) begin
                 r_plic_we0 <= 1;
                 r_plic_we1 <= 1;
                 r_plic_armed <= 1;
+                r_extint_start <= r_extint_num;
             end
         end
     end
-`endif
+
     /*********************************          IPI          *********************************/
     
 `ifdef SIM_MODE

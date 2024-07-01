@@ -27,6 +27,7 @@ error
 
 `ifdef SIM_MODE
 `define SIM_TNSRAM // tang nano sim ram
+`define SIM_PLIC
 //`define SIM_TNREFRESH
 //`define RAM_DEBUG
 `define mtsm 1
@@ -40,6 +41,7 @@ error
 `define IPI_MAX_DISPLAYS 20
 //`define LAUR_DEBUG_IPI
 //    `define laurmom 32'h094bd3e3
+`define EXTINT_ACK_ADDR 32'h3ffffffc
 
 `define LINUX
 `define TIMEOUT 64'd30000000001
