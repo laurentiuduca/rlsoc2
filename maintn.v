@@ -335,14 +335,14 @@ module m_topsim(CLK, RST_X);
             r_plic_odata <= 0;
             if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 1) begin
                     r_ena_extint_hart0 <= r_data_wdata;
-                    $display("r_ena_extint_hart0 <= 1");
+                    $display("r_ena_extint_hart0 <- %x", r_data_wdata);
             end  else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart0;
                     $display("r_ena_extint_hart0 is read as %x", r_ena_extint_hart0);
             end  
             else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we && r_data_busy == 1) begin
                     r_ena_extint_hart1 <= r_data_wdata;
-                    $display("r_ena_extint_hart1 <= 1");
+                    $display("r_ena_extint_hart1 <- %x", r_data_wdata);
             end else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart1;
                     $display("r_ena_extint_hart1 is read as %x", r_ena_extint_hart1);
