@@ -290,7 +290,7 @@ module m_topsim(CLK, RST_X);
                 r_extint1 <= 0;
                 `endif                    
                 r_extint1_ack <= 1;
-            end else if(w_extint1 == 0) begin
+            end else if(w_extint1 == 0 && r_extint1_ack) begin
                 r_extint1_ack <= 0;
                 $display("r_extint1_ack <= because w_extint1 is 0");
             end
@@ -303,16 +303,18 @@ module m_topsim(CLK, RST_X);
                     && ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
                         (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
                    ) begin
-                    r_plic_odata <= {24'h0, r_extint_num};
+                    r_plic_odata <= {24'h0, r_plic_armed};
                     plic_handler_start <= 1;
-                end else if(r_data_we && plic_handler_start
-                    && ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
-                        (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
+                    $display("read from claim returns : %x", r_plic_armed);
+                end else if(r_data_we && plic_handler_start /*&& r_data_wdata == r_plic_armed */
+                    && ((r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM)) ||
+                        (r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM)))
                     ) begin
                     // sw announce us when interrupt was completed
                     plic_handler_start <= 0;
                     r_plic_armed <= 0;
                     r_plic_odata <= 0;
+                    $display("write to claim : %x", r_data_wdata);
                 end
             end
 
@@ -331,7 +333,7 @@ module m_topsim(CLK, RST_X);
                 if((w_irq_t & r_ena_extint_hart0) || (w_irq_t & r_ena_extint_hart1))
                     r_plic_armed <= r_extint_num;
             end
-            if(w_extint1 == 0) begin
+            if(w_extint1 == 0 && r_extint1_ack) begin
                 r_extint1_ack <= 0;
                 $display("r_extint1_ack <= because w_extint1 is 0");
             end
