@@ -307,7 +307,8 @@ module m_topsim(CLK, RST_X);
                         r_plic_odata <= {24'h0, r_plic_armed};
                         plic_handler_start <= 1;
                         $display("read from claim returns %x w_grant=%1x pc0=%x pc1=%x", r_plic_armed, w_grant, w_pc0, w_pc1);
-                    end
+                    end else
+                        r_plic_odata <= 0;
                     r_plic_read_cnt <= r_plic_read_cnt + 1;
                 end else if(r_data_we && plic_handler_start /*&& r_data_wdata == r_plic_armed */
                     && ((r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM)) ||
