@@ -252,6 +252,7 @@ module m_topsim(CLK, RST_X);
     wire w_extint1=r_extint1;
     reg r_extint1=0, r_extint1_ack=0;
     `endif
+    reg r_plic_singlecore_int=0;
     wire [7:0] w_extint={7'd0, w_extint1};
     reg [7:0] r_ena_extint_hart0=0, r_ena_extint_hart1=0;
     reg [7:0] r_extint_num=0;
@@ -322,8 +323,7 @@ module m_topsim(CLK, RST_X);
             end else begin
                 r_plic_odata <= 0;
                 // exit logic
-                if((r_plic_read_cnt >= 3 || 
-                    (r_plic_read_cnt == 2 && !(r_ena_extint_hart0 & r_ena_extint_hart0 & w_irq_t))) && 
+                if((r_plic_read_cnt >= 3 || (r_plic_read_cnt == 2 && r_plic_singlecore_int)) && 
                     r_plic_write_cnt) begin
                         r_plic_read_cnt <= 0;
                         r_plic_write_cnt <= 0;
@@ -346,6 +346,10 @@ module m_topsim(CLK, RST_X);
                 if(w_irq_t & r_ena_extint_hart1) r_plic_we1 <= 1;
                 if((w_irq_t & r_ena_extint_hart0) || (w_irq_t & r_ena_extint_hart1))
                     r_plic_armed <= r_extint_num;
+                if(w_irq_t & r_ena_extint_hart0 & r_ena_extint_hart1)
+                    r_plic_singlecore_int <= 0;
+                else
+                    r_plic_singlecore_int <= 1;
             end
             if(w_extint1 == 0 && r_extint1_ack) begin
                 r_extint1_ack <= 0;
