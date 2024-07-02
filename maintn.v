@@ -293,7 +293,7 @@ module m_topsim(CLK, RST_X);
                 r_extint1_ack <= 1;
             end else if(w_extint1 == 0 && r_extint1_ack) begin
                 r_extint1_ack <= 0;
-                $display("r_extint1_ack <= because w_extint1 is 0");
+                $display("r_extint1_ack <= 0 because w_extint1 is 0");
             end
         
             // output logic
@@ -311,7 +311,7 @@ module m_topsim(CLK, RST_X);
                     end else
                         r_plic_odata <= 0;
                     r_plic_read_cnt <= r_plic_read_cnt + 1;
-                end else if(r_data_we && plic_handler_start /*&& r_data_wdata == r_plic_armed */
+                end else if(r_data_we && plic_handler_start && r_data_wdata == r_plic_armed
                     && ((r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM)) ||
                         (r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM)))
                     ) begin
@@ -354,7 +354,7 @@ module m_topsim(CLK, RST_X);
             end
             if(w_extint1 == 0 && r_extint1_ack) begin
                 r_extint1_ack <= 0;
-                $display("r_extint1_ack <= because w_extint1 is 0");
+                $display("r_extint1_ack <= 0 because w_extint1 is 0");
             end
 
             if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 2) begin
