@@ -255,9 +255,9 @@ module m_topsim(CLK, RST_X);
     wire [7:0] w_extint={7'd0, w_extint1};
     reg [7:0] r_ena_extint_hart0=0, r_ena_extint_hart1=0;
     reg [7:0] r_extint_num=0;
-    wire [7:0] w_pending_extint = (w_extint & r_ena_extint_hart0) | (w_extint & r_ena_extint_hart1);
     wire [7:0] w_irq_t;
-    assign w_irq_t = w_pending_extint & (~w_pending_extint+1);
+    wire [7:0] w_pending_extint = (w_extint & r_ena_extint_hart0) | (w_extint & r_ena_extint_hart1);
+    wire [7:0] w_irq_t = w_pending_extint & (1 + ~w_pending_extint);
     always@(posedge pll_clk) begin
             case (w_irq_t)
                 32'h00000001: r_extint_num <= 1;
@@ -298,14 +298,14 @@ module m_topsim(CLK, RST_X);
                 $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
                             w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
                 if(r_data_le && plic_handler_start==0
-                    //&& ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
-                    //    (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
+                    && ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
+                        (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
                    ) begin
                     r_plic_odata <= {24'h0, r_extint_num};
                     plic_handler_start <= 1;
                 end else if(r_data_we && plic_handler_start
-                    //&& ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
-                    //    (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
+                    && ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
+                        (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
                     ) begin
                     // sw announce us when interrupt was completed
                     plic_handler_start <= 0;
@@ -333,14 +333,20 @@ module m_topsim(CLK, RST_X);
                 r_extint1_ack <= 0;
 
             r_plic_odata <= 0;
-            if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we)
+            if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 1) begin
                     r_ena_extint_hart0 <= r_data_wdata;
-            else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1)
+                    $display("r_ena_extint_hart0 <= 1");
+            end  else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart0;
-            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we)
+                    $display("r_ena_extint_hart0 is read as %x", r_ena_extint_hart0);
+            end  
+            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we && r_data_busy == 1) begin
                     r_ena_extint_hart1 <= r_data_wdata;
-            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1)
+                    $display("r_ena_extint_hart1 <= 1");
+            end else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart1;
+                    $display("r_ena_extint_hart1 is read as %x", r_ena_extint_hart1);
+            end
         end
     end
 
