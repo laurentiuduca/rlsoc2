@@ -322,7 +322,8 @@ module m_topsim(CLK, RST_X);
             end else begin
                 r_plic_odata <= 0;
                 // exit logic
-                if((r_plic_read_cnt >= 3 || (r_plic_read_cnt == 2 && !(r_ena_extint_hart0 && r_ena_extint_hart0))) && 
+                if((r_plic_read_cnt >= 3 || 
+                    (r_plic_read_cnt == 2 && !(r_ena_extint_hart0 & r_ena_extint_hart0 & w_irq_t))) && 
                     r_plic_write_cnt) begin
                         r_plic_read_cnt <= 0;
                         r_plic_write_cnt <= 0;
