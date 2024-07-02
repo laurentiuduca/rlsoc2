@@ -291,10 +291,12 @@ module m_topsim(CLK, RST_X);
                 r_extint1 <= 0;
                 `endif                    
                 r_extint1_ack <= 1;
-            end else if(w_extint1 == 0 && r_extint1_ack) begin
+            end else if(w_extint1 == 0) begin
                 r_extint1_ack <= 0;
-                $display("r_extint1_ack <= 0 because w_extint1 is 0");
+                if(r_extint1_ack)
+                    $display("r_extint1_ack <= 0 because w_extint1 is 0");
             end
+
         
             // output logic
             if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 2) begin
@@ -352,9 +354,10 @@ module m_topsim(CLK, RST_X);
                 else
                     r_plic_singlecore_int <= 1;
             end
-            if(w_extint1 == 0 && r_extint1_ack) begin
+            if(w_extint1 == 0) begin
                 r_extint1_ack <= 0;
-                $display("r_extint1_ack <= 0 because w_extint1 is 0");
+                if(r_extint1_ack)
+                    $display("r_extint1_ack <= 0 because w_extint1 is 0");
             end
 
             if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 2) begin
