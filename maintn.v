@@ -290,8 +290,10 @@ module m_topsim(CLK, RST_X);
                 r_extint1 <= 0;
                 `endif                    
                 r_extint1_ack <= 1;
-            end else if(w_extint1 == 0)
+            end else if(w_extint1 == 0) begin
                 r_extint1_ack <= 0;
+                $display("r_extint1_ack <= because w_extint1 is 0");
+            end
         
             r_plic_odata <= 0;        
             if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
@@ -329,20 +331,22 @@ module m_topsim(CLK, RST_X);
                 if((w_irq_t & r_ena_extint_hart0) || (w_irq_t & r_ena_extint_hart1))
                     r_plic_armed <= r_extint_num;
             end
-            if(w_extint1 == 0)
+            if(w_extint1 == 0) begin
                 r_extint1_ack <= 0;
-
+                $display("r_extint1_ack <= because w_extint1 is 0");
+            end
             r_plic_odata <= 0;
             if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 1) begin
-                    r_ena_extint_hart0 <= r_data_wdata;
-                    $display("r_ena_extint_hart0 <- %x", r_data_wdata);
+                    // plic_toggle writes 1 << hwirq
+                    r_ena_extint_hart0 <= r_data_wdata >> 1;
+                    $display("r_ena_extint_hart0 <- %x", r_data_wdata >> 1);
             end  else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart0;
                     $display("r_ena_extint_hart0 is read as %x", r_ena_extint_hart0);
             end  
             else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we && r_data_busy == 1) begin
-                    r_ena_extint_hart1 <= r_data_wdata;
-                    $display("r_ena_extint_hart1 <- %x", r_data_wdata);
+                    r_ena_extint_hart1 <= r_data_wdata >> 1;
+                    $display("r_ena_extint_hart1 <- %x", r_data_wdata >> 1);
             end else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart1;
                     $display("r_ena_extint_hart1 is read as %x", r_ena_extint_hart1);
