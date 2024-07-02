@@ -267,7 +267,6 @@ module m_topsim(CLK, RST_X);
                 32'h00000080: r_extint_num <= 8;
                 default:      r_extint_num <= 0;
             endcase
-        end
     end
     reg r_plic_we0=0, r_plic_we1=0;
     reg [7:0] r_plic_armed=0;
@@ -275,53 +274,63 @@ module m_topsim(CLK, RST_X);
     reg r_plictest_started=0;
 
     always@(posedge pll_clk) begin
-        if(r_plic_armed) begin
+        if(r_plic_armed) begin // inside interrupt
+            // rvcorem announced it got interrupt
+            if(w_extint_taken0)
+                r_plic_we0 <= 0;
+            if(w_extint_taken1)
+                r_plic_we1 <= 0;
+
             if(r_mem_paddr == `EXTINT_ACK_ADDR && r_data_we && r_data_busy == 1) begin
                 $display("interrupt ack");
                 `ifdef SIM_PLIC
                 r_extint1 <= 0;
                 `endif                    
-                if(r_extint_start == 1)
-                    r_extint1_ack <= 1;
-            end
-            if(r_plic_armed == 1)
-                if(w_extint1 == 0) begin
-                    r_extint1_ack <= 0;
-                end 
+                r_extint1_ack <= 1;
+            end else if(w_extint1 == 0)
+                r_extint1_ack <= 0;
+        
+            r_plic_odata <= 0;        
             if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
-                    $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
+                $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
                             w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
-                if(r_data_le && plic_handler_start==0) begin
+                if(r_data_le && plic_handler_start==0
+                    //&& ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
+                    //    (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
+                   ) begin
                     r_plic_odata <= {24'h0, r_extint_num};
                     plic_handler_start <= 1;
-                end else if(r_data_we && plic_handler_start)
+                end else if(r_data_we && plic_handler_start
+                    //&& ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
+                    //    (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
+                    ) begin
                     // sw announce us when interrupt was completed
                     plic_handler_start <= 0;
                     r_plic_armed <= 0;
                     r_plic_odata <= 0;
-                else
-                    r_plic_odata <= 0;
+                end
             end
 
-            if(w_extint_taken0)
-                r_plic_we0 <= 0;
-            if(w_extint_taken1)
-                r_plic_we1 <= 0;
-        end else begin
+        end else begin // outside interrupt
             `ifdef SIM_PLIC
             if(r_mem_paddr == `EXTINT_ACK_ADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
                 if(r_data_wdata == 1000) begin
                     $display("started plictest");
                     r_extint1 <= 1;
                 end
-            end else
+            end
             `endif
-            r_plic_odata <= 0;
             if(r_extint_num) begin
                 if(w_irq_t & r_ena_extint_hart0) r_plic_we0 <= 1;
                 if(w_irq_t & r_ena_extint_hart1) r_plic_we1 <= 1;
-                r_plic_armed <= r_extint_num;
-            else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we)
+                if((w_irq_t & r_ena_extint_hart0) || (w_irq_t & r_ena_extint_hart1))
+                    r_plic_armed <= r_extint_num;
+            end 
+            if(w_extint1 == 0)
+                r_extint1_ack <= 0;
+
+            r_plic_odata <= 0;
+            if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we)
                     r_ena_extint_hart0 <= r_data_wdata;
             else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1)
                     r_plic_odata <= r_ena_extint_hart0;
