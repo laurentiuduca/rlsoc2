@@ -285,7 +285,7 @@ module m_topsim(CLK, RST_X);
             if(w_extint_taken1)
                 r_plic_we1 <= 0;
 
-            if(r_mem_paddr == `EXTINT_ACK_ADDR && r_data_we && r_data_busy == 1) begin
+            if(r_mem_paddr == `EXTINT_ACK_ADDR && r_data_we && r_data_busy == 2) begin
                 $display("interrupt ack");
                 `ifdef SIM_PLIC
                 r_extint1 <= 0;
@@ -297,7 +297,7 @@ module m_topsim(CLK, RST_X);
             end
         
             // output logic
-            if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
+            if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 2) begin
                 $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
                             w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
                 if(r_data_le
@@ -329,12 +329,13 @@ module m_topsim(CLK, RST_X);
                         r_plic_write_cnt <= 0;
                         plic_handler_start <= 0;
                         r_plic_armed <= 0;
+                        $display("plic interrupt done");
                 end
             end
 
         end else begin // outside interrupt
             `ifdef SIM_PLIC
-            if(r_mem_paddr == `EXTINT_ACK_ADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
+            if(r_mem_paddr == `EXTINT_ACK_ADDR && (r_data_le || r_data_we) && r_data_busy == 2) begin
                 if(r_data_wdata == 1000) begin
                     $display("started plictest");
                     r_extint1 <= 1;
@@ -356,20 +357,20 @@ module m_topsim(CLK, RST_X);
                 $display("r_extint1_ack <= because w_extint1 is 0");
             end
 
-            if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 1) begin
-                    // plic_toggle writes 1 << hwirq
+            if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 2) begin
+                    // plic_toggle() writes 1 << hwirq
                     r_ena_extint_hart0 <= r_data_wdata >> 1;
                     r_plic_odata <= 0;
                     $display("r_ena_extint_hart0 <- %x", r_data_wdata >> 1);
-            end else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1) begin
+            end else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 2) begin
                     r_plic_odata <= r_ena_extint_hart0;
                     $display("r_ena_extint_hart0 is read as %x", r_ena_extint_hart0);
             end  
-            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we && r_data_busy == 1) begin
+            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we && r_data_busy == 2) begin
                     r_ena_extint_hart1 <= r_data_wdata >> 1;
                     r_plic_odata <= 0;
                     $display("r_ena_extint_hart1 <- %x", r_data_wdata >> 1);
-            end else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1) begin
+            end else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 2) begin
                     r_plic_odata <= r_ena_extint_hart1;
                     $display("r_ena_extint_hart1 is read as %x", r_ena_extint_hart1);
             end else
