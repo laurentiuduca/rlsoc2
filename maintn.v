@@ -18,6 +18,9 @@ module m_maintn(
 	input wire w_btnl,
 	input wire w_btnr,
 
+    input wire w_extint1,
+    output reg r_extint1_ack,
+
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -247,7 +250,7 @@ module m_topsim(CLK, RST_X);
     /*********************************          PLIC          *********************************/
     `ifdef SIM_PLIC
     wire w_extint1=r_extint1;
-    reg r_extint1=0;
+    reg r_extint1=0, r_extint1_ack=0;
     `endif
     wire [7:0] w_extint={7'd0, w_extint1};
     reg [7:0] r_ena_extint_hart0=0, r_ena_extint_hart1=0;
@@ -325,7 +328,7 @@ module m_topsim(CLK, RST_X);
                 if(w_irq_t & r_ena_extint_hart1) r_plic_we1 <= 1;
                 if((w_irq_t & r_ena_extint_hart0) || (w_irq_t & r_ena_extint_hart1))
                     r_plic_armed <= r_extint_num;
-            end 
+            end
             if(w_extint1 == 0)
                 r_extint1_ack <= 0;
 
