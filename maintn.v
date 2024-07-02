@@ -272,7 +272,7 @@ module m_topsim(CLK, RST_X);
             endcase
     end
     reg r_plic_we0=0, r_plic_we1=0;
-    reg [7:0] r_plic_armed=0;
+    reg [7:0] r_plic_armed=0, r_plic_read_cnt=0, r_plic_write_cnt=0;
     reg plic_handler_start=0;
     reg r_plictest_started=0;
 
@@ -295,26 +295,38 @@ module m_topsim(CLK, RST_X);
                 $display("r_extint1_ack <= because w_extint1 is 0");
             end
         
-            r_plic_odata <= 0;        
+            // output logic
             if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
                 $display("plic t=%8x w_grant=%1x r_mem_paddr=%x r_data_le=%1x r_data_we=%1x r_data_wdata=%x", 
                             w_mtime, w_grant, r_mem_paddr, r_data_le, r_data_we, r_data_wdata);
-                if(r_data_le && plic_handler_start==0
+                if(r_data_le
                     && ((r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM) ||
                         (r_mem_paddr == `PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM))
                    ) begin
-                    r_plic_odata <= {24'h0, r_plic_armed};
-                    plic_handler_start <= 1;
-                    $display("read from claim returns : %x", r_plic_armed);
+                    if(plic_handler_start==0) begin
+                        r_plic_odata <= {24'h0, r_plic_armed};
+                        plic_handler_start <= 1;
+                        $display("read from claim returns %x w_grant=%1x pc0=%x pc1=%x", r_plic_armed, w_grant, w_pc0, w_pc1);
+                    end
+                    r_plic_read_cnt <= r_plic_read_cnt + 1;
                 end else if(r_data_we && plic_handler_start /*&& r_data_wdata == r_plic_armed */
                     && ((r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + `PLIC_HART_CLAIM)) ||
                         (r_mem_paddr == (`PLIC_BASE_ADDR + `PLIC_HART_BASE + 2*`PLIC_HART_SIZE + `PLIC_HART_CLAIM)))
                     ) begin
                     // sw announce us when interrupt was completed
-                    plic_handler_start <= 0;
-                    r_plic_armed <= 0;
-                    r_plic_odata <= 0;
+                    r_plic_write_cnt <= 1;
                     $display("write to claim : %x", r_data_wdata);
+                end else
+                    r_plic_odata <= 0;
+            end else begin
+                r_plic_odata <= 0;
+                // exit logic
+                if((r_plic_read_cnt >= 3 || (r_plic_read_cnt == 2 && !(r_ena_extint_hart0 && r_ena_extint_hart0))) && 
+                    r_plic_write_cnt) begin
+                        r_plic_read_cnt <= 0;
+                        r_plic_write_cnt <= 0;
+                        plic_handler_start <= 0;
+                        r_plic_armed <= 0;
                 end
             end
 
@@ -337,22 +349,26 @@ module m_topsim(CLK, RST_X);
                 r_extint1_ack <= 0;
                 $display("r_extint1_ack <= because w_extint1 is 0");
             end
-            r_plic_odata <= 0;
+
             if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we && r_data_busy == 1) begin
                     // plic_toggle writes 1 << hwirq
                     r_ena_extint_hart0 <= r_data_wdata >> 1;
+                    r_plic_odata <= 0;
                     $display("r_ena_extint_hart0 <- %x", r_data_wdata >> 1);
-            end  else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1) begin
+            end else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart0;
                     $display("r_ena_extint_hart0 is read as %x", r_ena_extint_hart0);
             end  
             else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we && r_data_busy == 1) begin
                     r_ena_extint_hart1 <= r_data_wdata >> 1;
+                    r_plic_odata <= 0;
                     $display("r_ena_extint_hart1 <- %x", r_data_wdata >> 1);
             end else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1) begin
                     r_plic_odata <= r_ena_extint_hart1;
                     $display("r_ena_extint_hart1 is read as %x", r_ena_extint_hart1);
-            end
+            end else
+                r_plic_odata <= 0;
+
         end
     end
 
