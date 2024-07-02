@@ -89,7 +89,7 @@ module m_topsim(CLK, RST_X);
     wire w_clint_we0, w_clint_we1;
     wire [1:0]  w_tlb_req, bus_tlb_req0, bus_tlb_req1;
     wire        w_tlb_busy, bus_tlb_busy0, bus_tlb_busy1;
-    wire [31:0] w_mip, w_wmip, bus_mip0, bus_wmip0, bus_mip1, bus_wmip1;
+    wire [31:0] w_mip, bus_mip0, bus_wmip0, bus_mip1, bus_wmip1;
     wire [31:0] w_dram_addr, bus_dram_addr0, bus_dram_addr1;
     wire [31:0] w_dram_wdata, bus_dram_wdata0, bus_dram_wdata1;
     wire [31:0] w_dram_odata, bus_dram_odata0, bus_dram_odata1;
@@ -250,10 +250,11 @@ module m_topsim(CLK, RST_X);
     reg r_extint1=0;
     `endif
     wire [7:0] w_extint={7'd0, w_extint1};
-    reg [7:0] r_enabled_extint=0;
+    reg [7:0] r_ena_extint_hart0=0, r_ena_extint_hart1=0;
     reg [7:0] r_extint_num=0;
+    wire [7:0] w_pending_extint = (w_extint & r_ena_extint_hart0) | (w_extint & r_ena_extint_hart1);
     wire [7:0] w_irq_t;
-    assign w_irq_t = w_extint & (~w_extint+1) & r_enabled_extint;
+    assign w_irq_t = w_pending_extint & (~w_pending_extint+1);
     always@(posedge pll_clk) begin
             case (w_irq_t)
                 32'h00000001: r_extint_num <= 1;
@@ -272,7 +273,6 @@ module m_topsim(CLK, RST_X);
     reg [7:0] r_plic_armed=0;
     reg plic_handler_start=0;
     reg r_plictest_started=0;
-    assign w_wmip  = 0;
 
     always@(posedge pll_clk) begin
         if(r_plic_armed) begin
@@ -295,6 +295,7 @@ module m_topsim(CLK, RST_X);
                     r_plic_odata <= {24'h0, r_extint_num};
                     plic_handler_start <= 1;
                 end else if(r_data_we && plic_handler_start)
+                    // sw announce us when interrupt was completed
                     plic_handler_start <= 0;
                     r_plic_armed <= 0;
                     r_plic_odata <= 0;
@@ -313,16 +314,21 @@ module m_topsim(CLK, RST_X);
                     $display("started plictest");
                     r_extint1 <= 1;
                 end
-            end
+            end else
             `endif
+            r_plic_odata <= 0;
             if(r_extint_num) begin
-                r_plic_we0 <= 1;
-                r_plic_we1 <= 1;
+                if(w_irq_t & r_ena_extint_hart0) r_plic_we0 <= 1;
+                if(w_irq_t & r_ena_extint_hart1) r_plic_we1 <= 1;
                 r_plic_armed <= r_extint_num;
-            end
-            if(r_dev == `PLIC_BASE_TADDR && (r_data_le || r_data_we) && r_data_busy == 1) begin
-                // check if sw wants to enable int
-            end
+            else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_we)
+                    r_ena_extint_hart0 <= r_data_wdata;
+            else if(r_mem_paddr == `PLIC_HART0_MASK_ADDR && r_data_le && r_data_busy == 1)
+                    r_plic_odata <= r_ena_extint_hart0;
+            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_we)
+                    r_ena_extint_hart1 <= r_data_wdata;
+            else if(r_mem_paddr == `PLIC_HART1_MASK_ADDR && r_data_le && r_data_busy == 1)
+                    r_plic_odata <= r_ena_extint_hart1;
         end
     end
 

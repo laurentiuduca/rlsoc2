@@ -211,7 +211,9 @@ error
 `define PLIC_SIZE       32'h400000
 `define PLIC_HART_BASE  32'h200000
 `define PLIC_HART_SIZE  32'h1000
-
+// laur
+`define PLIC_HART0_MASK_ADDR 32'h50002000
+`define PLIC_HART1_MASK_ADDR 32'h50002100
 /**** CLINT (Core Local Interrupter)                                                           ****/
 /**************************************************************************************************/
 `define CLINT_BASE_ADDR 32'h60000000
