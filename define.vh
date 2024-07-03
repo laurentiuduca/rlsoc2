@@ -16,6 +16,7 @@
 `define SIM_MODE
 //`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
+`define EMU_EXTINT1
 
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
@@ -27,7 +28,6 @@ error
 
 `ifdef SIM_MODE
 `define SIM_TNSRAM // tang nano sim ram
-`define SIM_PLIC
 //`define SIM_TNREFRESH
 //`define RAM_DEBUG
 `define mtsm 1
