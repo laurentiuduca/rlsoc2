@@ -260,7 +260,7 @@ module m_topsim(CLK, RST_X);
     reg [7:0] r_extint_num=0;
     wire [7:0] w_irq_t;
     wire [7:0] w_pending_extint = (w_extint & r_ena_extint_hart0) | (w_extint & r_ena_extint_hart1);
-    wire [7:0] w_irq_t = w_pending_extint & (1 + ~w_pending_extint);
+    assign w_irq_t = w_pending_extint & (1 + ~w_pending_extint);
     always@(posedge pll_clk) begin
             case (w_irq_t)
                 32'h00000001: r_extint_num <= 1;
