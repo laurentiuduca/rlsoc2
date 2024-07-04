@@ -293,10 +293,6 @@ module m_topsim(CLK, RST_X);
                 r_extint1 <= 0;
                 `endif                    
                 r_extint1_ack <= 1;
-            end else if(w_extint1 == 0) begin
-                r_extint1_ack <= 0;
-                if(r_extint1_ack)
-                    $display("r_extint1_ack <= 0 because w_extint1 is 0");
             end
 
         
@@ -340,13 +336,14 @@ module m_topsim(CLK, RST_X);
         end else begin // outside interrupt
             `ifdef EMU_EXTINT1
             if(r_mem_paddr == `EXTINT_ACK_ADDR && (r_data_le || r_data_we) && r_data_busy == 2) begin
-                if(r_data_wdata == 1000) begin
+                if(r_data_wdata == 100) begin
                     $display("started plictest");
                     r_extint1 <= 1;
                 end
             end
             `endif
             if(r_extint_num) begin
+                plic_handler_start <= 0;
                 if(w_irq_t & r_ena_extint_hart0) r_plic_we0 <= 1;
                 if(w_irq_t & r_ena_extint_hart1) r_plic_we1 <= 1;
                 if((w_irq_t & r_ena_extint_hart0) || (w_irq_t & r_ena_extint_hart1))
@@ -942,18 +939,23 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc_stip1 : w_btnl ? w_pc1 : 0; //w_sd_checksum;
+    assign data_vector = r_extint1_done == 1 ? r_dbg_data : (w_btnr == 0 && w_btnl == 0) ? w_pc_stip1 : w_btnl ? w_pc1 : 0; //w_sd_checksum;
     //assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc1 : w_pc0;
 
     reg r_extint1_done=0;
+    reg [31:0] r_dbg_data=0;
     always @(posedge pll_clk)
-        if(r_extint1_ack)
+        //if(r_extint1_ack)
+        if(r_extint1_ack && !r_extint1_done) begin
+            r_dbg_data <= {31'h0, r_extint1_ack};
             r_extint1_done <= 1;
+        end
 
-    assign w_led =  (w_btnl == 0 && w_btnr == 0) ? 
+    assign w_led = r_extint1_done == 1 ? ~ r_dbg_data : 
+                    (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                           r_extint1_done/*r_bbl_done*/, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} : 
-                        ~ w_sd_init_data[5:0];
+                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} : 
+                        ~ w_sd_init_data[5:0] ;
 `endif
     /**********************************************************************************************/
  
