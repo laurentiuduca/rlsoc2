@@ -939,19 +939,18 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    assign data_vector = r_extint1_done == 1 ? r_dbg_data : (w_btnr == 0 && w_btnl == 0) ? w_pc_stip1 : w_btnl ? w_pc1 : 0; //w_sd_checksum;
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc_stip1 : w_btnl ? w_pc1 : 0; //w_sd_checksum;
     //assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc1 : w_pc0;
 
     reg r_extint1_done=0;
     reg [31:0] r_dbg_data=0;
     always @(posedge pll_clk)
-        //if(r_extint1_ack)
         if(r_extint1_ack && !r_extint1_done) begin
             r_dbg_data <= {31'h0, r_extint1_ack};
             r_extint1_done <= 1;
         end
 
-    assign w_led = r_extint1_done == 1 ? ~ r_dbg_data : 
+    assign w_led = //r_extint1_done == 1 ? ~ r_dbg_data : 
                     (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
                         r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} : 
