@@ -222,16 +222,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
     
     wire [31:0] w_ir_t;
-    `ifdef CONFIG_RISCV_ISA_C // same as linux
     m_decomp decomp0(w_ir_org, w_ir_t);
-    `else
-    assign w_ir_t = w_ir_org;
-    always @(posedge CLK)
-        if(w_cinsn) begin
-            $display("CONFIG_RISCV_ISA_C not defined and commpressed instruction at pc %x", pc);
-            $finish;
-        end
-    `endif
 
     wire w_nop = (w_ir_t[6:0]==`OPCODE_OP_FP___ ||  
                   w_ir_t[6:0]==`OPCODE_LOAD_FP_ ||  w_ir_t[6:0]==`OPCODE_STORE_FP);
