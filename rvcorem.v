@@ -222,8 +222,17 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
     
     wire [31:0] w_ir_t;
+    `ifdef CONFIG_RISCV_ISA_C // same as linux
     m_decomp decomp0(w_ir_org, w_ir_t);
-    
+    `else
+    assign w_ir_t = w_ir_org;
+    always @(posedge CLK)
+        if(w_cinsn) begin
+            $display("CONFIG_RISCV_ISA_C not defined and commpressed instruction at pc %x", pc);
+            $finish;
+        end
+    `endif
+
     wire w_nop = (w_ir_t[6:0]==`OPCODE_OP_FP___ ||  
                   w_ir_t[6:0]==`OPCODE_LOAD_FP_ ||  w_ir_t[6:0]==`OPCODE_STORE_FP);
 
@@ -906,6 +915,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire [31:0] w_mod    = w_data_t ^ mstatus;
     
     assign w_tlb_flush   = r_tlb_flush; // generate this signal to flush TLBs 
+    reg reg_tlb_flush=0;
+    always @(posedge CLK)
+        reg_tlb_flush <= r_tlb_flush;
 
     always@(*) begin
         if(state==`S_COM && !w_busy) begin
@@ -918,7 +930,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end else begin
                     //$display("r_tlb_flush remains %x ---------------------", r_tlb_flush);
                     // avoid latch warning
-                    //r_tlb_flush <= 0;
+                    //r_tlb_flush <= reg_tlb_flush;
+                    if(r_tlb_flush != reg_tlb_flush)
+                        $display("---- 1 r_tlb_flush != reg_tlb_flush");
                 end
             end
             else if(r_op_CSR_SSTA) begin
@@ -928,7 +942,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end else begin
                     //$display("r_tlb_flush remains %x ---------------------", r_tlb_flush);
                     // avoid latch warning
-                    //r_tlb_flush <= 0;
+                    //r_tlb_flush <= reg_tlb_flush;
+                    if(r_tlb_flush != reg_tlb_flush)
+                        $display("---- 2 r_tlb_flush != reg_tlb_flush");
                 end
             end else if ((r_opcode == `OPCODE_SYSTEM__ && r_funct3 == `FUNCT3_PRIV__ && r_funct7==`FUNCT7_SFENCE_VMA))
                          //(r_opcode == `OPCODE_MISC_MEM && (r_funct3 == `FUNCT3_FENCE_ || r_funct3 == `FUNCT3_FENCEI)))
