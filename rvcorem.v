@@ -965,7 +965,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     assign w_state = (!RST_X | r_halt)                                         ? 0      : // `S_INI
                      (w_com)                                                   ? `S_COM :
-                     ((w_busy && !w_ex1) || (w_ex1 && w_ex1_busy)              ? state  :
+                     ((w_busy && !w_ex1) || (w_ex1 && w_ex1_busy))             ? state  :
                      (state==`S_FIN)                                           ? `S_INI :
                      (state==`S_IF  && w_nalign4 && r_if_state!=3)             ? `S_IF  : // Note
                      (state==`S_EX1 && !r_op_AMO && !r_op_LOAD && !r_op_STORE) ? `S_WB  :
