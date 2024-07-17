@@ -602,7 +602,7 @@ module m_dram_sim#(parameter MEM_SIZE = `MEM_SIZE)
 endmodule
 
 /**************************************************************************************************/
-/**** sdRAM Main Memory module
+/**** sdRAM Main Memory module */
 /**************************************************************************************************/
 module m_sbu_mem #(parameter MEM_SIZE = `MEM_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);

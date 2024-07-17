@@ -427,6 +427,7 @@ endtask
     reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
     reg  [7:0] mem_disk[0:`DISK_SIZE-1];
     initial begin
+`ifdef laur0
 `ifndef VERILATOR
     #1
 `endif
@@ -449,7 +450,7 @@ endtask
             j=j+1;
         end
 `endif // LINUX
-
+`endif // laur0
         $write("Running %s\n", {`HEX_DIR,`HEXFILE});
         $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
         j=0;
@@ -467,7 +468,8 @@ endtask
             j=j+1;
         end
         $write("-------------------------------------------------------------------\n");
-    end
+        $display("mem[%2x]=%x %x %x %x", 8'h8c, mem_bbl[8'h8c+3], mem_bbl[8'h8c+2], mem_bbl[8'h8c+1], mem_bbl[8'h8c+0]);
+   end
 `endif
 endmodule
 /**************************************************************************************************/

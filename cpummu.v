@@ -162,5 +162,14 @@ module m_cpummu(
 	    $write("HALT detect! at PC:%x\n", p.pc); 
 	    $finish(); 
     end
+
+    always@(posedge CLK) begin 
+        if(p.pc == 32'h8000008c)
+            // OPCODE=0100001
+            $display("PC:%x w_insn_addr=%x OPCODE=%x ir=%x insn_data=%x state=%x %x busy=%1x %1x %2x %1x pw_state %3x, %1x %1x %1x %1x, %1x", 
+                p.pc, p.w_insn_addr, p.r_opcode, p.r_ir, p.w_insn_data, p.state, p.r_tlb_req, 
+                p.w_busy, mmu.w_dram_busy, mmu.w_data_busy, mmu.w_use_tlb, mmu.r_pw_state,
+                mmu.w_dram_le, mmu.w_dram_we, mmu.w_data_le, mmu.w_data_we, mmu.w_satp[31]);
+    end
 `endif
 endmodule

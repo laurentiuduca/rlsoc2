@@ -189,6 +189,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     assign w_init_stage = r_init_stage;
 
     /***********************************           IF           ***********************************/
+    `ifdef CONFIG_RISCV_ISA_C
     wire [31:0] w_vadr1 = {pc[31:2], 2'b0}; // address of the first  2-byte
     wire [31:0] w_vadr2 = pc + 2;           // address of the second 2-byte
     wire        w_nalign4 = (pc[3:1]==3'b111);   // set when pc is not_align_4byte
@@ -218,7 +219,24 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                                                             {w_insn_data[15:0], r_if_irl} :
                                                             w_insn_data;
 
+    `else
+    assign w_insn_addr = pc;
+    wire [31:0] w_ir_org = w_insn_data;
+    reg s_if_was_busy = 0;
+    always@(posedge CLK) begin
+        if(state == `S_INI) begin
+            s_if_was_busy <= 0;
+        end else if(state == `S_IF && w_busy) begin
+            s_if_was_busy <= 1;
+        end else if (state == `S_IF && !w_busy && s_if_was_busy) begin
+            //$display("!w_busy && s_if_was_busy and w_insn_data=%x", w_insn_data);
+            r_ir <= w_insn_data;
+            s_if_was_busy <= 0;
+        end
+    end
+    `endif
     /***********************************           CVT          ***********************************/
+    `ifdef CONFIG_RISCV_ISA_C
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
     
     wire [31:0] w_ir_t;
@@ -233,7 +251,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_cinsn <= w_cinsn;
         if(!w_busy) r_ir16  <= w_ir_org[31:16];
     end
-
+    `else
+    always@(posedge CLK) if(state == `S_CVT) begin 
+        //r_ir    <= r_ir_org;
+        r_cinsn <= 0;
+    end
+    `endif
     /***********************************         ID & OF        ***********************************/
     wire [31:0] w_imm;
     m_imm_gen imm_gen0(r_ir, w_imm);
@@ -367,6 +390,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                             `FUNCT12_MRET__ : begin
                                 r_tkn       <= 1;
                                 r_jmp_pc    <= r_rcsr;
+                                //$display("mret r_jmp_pc <= %x", r_rcsr);
                             end
                             `FUNCT12_WFI___ : begin end
                             default: begin
@@ -965,9 +989,13 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     assign w_state = (!RST_X | r_halt)                                         ? 0      : // `S_INI
                      (w_com)                                                   ? `S_COM :
-                     ((w_busy && !w_ex1) || (w_ex1 && w_ex1_busy))             ? state  :
+                     (w_busy || (w_ex1 && w_ex1_busy))             ? state  :
                      (state==`S_FIN)                                           ? `S_INI :
+                     `ifdef CONFIG_RISCV_ISA_C
                      (state==`S_IF  && w_nalign4 && r_if_state!=3)             ? `S_IF  : // Note
+                     `else
+                     (state==`S_IF  && (w_busy || !s_if_was_busy))             ? `S_IF  :
+                     `endif
                      (state==`S_EX1 && !r_op_AMO && !r_op_LOAD && !r_op_STORE) ? `S_WB  :
                      (state==`S_LD  && r_op_STORE)                             ? `S_SD  :
                      (state==`S_LD  && r_op_LOAD)                              ? `S_WB  : state+1;
@@ -990,7 +1018,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     always @(posedge CLK) begin
         r_data_we <= w_d_we_t;
         r_data_en <= w_d_en_t;
-        r_tlb_req <= (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
+        r_tlb_req <=  (pending_exception != ~0)        ? `ACCESS_NONE :
+                     `ifdef CONFIG_RISCV_ISA_C
+                     (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
+                     `else
+                     (w_state==`S_IF && (w_busy || !s_if_was_busy)) ? `ACCESS_CODE  :
+                     `endif
                      (w_d_en_t)                        ? `ACCESS_READ  :
                      (w_d_we_t)                        ? `ACCESS_WRITE : `ACCESS_NONE;
     end

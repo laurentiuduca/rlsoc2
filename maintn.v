@@ -67,8 +67,31 @@ always @(posedge pll_clk) begin
 end
 
 `else
+`ifdef ICARUS
+module m_topsim();
+    reg CLK=0;
+    always begin #5 CLK = ~CLK; end
+        reg RST_X = 0;
+        reg [7:0] rst_cnt = 0;
+        always @(posedge CLK) begin
+            if(rst_cnt < 25) begin
+              rst_cnt <= rst_cnt + 1;
+                RST_X <= 0;
+                $display("rst_cnt=%d", rst_cnt);
+             end else
+              RST_X <= 1;
+        end
+        initial
+        begin
+              $dumpfile("single_pulse.vcd");
+            $dumpvars(0, m_topsim);
+              #20000;
+              $finish;
+        end
+`else
 module m_topsim(CLK, RST_X);
     input wire CLK, RST_X;
+`endif
     wire pll_clk = CLK;
     wire w_txd;
     wire w_rxd;
