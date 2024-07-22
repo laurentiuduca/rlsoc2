@@ -198,10 +198,11 @@ module m_mmu(
                         $display("state 2 -> 5 b");
                     end
                 end else begin
-                    $display("r_pw_state == 2 and no if met");
-                    if(w_dram_busy)
+                    r_pw_state <= 3;
+                    if(w_dram_busy) begin
                         $display("r_pw_state == 2 and dram busy");
-                    $finish;
+                        $finish;
+                    end
                 end                    
         end
         // Level 0
@@ -284,9 +285,9 @@ module m_mmu(
     end
     
     /***********************************           TLB          ***********************************/
-    wire        w_tlb_inst_r_we   = (r_pw_state == 5 || r_pw_state == 3) && !page_walk_fail && w_iscode;
-    wire        w_tlb_data_r_we   = (r_pw_state == 5 || r_pw_state == 3) && !page_walk_fail && w_isread;
-    wire        w_tlb_data_w_we   = (r_pw_state == 5 || r_pw_state == 3) && !page_walk_fail && w_iswrite;
+    wire        w_tlb_inst_r_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_iscode;
+    wire        w_tlb_data_r_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_isread;
+    wire        w_tlb_data_w_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_iswrite;
     wire [21:0] w_tlb_wdata       = {physical_addr[31:12], 2'b0};
 
     m_tlb#(20, 22, `TLB_SIZE) TLB_inst_r (CLK, 1'b1, w_tlb_flush, w_tlb_inst_r_we,
