@@ -989,7 +989,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     assign w_state = (!RST_X | r_halt)                                         ? 0      : // `S_INI
                      (w_com)                                                   ? `S_COM :
-                     (w_busy) || (w_ex1 && w_ex1_busy)               ? state  :
+                     (w_busy) || (w_ex1 && w_ex1_busy)                         ? state  :
                      (state==`S_FIN)                                           ? `S_INI :
                      `ifdef CONFIG_RISCV_ISA_C
                      (state==`S_IF  && w_nalign4 && r_if_state!=3)             ? `S_IF  : // Note
@@ -1018,7 +1018,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     always @(posedge CLK) begin
         r_data_we <= w_d_we_t;
         r_data_en <= w_d_en_t;
-        r_tlb_req <=  `ifdef CONFIG_RISCV_ISA_C
+        r_tlb_req <=  (w_pagefault != ~0)               ? `ACCESS_NONE :
+                    `ifdef CONFIG_RISCV_ISA_C
                      (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
                      `else
                      (w_state==`S_IF && (w_busy || !s_if_was_busy)) ? `ACCESS_CODE  :
