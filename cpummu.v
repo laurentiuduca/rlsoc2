@@ -92,6 +92,7 @@ module m_cpummu(
         .w_tlb_flush    (w_tlb_flush),
         .w_proc_busy    (w_proc_busy),
 
+        .w_mtime        (w_mtime),
         .w_mtimecmp     (w_mtimecmp),
         .w_wmtimecmp    (w_wmtimecmp),
         .w_clint_we     (w_clint_we),
@@ -162,7 +163,7 @@ module m_cpummu(
 	    $write("HALT detect! at PC:%x\n", p.pc); 
 	    $finish(); 
     end
-
+    `ifdef laur0
     always@(posedge CLK) begin 
         if(p.pc == 32'h8000008c)
             // OPCODE=0100001
@@ -171,5 +172,6 @@ module m_cpummu(
                 p.w_busy, mmu.w_dram_busy, mmu.w_data_busy, mmu.w_use_tlb, mmu.r_pw_state,
                 mmu.w_dram_le, mmu.w_dram_we, mmu.w_data_le, mmu.w_data_we, mmu.w_satp[31]);
     end
+    `endif
 `endif
 endmodule

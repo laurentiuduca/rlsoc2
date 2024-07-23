@@ -11,9 +11,9 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
-//`define CONFIG_RISCV_ISA_C
-//`define USE_SINGLE_CORE
+`define SIM_MODE
+`define CONFIG_RISCV_ISA_C
+`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
 
