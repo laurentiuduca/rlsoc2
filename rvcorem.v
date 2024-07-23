@@ -1018,10 +1018,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     always @(posedge CLK) begin
         r_data_we <= w_d_we_t;
         r_data_en <= w_d_en_t;
-        r_tlb_req <=  (w_pagefault != ~0)               ? `ACCESS_NONE :
+        r_tlb_req <=  
                     `ifdef CONFIG_RISCV_ISA_C
                      (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
                      `else
+                     (pending_exception != ~0)         ? `ACCESS_NONE :
                      (w_state==`S_IF && (w_busy || !s_if_was_busy)) ? `ACCESS_CODE  :
                      `endif
                      (w_d_en_t)                        ? `ACCESS_READ  :
