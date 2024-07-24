@@ -31,11 +31,11 @@ module m_mmu(
     input  wire  [1:0]  w_tlb_req,
     input  wire         w_tlb_flush,
     output wire         w_proc_busy,
-    
+
     input wire [63:0]   w_mtime,
-    input wire [63:0] w_mtimecmp,
-    output wire [63:0] w_wmtimecmp,
-    output wire        w_clint_we,
+    input wire [63:0]   w_mtimecmp,
+    output wire [63:0]  w_wmtimecmp,
+    output wire         w_clint_we,
     //--------------------------------------------------------------------------------------------//
     output wire [31:0]  w_mem_paddr,
     output wire         w_tlb_busy,
@@ -176,17 +176,33 @@ module m_mmu(
                 L1_pte      <= w_dram_odata;
                 r_pw_state  <= 2;
                 r_dram_was_busy <= 0;
+                //$display("state 1 w_dram_le=%x w_grant=%1x", w_dram_le, w_grant);
             end else if(w_dram_busy)
                 r_dram_was_busy <= 1;
         end
         else if(r_pw_state == 2) begin
-            if(w_dram_busy && !(w_priv == `PRIV_M || w_satp[31] == 0)) begin
-                $display("dram_busy in pw_state 2");
-            end
-            if(!w_dram_busy) begin
-                r_pw_state <= 3;
-                r_dram_was_busy <= 0;
-            end
+                if(!L1_pte[0]) begin
+                    physical_addr   <= 0;
+                    page_walk_fail  <= 1;
+                    r_pw_state <= 5;
+                    $display("state 2 -> 5 a w_dram_le=%x", w_dram_le);
+                end
+                else if(L1_xwr) begin
+                    physical_addr   <= (L1_success) ? L1_p_addr : 0;
+                    page_walk_fail  <= (L1_success) ? 0 : 1;
+                    if(L1_success)
+                        r_pw_state <= 3;
+                    else begin
+                        r_pw_state <= 5;
+                        $display("state 2 -> 5 b");
+                    end
+                end else begin
+                    r_pw_state <= 3;
+                    if(w_dram_busy) begin
+                        $display("r_pw_state == 2 and dram busy");
+                        $finish;
+                    end
+                end                    
         end
         // Level 0
         else if(r_pw_state == 3) begin
@@ -194,20 +210,14 @@ module m_mmu(
                 L0_pte      <= w_dram_odata;
                 r_pw_state  <= 4;
                 r_dram_was_busy <= 0;
+                //$display("state 3 physical_addr = %x", physical_addr);
             end else if(w_dram_busy)
                 r_dram_was_busy <= 1;
         end
         // Success?
         else if(r_pw_state == 4) begin
-            if(!L1_pte[0]) begin
-                physical_addr   <= 0;
-                page_walk_fail  <= 1;
-            end
-            else if(L1_xwr) begin
-                physical_addr   <= (L1_success) ? L1_p_addr : 0;
-                page_walk_fail  <= (L1_success) ? 0 : 1;
-            end
-            else if(!L0_pte[0]) begin
+            if(L1_pte[0] && !L1_xwr) 
+            if(!L0_pte[0]) begin
                 physical_addr   <= 0;
                 page_walk_fail  <= 1;
             end
@@ -227,12 +237,14 @@ module m_mmu(
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
                     if(page_walk_fail) begin
-                        $display("~ fault=%x ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x w_mtime=%d", 
+                        $display("~ fault=%x ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x time=%d", 
                             w_pagefault, w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir, w_mtime);
                         if(w_pte_we) begin
                             $display("-----pte-we in pagefault-----");
                             //$finish;
                         end
+                    end else begin
+                        //$display("state 5 physical_addr = %x", physical_addr);
                     end
                 //end
                 if(w_dram_busy) begin
@@ -255,7 +267,9 @@ module m_mmu(
                     r_data_was_busy <= 1;
                 end
             end else begin
-                $display("mmu state 6 and nothing to do");
+                $display("mmu state 6 and nothing to do: w_dram_aces=%1x w_dram_le=%1x w_dram_we=%1x w_isread=%1x r_tlb_use=%x",
+                    w_dram_aces, w_dram_le, w_dram_we, w_isread, r_tlb_use);
+                $display("w_dram_addr=%x w_insn_paddr=%x w_insn_addr=%x", w_dram_addr, w_insn_paddr, w_insn_addr);
                 $finish();
             end
         end
@@ -270,9 +284,9 @@ module m_mmu(
     end
     
     /***********************************           TLB          ***********************************/
-    wire        w_tlb_inst_r_we   = (r_pw_state == 5 && !page_walk_fail && w_iscode);
-    wire        w_tlb_data_r_we   = (r_pw_state == 5 && !page_walk_fail && w_isread);
-    wire        w_tlb_data_w_we   = (r_pw_state == 5 && !page_walk_fail && w_iswrite);
+    wire        w_tlb_inst_r_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_iscode;
+    wire        w_tlb_data_r_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_isread;
+    wire        w_tlb_data_w_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_iswrite;
     wire [21:0] w_tlb_wdata       = {physical_addr[31:12], 2'b0};
 
     m_tlb#(20, 22, `TLB_SIZE) TLB_inst_r (CLK, 1'b1, w_tlb_flush, w_tlb_inst_r_we,
@@ -293,7 +307,7 @@ module m_mmu(
     always@(*)begin
         case (r_pw_state)
             0:      begin r_tlb_pte_addr <= L1_pte_addr;    r_tlb_acs = 1; end
-            2:      begin r_tlb_pte_addr <= L0_pte_addr;    r_tlb_acs = 1; end
+            3:      begin r_tlb_pte_addr <= L0_pte_addr;    r_tlb_acs = 1; end
             5:      begin r_tlb_pte_addr <= w_pte_waddr;    r_tlb_acs = 1; end
             default:begin r_tlb_pte_addr <= 0;              r_tlb_acs = 0; end
         endcase
@@ -309,7 +323,7 @@ module m_mmu(
                                 (w_priv == `PRIV_M || w_satp[31] == 0)  ? w_data_ctrl       :
                                 (r_tlb_use[1:0]!=0)                     ? w_data_ctrl       :
                                 (r_pw_state == 0)                       ? `FUNCT3_LW____    :
-                                (r_pw_state == 2)                       ? `FUNCT3_LW____    :
+                                (r_pw_state == 3)                       ? `FUNCT3_LW____    :
                                 (r_pw_state == 5)                       ? `FUNCT3_SW____    :
                                 w_data_ctrl;
 
@@ -339,7 +353,7 @@ module m_mmu(
                     (r_mc_mode!=0) ? (w_mc_aces==`ACCESS_READ && w_mc_addr[31:28] != 0) :
                     (w_priv == `PRIV_M || w_satp[31] == 0) ? (w_iscode || w_isread) :
                     (r_tlb_use[2:1]!=0 && !w_tlb_busy) ? 1 :
-                    (w_tlb_busy && !w_tlb_hit && (r_pw_state == 0 || r_pw_state==2)) ? 1 : 0;
+                    (w_tlb_busy && !w_tlb_hit && (r_pw_state == 0 || (r_pw_state==3 && !r_dram_was_busy))) ? 1 : 0;
 
     
     assign      w_data_le = w_isread && !w_tlb_busy && !w_dram_aces;
@@ -370,13 +384,6 @@ module m_mmu(
                            ((w_dev == `CLINT_BASE_TADDR) && w_proc_data_we && 
                            ((w_offset==28'h4008 || w_offset==28'h400c) && (w_hart_id == 1)));
 
-    `ifdef laur0
-    always @(posedge CLK)
-        if(w_dev == `CLINT_BASE_TADDR && w_offset[27:4]==24'h400) begin
-            $display("core%1x w_data_wdata=%x sets wmtimecmp=%0d w_offset=%x w_proc_data_we=%x w_iswrite=%x, w_clint_we%x w_use_tlb=%1x w_proc_busy=%x r_pw_state=%x", 
-                w_hart_id, w_data_wdata, w_wmtimecmp, w_offset, w_proc_data_we, w_iswrite, w_clint_we, w_use_tlb, w_proc_busy, r_pw_state);
-        end
-    `endif
 endmodule
 /**************************************************************************************************/
 /*** Simple Direct Mapped Cache for TLB                                                         ***/
