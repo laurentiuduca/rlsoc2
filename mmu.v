@@ -227,8 +227,8 @@ module m_mmu(
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
                     if(page_walk_fail) begin
-                        $display("~ fault=%x ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x", 
-                            w_pagefault, w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir);
+                        $display("~ fault=%x ia=%x da=%x vaddr=%x hart=%x grant=%x pc=%x ir=%x w_mtime=%d", 
+                            w_pagefault, w_insn_addr, w_data_addr, v_addr, w_hart_id, w_grant, w_pc, w_ir, w_mtime);
                         if(w_pte_we) begin
                             $display("-----pte-we in pagefault-----");
                             //$finish;
