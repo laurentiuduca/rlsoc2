@@ -240,7 +240,12 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
     
     wire [31:0] w_ir_t=w_ir_org;
-    //m_decomp decomp0(w_ir_org, w_ir_t);
+    `define lc
+    `ifdef lc
+    assign w_ir_t = w_ir_org;
+    `else
+    m_decomp decomp0(w_ir_org, w_ir_t);
+    `endif
 
     wire w_nop = (w_ir_t[6:0]==`OPCODE_OP_FP___ ||  
                   w_ir_t[6:0]==`OPCODE_LOAD_FP_ ||  w_ir_t[6:0]==`OPCODE_STORE_FP);
@@ -250,7 +255,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_ir    <= w_ir;
         r_cinsn <= w_cinsn;
         if(!w_busy) r_ir16  <= w_ir_org[31:16];
-        if(w_ir_org && w_ir_org != 2'b11) begin
+        if(w_ir_org && w_ir_org[1:0] != 2'b11) begin
             $display("t%x pc%x w_ir_org%x", w_mtime, pc, w_ir_org);
         end
     end
