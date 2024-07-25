@@ -239,6 +239,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     `ifdef CONFIG_RISCV_ISA_C
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
     
+    reg [31:0] rlcnt=0;
     wire [31:0] w_ir_t;
     m_decomp decomp0(w_ir_org, w_ir_t);
 
@@ -250,6 +251,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         r_ir    <= w_ir;
         r_cinsn <= w_cinsn;
         if(!w_busy) r_ir16  <= w_ir_org[31:16];
+        if(w_ir_t != w_ir_org && !w_busy && rlcnt < 100) begin
+            $display("---- %d w_ir_t=%x != w_ir_org=%x pc=%x w_cinsn=%x w_ir=%x", w_mtime, w_ir_t, w_ir_org, pc, w_cinsn, w_ir);
+            rlcnt <= rlcnt + 1;
+        end
     end
     `else
     always@(posedge CLK) if(state == `S_CVT) begin 
@@ -573,10 +578,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             $finish;
         end
         if(!RST_X || r_halt) begin pc <= `D_START_PC; end
-        else if(w_pagefault != ~32'h0) begin 
-            pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; 
-            $display("pagefault state%x", state);
-        end
+        else if(w_pagefault != ~32'h0) begin pending_tval <= (state==`S_IF) ? pc : (state!=`S_LD && state!=`S_SD) ? 0 : r_mem_addr; end
         else if(state==`S_FIN && !w_busy) begin
             if(pending_exception != ~0)             begin pc <= (w_deleg) ? stvec : mtvec; end   // raise Exception
             else if(w_interrupt_mask && w_take_int) begin pc <= (w_deleg) ? stvec : mtvec; end   // Interrupt HERE
