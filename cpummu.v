@@ -49,6 +49,7 @@ module m_cpummu(
     wire w_halt;
 
     wire [31:0] w_insn_data, w_insn_addr;
+    wire [31:0] w_data;
     wire [31:0] w_data_addr;
     wire [2:0]  w_data_ctrl;
     wire        w_proc_data_we;
@@ -77,6 +78,8 @@ module m_cpummu(
 
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),
+        .w_data_data    (w_data_data),
+        .w_data         (w_data),
         .w_data_wdata   (w_data_wdata),
         .w_proc_data_we (w_proc_data_we),
         .w_data_we      (w_data_we),
@@ -118,7 +121,7 @@ module m_cpummu(
         .w_insn_addr    (w_insn_addr),
         .w_data_addr    (w_data_addr),
         .w_insn_data    (w_insn_data),
-        .w_data_data    (w_data_data),
+        .w_data_data    (w_data),
         .w_data_wdata   (w_data_wdata),
         .w_data_we      (w_proc_data_we),
         .w_data_ctrl    (w_data_ctrl),

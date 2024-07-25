@@ -19,6 +19,8 @@ module m_mmu(
     input wire w_tx_ready,
     input  wire [31:0]  w_insn_addr,
     input  wire [31:0]  w_data_addr,
+    input  wire [31:0]  w_data_data,
+    output wire [31:0]  w_data,
     input  wire [31:0]  w_data_wdata,
     input  wire         w_proc_data_we,
     output  wire         w_data_we,
@@ -47,6 +49,8 @@ module m_mmu(
     output wire [2:0]   w_dram_ctrl,
     output wire         w_dram_le
     );
+
+    reg [31:0] r_insn_data=0, r_data=0;
 
     /***** Address translation ********************************************************************/
     reg  [31:0] physical_addr       = 0;
@@ -232,7 +236,6 @@ module m_mmu(
         end
         // Update pte
         else if(r_pw_state == 5) begin
-                //if(page_walk_fail || !w_pte_we) begin
                     r_pw_state      <= 0;
                     physical_addr   <= 0;
                     page_walk_fail  <= 0;
@@ -246,12 +249,10 @@ module m_mmu(
                     end else begin
                         //$display("state 5 physical_addr = %x", physical_addr);
                     end
-                //end
                 if(w_dram_busy) begin
                     $display("dram busy in r_pw_state 5");
                     $finish;
                 end
-                       
         end
         else if(r_pw_state == 6) begin
             if(w_dram_aces && (w_dram_le || w_dram_we)) begin
@@ -259,7 +260,7 @@ module m_mmu(
                     r_pw_state <= 7;
                     r_tlb_use <= 0;
                     r_dram_took_cmd <= 1;
-                end
+                end 
             end else if(w_data_le || w_data_we) begin
                 if(w_data_busy) begin
                     r_pw_state <= 7;
@@ -276,6 +277,13 @@ module m_mmu(
         else if(r_pw_state == 7 && 
                 ((!w_dram_busy && r_dram_took_cmd) || 
                 (r_data_was_busy && w_data_busy==0))) begin
+            if(r_dram_took_cmd) begin
+                if(w_use_tlb == `ACCESS_CODE)
+                    r_insn_data <= w_dram_odata;
+                else
+                    r_data <= w_dram_odata;
+            end else if(r_data_was_busy)
+                r_data <= w_data_data;
             r_pw_state <= 0;
             r_tlb_use <= 0;
             r_dram_took_cmd <= 0;
@@ -358,6 +366,9 @@ module m_mmu(
     
     assign      w_data_le = w_isread && !w_tlb_busy && !w_dram_aces;
     assign      w_data_we = (w_iswrite || w_proc_data_we) && !w_tlb_busy && !w_dram_aces;
+
+    assign w_data = (w_priv == `PRIV_M || w_satp[31] == 0) ? w_dram_aces ? w_dram_odata : w_data_data : r_data;
+    assign w_insn_data = (w_priv == `PRIV_M || w_satp[31] == 0) ? w_dram_odata : r_insn_data;
 
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
