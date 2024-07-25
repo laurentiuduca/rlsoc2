@@ -19,8 +19,6 @@ module m_mmu(
     input wire w_tx_ready,
     input  wire [31:0]  w_insn_addr,
     input  wire [31:0]  w_data_addr,
-    input  wire [31:0]  w_data_data,
-    output wire [31:0]  w_data,
     input  wire [31:0]  w_data_wdata,
     input  wire         w_proc_data_we,
     output  wire         w_data_we,
@@ -277,13 +275,6 @@ module m_mmu(
         else if(r_pw_state == 7 && 
                 ((!w_dram_busy && r_dram_took_cmd) || 
                 (r_data_was_busy && w_data_busy==0))) begin
-            if(r_dram_took_cmd) begin
-                if(w_use_tlb == `ACCESS_CODE)
-                    r_insn_data <= w_dram_odata;
-                else
-                    r_data <= w_dram_odata;
-            end else if(r_data_was_busy)
-                r_data <= w_data_data;
             r_pw_state <= 0;
             r_tlb_use <= 0;
             r_dram_took_cmd <= 0;
@@ -351,6 +342,7 @@ module m_mmu(
 
     assign          w_dram_ctrl =   (r_mc_mode!=0)              ? (w_mem_ctrl)      :
                                 (w_iscode && !w_tlb_busy)   ? `FUNCT3_LW____    : w_mem_ctrl;
+    assign      w_insn_data =   w_dram_odata;
 
     wire        w_dram_aces = (w_dram_addr[31:28] == 8 || w_dram_addr[31:28] == 0 || w_dram_addr[31:28] == 9);
 
@@ -365,9 +357,6 @@ module m_mmu(
     
     assign      w_data_le = w_isread && !w_tlb_busy && !w_dram_aces;
     assign      w_data_we = (w_iswrite || w_proc_data_we) && !w_tlb_busy && !w_dram_aces;
-
-    assign w_data = (w_priv == `PRIV_M || w_satp[31] == 0) ? w_dram_aces ? w_dram_odata : w_data_data : r_data;
-    assign w_insn_data = (w_priv == `PRIV_M || w_satp[31] == 0) ? w_dram_odata : r_insn_data;
 
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
