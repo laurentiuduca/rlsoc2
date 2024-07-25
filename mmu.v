@@ -351,7 +351,6 @@ module m_mmu(
 
     assign          w_dram_ctrl =   (r_mc_mode!=0)              ? (w_mem_ctrl)      :
                                 (w_iscode && !w_tlb_busy)   ? `FUNCT3_LW____    : w_mem_ctrl;
-    assign      w_insn_data =   w_dram_odata;
 
     wire        w_dram_aces = (w_dram_addr[31:28] == 8 || w_dram_addr[31:28] == 0 || w_dram_addr[31:28] == 9);
 
