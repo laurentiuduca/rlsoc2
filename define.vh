@@ -11,7 +11,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-`define SIM_MODE
+//`define SIM_MODE
 //`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
@@ -167,7 +167,7 @@ error
 /**** Simulation                                                                               ****/
 /**************************************************************************************************/
 `ifdef LINUX
-`define D_START_PC      32'h80700000
+`define D_START_PC      32'h80770000
 `else
 `define D_START_PC      0
 `endif

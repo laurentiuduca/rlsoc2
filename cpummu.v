@@ -92,6 +92,7 @@ module m_cpummu(
         .w_tlb_flush    (w_tlb_flush),
         .w_proc_busy    (w_proc_busy),
 
+        .w_mtime        (w_mtime),
         .w_mtimecmp     (w_mtimecmp),
         .w_wmtimecmp    (w_wmtimecmp),
         .w_clint_we     (w_clint_we),
