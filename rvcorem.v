@@ -36,9 +36,12 @@ module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_ha
     initial begin
         for(i=0; i<32; i=i+1) mem[i] = 0;
 `ifdef LINUX
+`ifdef NUTTX
+`else
         mem[10] = w_hart_id;
         //mem[11] = `D_INITD_ADDR + `D_START_PC;
-	mem[11] = `D_INITD_ADDR;
+	    mem[11] = `D_INITD_ADDR;
+`endif
 `endif
     end
 endmodule

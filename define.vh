@@ -11,7 +11,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
+`define SIM_MODE
 //`define USE_SINGLE_CORE
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
@@ -42,40 +42,16 @@ error
 `define EXTINT_ACK_ADDR 32'h3ffffffc
 
 `define LINUX
+`define NUTTX
+
 `define TIMEOUT 64'd30000000001
 //`define DEBUG
 //`define TRACE
 //`define MIDDLE
 
 `define HEX_DIR "./"
-`ifdef LINUX
-    `ifndef MIDDLE
-        `define HEXFILE    "../binary/init_kernel.txt"
-        `define IMAGE_FILE "../binary/init_disk.txt"
-//        `define HEXFILE    "init_kernel.txt"
-//        `define IMAGE_FILE "init_disk.txt"
-    `else
-        `define HEXFILE    "./init_mem.txt"
-        `define REGFILE    "./init_reg.txt"
-        `define IMAGE_FILE "./init_dsk.txt"
-    `endif
-`else
-    `define HEXFILE "./test.mem"
-`endif
-
-// `define HEX_DIR ""
-// `ifdef LINUX
-//     `ifndef MIDDLE
-//         `define HEXFILE    "/home/miyazaki/riscv/trace/rv32imac/init_mem.txt"
-//         `define IMAGE_FILE "/home/miyazaki/riscv/trace/rv32imac/init_dsk.txt"
-//     `else
-//         `define HEXFILE    "./init_mem.txt"
-//         `define REGFILE    "./init_reg.txt"
-//         `define IMAGE_FILE "./init_dsk.txt"
-//     `endif
-// `else
-//     `define HEXFILE "/home/miyazaki/GitHub/MikuRV/MikuRV/app/test/test.mem"
-// `endif
+`define HEXFILE    "../binary/init_kernel.txt"
+`define IMAGE_FILE "../binary/init_disk.txt"
 
 /**************************************************************************************************/
 `ifndef SIM_MODE
@@ -127,47 +103,16 @@ error
 //`define CONSOLE_MEM "/home/pub/riscv/data_vefify/cons-test-initmem.txt"
 /**************************************************************************************************/
 /**************************************************************************************************/
-//`ifdef LINUX
-//    `undef HEX_DIR
-//    `undef TIMEOUT
-    //`define TIMEOUT 10000000 //500000 //(74000000)
-    //`define TIMEOUT 70000000
-//    `define TIMEOUT 80000000
-    //`define HEX_DIR "/home/share/FPGA/riscv/data_vefify/"
-//    `define HEX_DIR ""
-    //`define MC_PROG "./microctrl.hex"
-//    `ifdef MIDDLE
-//        `define HEXFILE    "/home/pub/riscv/hexdata/rv32ima/60M/init_mem.txt"
-//        `define REGFILE    "/home/pub/riscv/hexdata/rv32ima/60M/init_reg.txt"
-//        `define IMAGE_FILE "/home/pub/riscv/hexdata/rv32ima/60M/init_dsk.txt"
-        //`define HEXFILE    "./init_mem.txt"
-        //`define REGFILE    "./init_reg.txt"
-        //`define IMAGE_FILE "./init_dsk.txt"
-//    `else
-        //`define HEXFILE    "/home/pub/riscv/data_vefify/bbl_v05.hex"  //"/home/pub/riscv/data_vefify/initmem_nofloat_comp.txt"
-        //`define IMAGE_FILE "/home/pub/riscv/data_vefify/root_v07.hex" //"/home/pub/riscv/data_vefify/initdsk_nofloat_comp.txt"
-//        `define HEXFILE    "/home/miyazaki/riscv/trace/rv32imac/init_mem.txt"
-//        `define IMAGE_FILE "/home/miyazaki/riscv/trace/rv32imac/init_dsk.txt"
-//    `endif
-// `else
-//     `ifndef HEXFILE
-//         `ifdef TRACE2
-//             `define HEXFILE "rvc.hex"
-//         `else 
-//             `ifdef CONSOLE_TEST
-//                 `define HEXFILE "console.hex"
-//             `else
-//                 `define HEXFILE "template-c.hex"        /* default hex */
-//             `endif
-//         `endif
-//     `endif
-//`endif
 
 /**************************************************************************************************/
 /**** Simulation                                                                               ****/
 /**************************************************************************************************/
 `ifdef LINUX
+`ifdef NUTTX
+`define D_START_PC      32'h80000000
+`else
 `define D_START_PC      32'h80770000
+`endif
 `else
 `define D_START_PC      0
 `endif
@@ -185,22 +130,6 @@ error
 // Console
 `define CONSOLE_QUEUE_NUM_MAX   2
 `define VIRTIO_CONSOLE_IRQ      1
-
-// Block Device (DISK)
-`define SECTOR_SIZE         512
-`define DISK_BUF_SIZE       512*512
-`ifdef LINUX
-    `define DISK_SIZE           64*1024*1024
-`else
-    `define DISK_SIZE           32*1024
-`endif
-`define DISK_QUEUE_NUM_MAX  4
-`define VIRTIO_DISK_IRQ     2
-`define VIRTIO_BLK_T_IN     0
-`define VIRTIO_BLK_T_OUT    1
-`define VIRTIO_BLK_S_OK     0
-`define VIRTIO_BLK_IOERR    1
-`define VIRTIO_BLK_UNSUPP   2
 
 /**** PLIC (Platform-Level Interrupt Controller)                                               ****/
 /**************************************************************************************************/

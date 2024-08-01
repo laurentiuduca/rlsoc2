@@ -431,25 +431,6 @@ endtask
     #1
 `endif
 
-`ifdef LINUX
-        $write("Load image file: %s\n", `IMAGE_FILE);
-        $readmemh(`IMAGE_FILE, mem_disk);
-        j=`BBL_SIZE;
-
-        for(i=0;i<`DISK_SIZE;i=i+1) begin
-`ifdef DRAM_SIM
-`ifdef SKIP_CACHE
-	    idbmem.idbmem.mem[j]=mem_disk[i];
-`else
-	    idbmem.cache_ctrl.mi.mem[j]=mem_disk[i];
-`endif
-`else
-	    idbmem.idbmem.mem[j]=mem_disk[i];
-`endif // DRAM_SIM
-            j=j+1;
-        end
-`endif // LINUX
-
         $write("Running %s\n", {`HEX_DIR,`HEXFILE});
         $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
         j=0;
