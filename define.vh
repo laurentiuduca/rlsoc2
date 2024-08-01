@@ -42,7 +42,7 @@ error
 `define EXTINT_ACK_ADDR 32'h3ffffffc
 
 `define LINUX
-`define NUTTX
+//`define NUTTX
 
 `define TIMEOUT 64'd30000000001
 //`define DEBUG
