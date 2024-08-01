@@ -500,7 +500,11 @@ module m_topsim(CLK, RST_X);
         else
             r_wait_ready <= 0;
         // optimisation instead of w_mem_wdata put w_data_wdata
+        `ifdef NUTTX
+        if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && w_tx_ready && r_wait_ready) begin
+        `else
         if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
+        `endif
             r_uart_we   <= 1;
             r_uart_data <= w_data_wdata[7:0];
             //$display("tohost data wr %x", w_data_wdata);
@@ -512,10 +516,6 @@ module m_topsim(CLK, RST_X);
     	end else begin 
             r_uart_we   <= 0;
             r_uart_data <= 0;
-        end
-        // Finish Simulation
-        if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_POWER_OFF)) begin
-            r_finish = 1;
         end
     end
 
