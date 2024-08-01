@@ -425,7 +425,6 @@ endtask
     integer i, j;
     //integer k;
     reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
-    reg  [7:0] mem_disk[0:`DISK_SIZE-1];
     initial begin
 `ifndef VERILATOR
     #1
