@@ -672,8 +672,13 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     reg [31:0] old_insn_addr;
 `endif
 
-    wire w_take_int = (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 
+    wire w_take_int = 
+                      `ifdef NUTTX_FLAT
+                      1;
+                      `else
+                      (irq_num == `MIP_STIP_SHIFT) ?  (priv <= `PRIV_S) && !r_op_ECALL && !r_op_SRET: 
                       (irq_num == `MIP_SEIP_SHIFT) ?  (priv <= `PRIV_S) : 1;
+                      `endif
     reg [31:0] r_ipi_max_displays=0, r_extint_max_displays=0;
     output reg r_ipi_taken=0, r_extint_taken=0;
 
@@ -683,15 +688,25 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if(r_extint_taken == 0) begin
                     if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                         r_extint_max_displays <= r_extint_max_displays + 1;
-                        $display("core%1x w_plic_we mip <= seip", mhartid);
+                        $display("core%1x w_plic_we mip <= m/seip", mhartid);
                     end
+                    `ifdef NUTTX_FLAT
+                    mip[31:8] <= `MIP_MEIP >> 8;
+                    `else
                     mip[31:8] <= `MIP_SEIP >> 8;
+                    `endif
                     r_extint_taken <= 1;
                 end
             end else
                 r_extint_taken <= 0;
-        end else if((state == `S_FIN && !w_busy) && (w_interrupt_mask && w_take_int) &&
-                    (irq_num == `MIP_SEIP_SHIFT)) begin
+        end else 
+        `ifdef NUTTX_FLAT
+        if((state == `S_FIN && !w_busy) && (w_interrupt_mask && w_take_int) &&
+            (irq_num == `MIP_MEIP_SHIFT)) begin
+        `else
+        if((state == `S_FIN && !w_busy) && (w_interrupt_mask && w_take_int) &&
+            (irq_num == `MIP_SEIP_SHIFT)) begin
+        `endif
                         mip[31:8] <= 0;
                         if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
                                 r_extint_max_displays <= r_extint_max_displays + 1;
@@ -743,7 +758,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
                 //if(w_mtime >= 460000000)
-                    $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
+                    //$display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
                 if(r_was_clint_we < 2)
@@ -756,15 +771,25 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
             end else if(state == `S_IF) begin
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
+                    `ifdef NUTTX_FLAT
+                    mip[7:4] <= `MIP_MTIP >> 4;
+                    `else
                     mip[7:4] <= `MIP_STIP >> 4;
+                    `endif
                     r_was_clint_we <= 0;
-                    $display("%0d: core%1x sets stip pc=%x state=%x", w_mtime, mhartid, pc, state);
+                    //$display("%0d: core%1x sets m/stip pc=%x state=%x", w_mtime, mhartid, pc, state);
                 end
-            end else if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
+            end else 
+            `ifdef NUTTX_FLAT
+            if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
+                w_interrupt_mask && w_take_int && irq_num == `MIP_MTIP_SHIFT) begin
+            `else
+            if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
                         w_interrupt_mask && w_take_int && irq_num == `MIP_STIP_SHIFT) begin
+            `endif
                     mip[7:4] <= 0; // however is disabled by w_sstatus_t3
             end
-
+            
         //end
 
         if(state == `S_FIN && !w_busy) begin

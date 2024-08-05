@@ -386,6 +386,9 @@ module m_topsim(CLK, RST_X);
     assign bus_ipi = r_ipi;
 
     always@(posedge pll_clk) begin
+        if(r_dev == `CLINT_BASE_TADDR  && (w_offset==28'hbff8 || w_offset==28'hbffc) && r_data_we)
+            $display("writing clock ====");
+
         r_clint_odata <=    (r_dev == `CLINT_BASE_TADDR && (w_offset==28'h0 || w_offset==28'h4)) ? r_ipi :
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbff8)) ? w_mtime[31:0] :
                             (r_dev == `CLINT_BASE_TADDR && (w_offset==28'hbffc)) ? w_mtime[63:32] :
@@ -419,10 +422,14 @@ module m_topsim(CLK, RST_X);
                     `endif
                     `endif
                      // signal core 0
+                    `ifdef NUTTX_FLAT
+                    r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b1}; // M-priv
+                    `else
                     if(w_data_wdata == 2)
                         r_ipi <= {r_ipi[31:17], 1'b1, r_ipi[15:1], 1'b1}; // S-priv
                     else
                         r_ipi <= {r_ipi[31:17], 1'b0, r_ipi[15:1], 1'b1}; // M-priv
+                    `endif
                     if(r_ipi & 1)
                         $display("-------- %x: core0 already had ipi pc0=%x pc1=%x", w_mtime, w_pc0, w_pc1);
                 end
@@ -449,10 +456,14 @@ module m_topsim(CLK, RST_X);
                     `endif
                     `endif
                      // signal core 1
+                    `ifdef NUTTX_FLAT
+                    r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // M-priv
+                    `else
                     if(w_data_wdata == 2)
                         r_ipi <= {r_ipi[31:18], 1'b1, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // S-priv
                     else
                         r_ipi <= {r_ipi[31:18], 1'b0, r_ipi[16], r_ipi[15:2], 1'b1, r_ipi[0]}; // M-priv
+                    `endif
                     if(r_ipi & (1<<1))
                         $display("-------- %x: core1 already had ipi pc0=%x pc1=%x", w_mtime, w_pc0, w_pc1);
                 end
