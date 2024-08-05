@@ -12,7 +12,8 @@
 //`define ARTYA7
 /**************************************************************************************************/
 `define SIM_MODE
-//`define USE_SINGLE_CORE
+`define USE_SINGLE_CORE
+`define NUTTX_FLAT
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
 
@@ -42,7 +43,6 @@ error
 `define EXTINT_ACK_ADDR 32'h3ffffffc
 
 `define LINUX
-//`define NUTTX
 
 `define TIMEOUT 64'd30000000001
 //`define DEBUG
@@ -108,7 +108,7 @@ error
 /**** Simulation                                                                               ****/
 /**************************************************************************************************/
 `ifdef LINUX
-`ifdef NUTTX
+`ifdef NUTTX_FLAT
 `define D_START_PC      32'h80000000
 `else
 `define D_START_PC      32'h80770000

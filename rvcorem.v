@@ -36,7 +36,7 @@ module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_ha
     initial begin
         for(i=0; i<32; i=i+1) mem[i] = 0;
 `ifdef LINUX
-`ifdef NUTTX
+`ifdef NUTTX_FLAT
 `else
         mem[10] = w_hart_id;
         //mem[11] = `D_INITD_ADDR + `D_START_PC;
@@ -743,7 +743,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
         //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
                 //if(w_mtime >= 460000000)
-                //    $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
+                    $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
                 if(r_was_clint_we < 2)
@@ -758,7 +758,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 if(r_was_clint_we==2 && (w_mtime >= mtimecmp)) begin
                     mip[7:4] <= `MIP_STIP >> 4;
                     r_was_clint_we <= 0;
-                    //$display("%0d: core%1x sets stip pc=%x state=%x", w_mtime, mhartid, pc, state);
+                    $display("%0d: core%1x sets stip pc=%x state=%x", w_mtime, mhartid, pc, state);
                 end
             end else if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
                         w_interrupt_mask && w_take_int && irq_num == `MIP_STIP_SHIFT) begin
