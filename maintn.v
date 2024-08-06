@@ -511,7 +511,7 @@ module m_topsim(CLK, RST_X);
         else
             r_wait_ready <= 0;
         // optimisation instead of w_mem_wdata put w_data_wdata
-        `ifdef NUTTX
+        `ifdef NUTTX_FLAT
         if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && w_tx_ready && r_wait_ready) begin
         `else
         if((r_mem_paddr==`TOHOST_ADDR && r_data_we) && (w_data_wdata[31:16]==`CMD_PRINT_CHAR) && w_tx_ready && r_wait_ready) begin
@@ -932,7 +932,7 @@ module m_topsim(CLK, RST_X);
 	    if(old_w_mtime != w_mtime) begin
 		    old_w_mtime = w_mtime;
 		    if(w_mtime % 64'd10000000 == 64'd0) begin
-			    $write("w_mtime=%d ENABLE_TIMER=%d\n", w_mtime, `ENABLE_TIMER);
+			    $write("w_mtime=%d ENABLE_TIMER=%d pc0=%x\n", w_mtime, `ENABLE_TIMER, w_pc0);
 		    end
 	    end
     end
@@ -968,98 +968,16 @@ module m_topsim(CLK, RST_X);
                         ~ w_sd_init_data[5:0] ;
 `endif
     /**********************************************************************************************/
- 
+
 `ifdef SIM_MODE
-reg [31:0] old_mem_paddr=0, old_data_data = 0, old_pc0 = 0, rcnt=0;
-
-//`define RAM_TRACE
-`ifdef RAM_TRACE
-`ifdef USE_SINGLE_CORE
-task ramtrace;
-begin
-            if (dram_con.i_rd_en && dram_con.o_busy == 0) begin
-                daddr <= w_dram_addr; //dram_con.i_addr;
-                dstate <= 1;
-            end else if (dram_con.i_wr_en && dram_con.o_busy == 0) begin
-                dstate <= 4;
-                if(mmustate)
-                    $fwrite(file, "dram_wr %x %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state, mmustate);
-                else
-                    $fwrite(file, "dram_wr %x %x %x %x\n", w_dram_addr/*dram_con.i_addr*/, dram_con.i_data, w_pc0, core0.p.state);
-            end else if (r_data_le) begin
-                dstate <= 6;
-            end else if(r_data_we) begin
-                $fwrite(file, "data_we %x %x %x %x\n", w_mem_paddr, w_data_wdata, w_pc0, core0.p.state);
-                dstate <= 8;
-            end else
-                dstate <= 0;
-end
-endtask
-
-integer file;
-reg [999:0] filename;
-reg [7:0] trace_state=0, dstate=0, drdev=0;
-reg [31:0] daddr=0, dstart=0;
-wire [3:0] mmustate=core0.mmu.r_pw_state;
+`ifdef laur0
 always @(posedge pll_clk)
-begin
-    `ifdef laur0
-    if(ba.r_bus_dram_odata0 == 32'h40008000) begin
-        $display("--- console a4=%x", core0.p.regs.mem[14]);
+    if(w_pc0 == 32'h80000008) begin
+        $display("%d: w_pc0=%x r_mem_paddr=%x w_ir0=%x r_data_we=%1x w_tx_ready=%1x r_wait_ready=%1x r_uart_we=%1x", 
+            w_mtime, w_pc0, r_mem_paddr, w_ir0, r_data_we, w_tx_ready, r_wait_ready, r_uart_we);
     end
-    `endif
-    if(dstart == 0) begin
-            dstart <= 1;
-            $sformat(filename, "serial%0d.out", 1);
-            file = $fopen(filename, "w");
-    end
-        if(dstate == 0) begin
-            ramtrace;
-        end else if (dstate == 1) begin
-            if(dram_con.o_busy == 1)
-                dstate <= 2;
-        end else if (dstate == 2) begin
-            if(dram_con.o_busy == 0) begin
-                if(mmustate)
-                    $fwrite(file, "dram_rd %x %x %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state, mmustate, core0.mmu.v_addr);
-                else
-                    $fwrite(file, "dram_rd %x %x %x %x %x\n", daddr, dram_con.o_data, w_pc0, core0.p.state, core0.mmu.v_addr);
-                ramtrace;
-            end
-        end else if (dstate == 4) begin // wait dram-write
-            if(dram_con.o_busy == 1)
-                dstate <= 5;
-        end else if (dstate == 5) begin
-            if(dram_con.o_busy == 0)
-                ramtrace;
-        end else if (dstate == 6) begin
-            if(r_data_busy)
-                dstate <= 7;
-        end else if (dstate == 7) begin
-            if(r_data_busy == 0) begin
-                $fwrite(file, "data_le %x %x %x %x %x\n", 
-                        r_mem_paddr, r_data_data, w_pc0, core0.p.state, mmustate);   
-                ramtrace;
-            end
-        end else if (dstate == 8) begin
-            if(r_data_busy)
-                dstate <= 9;
-        end else if (dstate == 9) begin
-            if(r_data_busy == 0)
-                ramtrace;
-        end 
-        
-        if (w_mtime >= 20000) begin
-                $display("finish ram trace with dstate=%x dram_con.o_busy=%x dram_con.i_rd_en=%x r_dev=%x r_data_we=%x", 
-                    dstate, dram_con.o_busy, dram_con.i_rd_en, dram_con.i_wr_en, r_dev, r_data_we);
-                $fclose(file);
-                dstate <= 400;
-                $finish;
-        end
-
-end
 `endif
-`endif // RAM_TRACE
 `endif // SIM_MODE
+                    
 endmodule
 
