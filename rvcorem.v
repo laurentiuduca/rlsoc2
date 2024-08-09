@@ -542,8 +542,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     // wfi keeps pc constant
     wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
-    wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
-                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
+    wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  ||
+                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) ||
                       ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
 
     always @(posedge CLK) begin /////// update program counter
@@ -748,13 +748,6 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                         end
         end
 
-
-        /* if(state == `S_EX2 || state == `S_WB) begin
-            if(w_plic_we) begin
-                $display("----rvcorem w_plic_we mip <= %x state=%x", w_wmip, state);
-                mip[31:8]     <= w_wmip[31:8];
-            end
-        end */
         //if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
                 //if(w_mtime >= 460000000)
@@ -811,13 +804,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 end
             end
             else if(w_interrupt_mask && w_take_int) begin
-                if(irq_num == `MIP_STIP_SHIFT) begin
-                    //$display("stip pc=%x hart=%x", pc, w_hart_id);
-                    pc_stip <= pc;
-                end
-                if(irq_num == 2) begin
-                    $display("irq_num=2, pc=%x", pc);
-                    $finish;
+                if(irq_num == `MIP_MTIP_SHIFT) begin
+                    //$display("mtip pc=%x hart=%x", pc, w_hart_id);
                 end
                 if(w_deleg) begin
                     scause  <= cause;
