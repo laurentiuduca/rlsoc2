@@ -135,7 +135,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr0), .w_data_we(bus_data_we0), .w_data_le(bus_data_le0), .w_data_busy(bus_data_busy0),
         .w_data_wdata(bus_data_wdata0), .w_data_data(bus_data_data0),
-        .w_mtime(w_mtime),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp0),
         .w_tlb_req(bus_tlb_req0), .w_tlb_busy(bus_tlb_busy0),
         .w_mip(bus_mip0), .w_plic_we(r_plic_we0),
         .w_dram_addr(bus_dram_addr0), .w_dram_wdata(bus_dram_wdata0), .w_dram_odata(bus_dram_odata0), .w_dram_we_t(bus_dram_we_t0),
@@ -152,7 +152,7 @@ module m_topsim(CLK, RST_X);
         .w_init_done(w_init_done), .w_tx_ready(w_tx_ready),
         .w_mem_paddr(bus_mem_paddr1), .w_data_we(bus_data_we1), .w_data_le(bus_data_le1), .w_data_busy(bus_data_busy1),
         .w_data_wdata(bus_data_wdata1), .w_data_data(bus_data_data1),
-        .w_mtime(w_mtime),
+        .w_mtime(w_mtime), .w_mtimecmp(w_mtimecmp1),
         .w_tlb_req(bus_tlb_req1), .w_tlb_busy(bus_tlb_busy1),
         .w_mip(bus_mip1), .w_plic_we(r_plic_we1),
         .w_dram_addr(bus_dram_addr1), .w_dram_wdata(bus_dram_wdata1), .w_dram_odata(bus_dram_odata1), .w_dram_we_t(bus_dram_we_t1),
@@ -932,7 +932,7 @@ module m_topsim(CLK, RST_X);
 	    if(old_w_mtime != w_mtime) begin
 		    old_w_mtime = w_mtime;
 		    if(w_mtime % 64'd10000000 == 64'd0) begin
-			    $write("w_mtime=%d ENABLE_TIMER=%d pc0=%x\n", w_mtime, `ENABLE_TIMER, w_pc0);
+			    $write("w_mtime=%d ENABLE_TIMER=%d pc0=%x pc1=%x\n", w_mtime, `ENABLE_TIMER, w_pc0, w_pc1);
 		    end
 	    end
     end

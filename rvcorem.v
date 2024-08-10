@@ -120,7 +120,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     reg   [1:0] priv           = `PRIV_M;      // Mode
     //reg  [63:0] w_mtime          = 1;            // w_mtime
-    reg  [63:0] mtimecmp       = 64'h0; 
+    reg  [63:0] mtimecmp       = 64'hffffffff_ffffffff; 
     reg  [3:0] r_was_clint_we  = 0;
     reg  [31:0] pending_tval   = 0;            //
     reg  [31:0] pending_exception = ~0;        //
@@ -545,9 +545,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
     // wfi keeps pc constant
     wire w_executing_wfi = ((r_opcode==`OPCODE_SYSTEM__) && (r_funct3 == `FUNCT3_PRIV__) && (r_funct12== `FUNCT12_WFI___));
-    wire w_exit_wfi =                           (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  ||
-                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) ||
-                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)));
+    wire w_exit_wfi =                        |( (mip & mie & (`MIP_MEIP | `MIP_MTIP | `MIP_MSIP))  |
+                      ((r_priv_t <= `PRIV_S) && (mip & mie & (`MIP_SEIP | `MIP_STIP | `MIP_SSIP))) |
+                      ((r_priv_t <= `PRIV_U) && (mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP))) );
 
     always @(posedge CLK) begin /////// update program counter
         if(mip & mie & (`MIP_UEIP | `MIP_UTIP | `MIP_USIP)) begin
