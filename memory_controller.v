@@ -75,7 +75,14 @@ always @(posedge clk) begin
     cycles <= cycles == 3'd7 ? 3'd7 : cycles + 3'd1;
     wcycles <= wcycles == 255 ? 255 : wcycles + 1;
     // Initiate read or write
-    if (!busy) begin
+    if (~resetn) begin
+        busy <= 1'b1;
+        fail <= 1'b0;
+        total_written <= 0;
+        MemInitializing <= 1'b1;
+        mem_initialized <= 0;
+    end
+    else if (!busy) begin
         if (read_a || read_b || write || refresh) begin
             MemAddr <= addr;
             MemWR <= write;
@@ -128,13 +135,6 @@ always @(posedge clk) begin
         end
     end
 
-    if (~resetn) begin
-        busy <= 1'b1;
-        fail <= 1'b0;
-        total_written <= 0;
-        MemInitializing <= 1'b1;
-        mem_initialized <= 0;
-    end
 end
 
 
