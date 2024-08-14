@@ -750,9 +750,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                         end
         end
 
-            if(w_clint_we && state == `S_SD) begin
+            if(w_clint_we && state == `S_SD && !w_busy) begin
                 //if(w_mtime >= 460000000)
-                    //$display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
+                    $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
                 if(r_was_clint_we < 2)
