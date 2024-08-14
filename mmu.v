@@ -356,7 +356,8 @@ module m_mmu(
 
     
     assign      w_data_le = w_isread && !w_tlb_busy && !w_dram_aces;
-    assign      w_data_we = (w_iswrite || w_proc_data_we) && !w_tlb_busy && !w_dram_aces;
+    assign      w_data_we = (w_iswrite || w_proc_data_we) && !w_tlb_busy && !w_dram_aces && 
+                            (w_dev != `CLINT_BASE_TADDR || w_offset[27:24]!=4);
 
     /***********************************           BUSY         ***********************************/
     assign w_tlb_busy = 
