@@ -750,7 +750,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                         end
         end
 
-        //if(state == `S_SD && !w_busy) begin
+        if(state == `S_SD && !w_busy) begin
             if(w_clint_we) begin
                 //if(w_mtime >= 460000000)
                     //$display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
@@ -785,7 +785,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     mip[7:4] <= 0; // however is disabled by w_sstatus_t3
             end
             
-        //end
+        end
 
         if(state == `S_FIN && !w_busy) begin
             if(pending_exception != ~0) begin
