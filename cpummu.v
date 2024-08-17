@@ -43,7 +43,9 @@ module m_cpummu(
     input wire [31:0] w_oh_pc,
 
     output wire w_ipi_taken,
-    output wire w_extint_taken
+    output wire w_extint_taken,
+
+    output wire [31:0] w_a0
     );
 
     wire w_halt;
@@ -152,7 +154,9 @@ module m_cpummu(
         .w_grant(w_grant),
 
         .r_ipi_taken(w_ipi_taken),
-        .r_extint_taken(w_extint_taken)
+        .r_extint_taken(w_extint_taken),
+
+        .w_a0(w_a0)
     );
 
     /**********************************************************************************************/

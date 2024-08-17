@@ -12,7 +12,7 @@
 
 /***** 2 read 1 write port, register file                                                     *****/
 /**************************************************************************************************/
-module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_hart_id);
+module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_hart_id, w_a0);
     input  wire        CLK;
     input  wire [ 4:0] w_rs1, w_rs2;
     output wire [31:0] w_rdata1, w_rdata2;
@@ -20,6 +20,7 @@ module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_ha
     input  wire [ 4:0] rd;
     input  wire [31:0] w_wdata;
     input  wire [31:0] w_hart_id;
+    output wire [31:0] w_a0;
 
     reg [31:0] mem [0:31];
 
@@ -32,13 +33,14 @@ module m_regfile (CLK, w_rs1, w_rs2, w_rdata1, w_rdata2, w_we, rd, w_wdata, w_ha
         end
     end
 
+    assign w_a0 = mem[10];
+
     integer i;
     initial begin
         for(i=0; i<32; i=i+1) mem[i] = 0;
 `ifdef LINUX
-`ifdef NUTTX_FLAT
-`else
         mem[10] = w_hart_id;
+`ifndef NUTTX_FLAT
         //mem[11] = `D_INITD_ADDR + `D_START_PC;
 	    mem[11] = `D_INITD_ADDR;
 `endif
@@ -53,7 +55,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 w_data_wdata, w_data_we, w_data_ctrl, w_priv, w_satp, w_mstatus, w_mtime,
                 w_mtimecmp, w_wmtimecmp, w_clint_we, w_mip, w_plic_we, w_busy, w_pagefault,
                 w_tlb_req, w_tlb_flush, w_core_pc, w_core_ir, w_core_odata, w_init_stage, state, pc, r_ir,
-                reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc, w_grant, r_ipi_taken, r_extint_taken);
+                reserved, load_res, hart_sc, w_oh_reserved, w_oh_load_res, w_oh_sc, w_oh_pc, w_grant, r_ipi_taken, r_extint_taken,
+                w_a0);
     input  wire         CLK, RST_X, w_stall;
     input  wire [31:0] w_ipi;
     input  wire [31:0]  w_hart_id;
@@ -82,6 +85,8 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     output wire  [1:0]  w_tlb_req;      // from r_tlb_req
     output wire         w_data_we;      // from r_data_we, write enable for DRAM memory
     output wire         w_tlb_flush;    // from r_tlb_flush
+
+    output wire [31:0]  w_a0;
 
     /***** registers and CPU architecture state ***************************************************/
     output reg   [3:0] state   = 0;            // State for Multi cycle Processor
@@ -245,7 +250,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                       
     wire [31:0] w_rrs1, w_rrs2;
     wire w_regfile_we = (w_wb_r_enable && state==`S_WB);
-    m_regfile regs(CLK, w_rs1, w_rs2, w_rrs1, w_rrs2, w_regfile_we, r_rd, w_wb_r_data, w_hart_id);
+    m_regfile regs(CLK, w_rs1, w_rs2, w_rrs1, w_rrs2, w_regfile_we, r_rd, w_wb_r_data, w_hart_id, w_a0);
 
     always @(posedge CLK) if(state == `S_ID) begin
         r_rrs1    <= w_rrs1;      // operand which is read from register file
@@ -752,7 +757,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
 
             if(w_clint_we && state == `S_SD && !w_busy) begin
                 //if(w_mtime >= 460000000)
-                    $display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
+                    //$display("%0d: core%1x sets mtimecmp=%x pc=%x state=%x", w_mtime, mhartid, w_wmtimecmp, pc, state);
                 mtimecmp    <= w_wmtimecmp;
                 mip[7:4] <= 0;
                 if(r_was_clint_we < 2)

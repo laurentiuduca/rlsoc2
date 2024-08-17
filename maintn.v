@@ -129,6 +129,8 @@ module m_topsim(CLK, RST_X);
     wire        w_key_we;
     wire  [7:0] w_key_data;
 
+    wire [31:0] w_a00, w_a01;
+
 //`ifdef laur0
     m_cpummu core0(
         .CLK(pll_clk), .RST_X(RST_X), .w_hart_id(0), .w_grant(w_grant), .w_ipi(bus_ipi), .w_core_ir(bus_core_ir_0), .w_state(bus_cpustate0),
@@ -142,7 +144,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(bus_dram_busy0), .w_dram_ctrl(bus_dram_ctrl0), .w_dram_le(bus_dram_le0), .w_pc(w_pc0), .w_ir(w_ir0),
         .w_reserved(w_reserved0), .w_hart_sc(w_hart_sc0), .w_load_res(w_load_res0),
         .w_oh_reserved(w_reserved1), .w_oh_sc(w_hart_sc1), .w_oh_load_res(w_load_res1), .w_oh_pc(w_pc1), 
-        .w_ipi_taken(w_ipi_taken0), .w_extint_taken(w_extint_taken0)
+        .w_ipi_taken(w_ipi_taken0), .w_extint_taken(w_extint_taken0), .w_a0(w_a00)
     );
 //`endif
 
@@ -159,7 +161,7 @@ module m_topsim(CLK, RST_X);
         .w_dram_busy(bus_dram_busy1), .w_dram_ctrl(bus_dram_ctrl1), .w_dram_le(bus_dram_le1), .w_pc(w_pc1), .w_ir(w_ir1),
         .w_reserved(w_reserved1), .w_hart_sc(w_hart_sc1), .w_load_res(w_load_res1),
         .w_oh_reserved(w_reserved0), .w_oh_sc(w_hart_sc0), .w_oh_load_res(w_load_res0), .w_oh_pc(w_pc0), 
-        .w_ipi_taken(w_ipi_taken1), .w_extint_taken(w_extint_taken1)
+        .w_ipi_taken(w_ipi_taken1), .w_extint_taken(w_extint_taken1), .w_a0(w_a01)
     );
 `endif
 
@@ -950,8 +952,8 @@ module m_topsim(CLK, RST_X);
     wire clkdiv;
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
-    
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_pc1;  //w_sd_checksum;
+
+    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl == 0 ? w_pc1 : w_sd_checksum;
 
     reg r_extint1_done=0;
     reg [31:0] r_dbg_data=0;
@@ -969,15 +971,20 @@ module m_topsim(CLK, RST_X);
 `endif
     /**********************************************************************************************/
 
-`ifdef SIM_MODE
 `ifdef laur0
-always @(posedge pll_clk)
-    if(w_pc0 == 32'h80000008) begin
-        $display("%d: w_pc0=%x r_mem_paddr=%x w_ir0=%x r_data_we=%1x w_tx_ready=%1x r_wait_ready=%1x r_uart_we=%1x", 
-            w_mtime, w_pc0, r_mem_paddr, w_ir0, r_data_we, w_tx_ready, r_wait_ready, r_uart_we);
+reg [31:0] r_oldpc=0;
+reg [31:0] r_dbg2=0, r_dbg=0;
+always @(posedge pll_clk) begin
+    r_oldpc <= w_pc0;
+    if(w_pc0 == 32'h80000c68 && r_oldpc != w_pc0) begin
+        r_dbg2 <= (w_grant << 16) | r_dbg2[15:0] + 1;
+        r_dbg <= w_a00;
+        $display("%d: w_pc0=%x r_oldpc=%x w_pc1=%x r_dbg2=%x w_grant=%1x w_a00=%x w_a01=%x", 
+            w_mtime, w_pc0, r_oldpc, w_pc1, r_dbg2, w_grant, w_a00, w_a01);
     end
+end
+
 `endif
-`endif // SIM_MODE
                     
 endmodule
 
