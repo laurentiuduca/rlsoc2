@@ -417,7 +417,7 @@ error
 `define WCSR_MASK1  32'hffff    // ((1 << (CAUSE_STORE_PAGE_FAULT + 1)) - 1;)
 `define WCSR_MASK2  (`MIP_SSIP | `MIP_STIP | `MIP_SEIP)
 `define WCSR_MASK3  (`MIP_MEIP | `MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP | `MIP_SEIP)
-`define WCSR_MASK4  (`MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP) // allow clearing MIP_MSIP
+`define WCSR_MASK4  (`MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP)
 
 `define MASK_STATUS (`MSTATUS_MASK & ~`MSTATUS_FS)
 
