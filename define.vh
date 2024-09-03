@@ -107,14 +107,14 @@ error
 /**************************************************************************************************/
 /**** Simulation                                                                               ****/
 /**************************************************************************************************/
-`ifdef LINUX
 `ifdef NUTTX_FLAT
 `define D_START_PC      32'h80000000
 `else
+`ifdef LINUX
 `define D_START_PC      32'h80770000
-`endif
 `else
-`define D_START_PC      0
+ error
+`endif
 `endif
 
 /**** VirtIO                                                                                   ****/
