@@ -12,8 +12,8 @@
 //`define ARTYA7
 /**************************************************************************************************/
 `define SIM_MODE
-`define USE_SINGLE_CORE
-//`define NUTTX_FLAT
+//`define USE_SINGLE_CORE
+`define NUTTX_FLAT
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
 
@@ -416,8 +416,8 @@ error
 // Write CSR
 `define WCSR_MASK1  32'hffff    // ((1 << (CAUSE_STORE_PAGE_FAULT + 1)) - 1;)
 `define WCSR_MASK2  (`MIP_SSIP | `MIP_STIP | `MIP_SEIP)
-`define WCSR_MASK3  (`MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP | `MIP_SEIP)
-`define WCSR_MASK4  (`MIP_MSIP | `MIP_SSIP | `MIP_STIP) // allow clearing MIP_MSIP
+`define WCSR_MASK3  (`MIP_MEIP | `MIP_MSIP | `MIP_MTIP | `MIP_SSIP | `MIP_STIP | `MIP_SEIP)
+`define WCSR_MASK4  (`MIP_MEIP | `MIP_MSIP | `MIP_SSIP | `MIP_STIP) // allow clearing MIP_MSIP
 
 `define MASK_STATUS (`MSTATUS_MASK & ~`MSTATUS_FS)
 
