@@ -198,9 +198,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     assign w_init_stage = r_init_stage;
 
     /***********************************           IF           ***********************************/
+    `ifdef CINSN_OLD
     wire [31:0] w_vadr1 = {pc[31:2], 2'b0}; // address of the first  2-byte
     wire [31:0] w_vadr2 = pc + 2;           // address of the second 2-byte
-    wire        w_nalign4 = (pc[3:1]==3'b111);   // set when pc is not_align_4byte
+    //wire        w_nalign4 = (pc[3:1]==3'b111);   // set when pc is not_align_4byte
+    wire        w_nalign4 = (pc[1:0]!=0);   // set when pc is not_align_4byte
     wire        w_usestate = (w_nalign4 && !r_ir16_v);
 
     always@(posedge CLK) begin
@@ -226,6 +228,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     wire [31:0] w_ir_org = (r_if_state == 3) ? (r_ir16_v) ? {w_insn_data[15:0], r_ir16} :
                                                             {w_insn_data[15:0], r_if_irl} :
                                                             w_insn_data;
+    `else
+    assign w_insn_addr = pc;
+    wire [31:0] w_ir_org = w_insn_data;
+    `endif
 
     /***********************************           CVT          ***********************************/
     wire w_cinsn = (w_ir_org[1:0] != 2'b11); // flag to indicate a compressed instruction
@@ -701,6 +707,7 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                     end
                     `ifdef NUTTX_FLAT
                     mip[31:8] <= `MIP_MEIP >> 8;
+                    $display("nuttx-flat mip[31:8]<=%x", `MIP_MEIP >> 8);
                     `else
                     mip[31:8] <= `MIP_SEIP >> 8;
                     `endif
@@ -717,10 +724,10 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             (irq_num == `MIP_SEIP_SHIFT)) begin
         `endif
                         mip[31:8] <= 0;
-                        if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
-                                r_extint_max_displays <= r_extint_max_displays + 1;
+                        //if(r_extint_max_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
+                        //        r_extint_max_displays <= r_extint_max_displays + 1;
                                 $display("core%1x got clear extint", mhartid);
-                        end
+                        //end
         end
 
         if(state == `S_IF) begin
@@ -786,9 +793,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                 w_interrupt_mask && w_take_int && irq_num == `MIP_MTIP_SHIFT) begin
             `else
             if (state == `S_FIN && !w_busy && pending_exception == ~0 && 
-                        w_interrupt_mask && w_take_int && irq_num == `MIP_STIP_SHIFT) begin
+                w_interrupt_mask && w_take_int && irq_num == `MIP_STIP_SHIFT) begin
             `endif
-                    mip[7:4] <= 0; // however is disabled by w_sstatus_t3
+                mip[7:4] <= 0; // however is disabled by w_sstatus_t3
             end
 
         if(state == `S_FIN && !w_busy) begin
@@ -811,7 +818,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
             end
             else if(w_interrupt_mask && w_take_int) begin
                 if(irq_num == `MIP_MTIP_SHIFT) begin
-                    //$display("mtip pc=%x hart=%x", pc, w_hart_id);
+                    //$display("mtip pc=%x hart=%x w_interrupt_mask=%x mip=%x mie=%x", 
+                    //    pc, w_hart_id, w_interrupt_mask, mip, mie);
+                end else if(irq_num == `MIP_MEIP_SHIFT) begin
+                    $display("meip pc=%x hart=%x w_interrupt_mask=%x mip=%x mie=%x cause=%x mtvec=%x", 
+                        pc, w_hart_id, w_interrupt_mask, mip, mie, cause, mtvec);
                 end
                 if(w_deleg) begin
                     scause  <= cause;
@@ -989,7 +1000,9 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
                      (w_com)                                                   ? `S_COM :
                      ((w_busy) || (w_ex1 && w_ex1_busy))                       ? state  :
                      (state==`S_FIN)                                           ? `S_INI :
+                     `ifdef CINSN_OLD
                      (state==`S_IF  && w_nalign4 && r_if_state!=3)             ? `S_IF  : // Note
+                     `endif
                      (state==`S_EX1 && !r_op_AMO && !r_op_LOAD && !r_op_STORE) ? `S_WB  :
                      (state==`S_LD  && r_op_STORE)                             ? `S_SD  :
                      (state==`S_LD  && r_op_LOAD)                              ? `S_WB  : state+1;
@@ -1012,7 +1025,11 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     always @(posedge CLK) begin
         r_data_we <= w_d_we_t;
         r_data_en <= w_d_en_t;
-        r_tlb_req <= (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
+        r_tlb_req <= `ifdef CINSN_OLD
+                     (w_state==`S_IF && w_if_state!=1) ? `ACCESS_CODE  :     //// Note!!
+                     `else
+                     (w_state==`S_IF)                  ? `ACCESS_CODE  : 
+                     `endif
                      (w_d_en_t)                        ? `ACCESS_READ  :
                      (w_d_we_t)                        ? `ACCESS_WRITE : `ACCESS_NONE;
     end
