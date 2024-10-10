@@ -1517,7 +1517,7 @@ module m_decomp(w_ic, r_iw);
                 //$display("r_iw default -------------------------------- %x", {w_ic[1:0], w_ic[15:13]});
                 // not defined; it is reserved by riscv authors
                 // remove latch warning
-                `ifdef CINSN
+                `ifdef CINSN_OLD
                 `else
                 r_iw=w_ic;
                 `endif
