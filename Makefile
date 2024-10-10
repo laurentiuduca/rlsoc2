@@ -49,7 +49,7 @@ clean:
 	rm -rf simv.daidir csrc
 	rm -rf obj_dir
 	rm -rf synth.vg impl serialout.txt ftn.txt *out stip*.txt
-
+	rm -rf laur2.txt log*txt
 logclean:
 	rm -f log_*.txt diff_*.txt
 
