@@ -187,7 +187,7 @@ module m_mmu(
                     physical_addr   <= 0;
                     page_walk_fail  <= 1;
                     r_pw_state <= 5;
-                    $display("state 2 -> 5 a w_dram_le=%x", w_dram_le);
+                    //$display("state 2 -> 5 a w_dram_le=%x", w_dram_le);
                 end
                 else if(L1_xwr) begin
                     physical_addr   <= (L1_success) ? L1_p_addr : 0;
@@ -196,7 +196,7 @@ module m_mmu(
                         r_pw_state <= 3;
                     else begin
                         r_pw_state <= 5;
-                        $display("state 2 -> 5 b");
+                        //$display("state 2 -> 5 b");
                     end
                 end else begin
                     r_pw_state <= 3;
