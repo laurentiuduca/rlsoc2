@@ -13,7 +13,7 @@
 /**************************************************************************************************/
 `define SIM_MODE
 //`define USE_SINGLE_CORE
-`define NUTTX_FLAT
+//`define NUTTX_FLAT
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
 
