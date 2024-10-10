@@ -415,22 +415,29 @@ module m_RVCoreM(CLK, RST_X, w_stall, w_hart_id, w_ipi, r_halt, w_insn_addr, w_d
     assign w_data_addr = r_mem_addr;
     
     wire [31:0] w_mem_rdata = w_data_data;
-    reg [31:0] r_lrpc, r_lrmtime;
+    reg [31:0] r_lrpc=0, r_lrmtime=0, r_lrsc_displays=0;
     always@(posedge CLK) begin
-        if(state == `S_WB && (r_op_AMO && r_op_AMO_LR)/* && !w_busy*/) begin
+        if(state == `S_FIN && (r_op_AMO && r_op_AMO_LR) && !w_busy) begin
             load_res <= r_mem_addr;
             reserved <= 1;
             r_lrpc <= pc;
             r_lrmtime <= w_mtime;
-            //$display("-------- amo-lr mhartid=%1x r_mem_addr=%x", mhartid, r_mem_addr);
-        end else if(state == `S_WB && r_op_AMO && r_op_AMO_SC /*&& !r_wb_data[0] && !w_busy*/) begin
+            if(r_lrsc_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
+                r_lrsc_displays <= r_lrsc_displays + 1;
+                $display("-------- %0d: amo-lr start mhartid=%1x r_mem_addr=%x", w_mtime, mhartid, r_mem_addr);
+            end
+        end else if(state == `S_FIN && r_op_AMO && r_op_AMO_SC /*&& !r_wb_data[0]*/ && !w_busy) begin
             reserved <= 0;
-            //$display("-------- amo-sc mhartid=%1x load_res=%x", mhartid, load_res);
+            if(r_lrsc_displays < (`IPI_MAX_DISPLAYS >> 1)) begin
+                r_lrsc_displays <= r_lrsc_displays + 1;
+                $display("-------- %0d: amo-sc success=%0x mhartid=%1x load_res=%x", w_mtime, reserved?1:0, mhartid, load_res);
+            end
         end
         `ifndef USE_SINGLE_CORE
-        else if(reserved && (w_oh_load_res == load_res) && w_oh_sc && w_oh_reserved) begin
+        else if(reserved && (w_oh_load_res == load_res) && w_oh_sc && w_oh_reserved && 
+            ((r_op_AMO && r_op_AMO_SC && state < `S_EX1) || !r_op_AMO_SC)) begin
             reserved <= 0;
-            $display("-------- %0d: reserved disabled for mhartid=%1x pc=%x lrpc=%x oh_pc=%x load_res=%x lrmtime=%x", 
+            $display("-------- %0d: reserved disabled for mhartid=%1x pc=%x lrpc=%x oh_pc=%x load_res=%x lrmtime=%0d", 
                 w_mtime, mhartid, pc, r_lrpc, w_oh_pc, load_res, r_lrmtime);
         end
         `endif
