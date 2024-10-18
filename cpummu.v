@@ -86,7 +86,11 @@ module m_cpummu(
         .w_data_ctrl    (w_data_ctrl),
         .w_insn_data    (w_insn_data),
         .w_priv         (w_priv),
+        `ifdef NUTTX_FLAT
+        .w_satp         (0),
+        `else
         .w_satp         (w_satp),
+        `endif
         .w_mstatus      (w_mstatus),
         .w_pagefault    (w_pagefault),
         .w_tlb_req      (w_tlb_req),

@@ -283,6 +283,7 @@ module m_mmu(
     end
     
     /***********************************           TLB          ***********************************/
+    `ifndef NUTTX_FLAT
     wire        w_tlb_inst_r_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_iscode;
     wire        w_tlb_data_r_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_isread;
     wire        w_tlb_data_w_we   = (r_pw_state == 5 || (L1_success && r_pw_state == 3)) && !page_walk_fail && w_iswrite;
@@ -299,6 +300,7 @@ module m_mmu(
     m_tlb#(20, 22, `TLB_SIZE) TLB_data_w (CLK, 1'b1, w_tlb_flush, w_tlb_data_w_we,
                                             w_data_addr[31:12], w_data_addr[31:12], w_tlb_wdata,
                                             w_tlb_data_w_addr, w_tlb_data_w_oe);
+    `endif
 
     /***********************************          Memory        ***********************************/
     reg  [31:0] r_tlb_pte_addr = 0;
