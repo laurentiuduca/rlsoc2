@@ -15,7 +15,7 @@ module sd_file_loader (
     output wire         sdcard_pwr_n,
     // signals connect to SD bus
     output wire         sdclk,
-    inout               sdcmd,
+    inout  wire         sdcmd,
     input  wire         sddat0,
     output wire         sddat1, sddat2, sddat3,
     // led to show the status of SDcard
@@ -64,9 +64,10 @@ sd_file_reader #(
 
     assign tangled = ~{DONE, led[8:4]};
 
+    reg [7:0] state=0;
     reg [1:0] waddr=0;
-    reg [7:0] mem[4];
-    wire       rdone;
+    reg [7:0] mem[0:3];
+    reg       rdone;
     reg        rstart = 0;
     reg [31:0] rsector = 0, i=0;
     
@@ -93,7 +94,7 @@ sd_file_reader #(
                     rstart <= 0;
             end else if(state == 20) begin
                 if(w_ctrl_state == 0)
-                    if((i < `BIN_SIZE) begin
+                    if(i < `BIN_SIZE) begin
                         DATA <= {mem[3], mem[2], mem[1], mem[0]};
                         WE <= 1;
                         i <= i + 4;
@@ -101,7 +102,7 @@ sd_file_reader #(
                     end
                 if(i>=`BIN_SIZE)
                     DONE <= 1;
-    end else if(state == 21) begin
+            end else if(state == 21) begin
                 if(w_ctrl_state != 0) begin
                     WE <= 0;
                     state <= 0;

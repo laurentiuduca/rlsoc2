@@ -19,6 +19,8 @@ add_file max7219.v
 add_file clkdivider.v
 
 add_file sd_loader.v
+add_file sd_file_loader.v
+add_file sd_file_reader.v
 add_file sd_reader.v
 add_file sdcmd_ctrl.v
 
