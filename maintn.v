@@ -631,12 +631,22 @@ module m_topsim(CLK, RST_X);
 `ifndef SIM_MODE
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
+    `define FAT32_SD
+    `ifdef FAT32_SD
+    wire [5:0] sd_led_status;
+    sd_file_loader sd_file_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .w_ctrl_state(r_sd_state), 
+        .tangled(sd_led_status),
+        .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
+        .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
+    `else
     sd_loader sd_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
-
+    `endif
 
     // sd state machine for copying sd to dram
     reg [7:0] r_sd_state=0;
