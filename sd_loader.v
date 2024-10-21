@@ -54,7 +54,7 @@ reg [$clog2(`SD_SECTOR_SIZE):0] i=0;
         end else begin
             if(state == 0) begin
                 if (DONE==0) begin
-                    if(rdone) begin
+                    if(rdone) begin // sector was read
                         rstart <= 0;
                         state <= 20;
                     end else if(w_main_init_state == 3) begin
