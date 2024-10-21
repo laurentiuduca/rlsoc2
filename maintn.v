@@ -632,7 +632,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
-    `define FAT32_SD
+    //`define FAT32_SD
     `ifdef FAT32_SD
     sd_file_loader sd_file_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
