@@ -45,7 +45,7 @@ wire       outen;     // when outen=1, a byte of file content is read out from o
 wire [7:0] outbyte;   // a byte of file content
 
 sd_file_reader #(
-    .FILE_NAME_LEN    ( `BIN_SIZE      ),  // the length of "example.txt" (in bytes)
+    .FILE_NAME_LEN    ( 11      ),         // the length of "example.txt" (in bytes)
     .FILE_NAME        ( "initmem.bin"  ),  // file name to read
     .CLK_DIV          ( 2              )   // because clk=27MHz, CLK_DIV must ≥2
 ) u_sd_file_reader (
@@ -68,12 +68,10 @@ sd_file_reader #(
     reg [1:0] waddr=0;
     reg [7:0] mem[0:3];
     reg       rdone;
-    reg        rstart = 0;
     reg [31:0] rsector = 0, i=0;
     
     always @(posedge clk27mhz) begin
         if(!resetn) begin
-            rstart <= 0;
             rsector <= 0;
             state <= 0;
             DATA <= 0;
@@ -84,18 +82,13 @@ sd_file_reader #(
             if(state == 0) begin
                 if (DONE==0) begin
                     if(rdone) begin // sector was read
-                        rstart <= 0;
                         state <= 20;
-                    end else if(w_main_init_state == 3) begin
-                        rstart <= 1;
-                    end else
-                        rstart <= 0;
-                end else
-                    rstart <= 0;
+                        DATA <= {mem[3], mem[2], mem[1], mem[0]};
+                    end
+                end
             end else if(state == 20) begin
                 if(w_ctrl_state == 0)
                     if(i < `BIN_SIZE) begin
-                        DATA <= {mem[3], mem[2], mem[1], mem[0]};
                         WE <= 1;
                         i <= i + 4;
                         state <= 21;
@@ -118,11 +111,11 @@ sd_file_reader #(
             if(DONE==0 && outen && w_main_init_state == 3) begin
                 mem[waddr] <= outbyte;
                 waddr <= (waddr + 1) & 2'b11;
-                if(waddr == 2'b11)
-                    rdone <= 1;
-                else
-                    rdone <= 0;
             end
+            if(waddr == 2'b11)
+                rdone <= 1;
+            else
+                rdone <= 0;
         end
     end
 
