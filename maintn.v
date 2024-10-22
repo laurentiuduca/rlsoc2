@@ -974,9 +974,9 @@ module m_topsim(CLK, RST_X);
         end
 
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
-                        sd_led_status :
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} ;
+                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} :
+                        sd_led_status;
 `endif
     /**********************************************************************************************/
 

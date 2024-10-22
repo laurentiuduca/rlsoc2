@@ -81,7 +81,7 @@ sd_file_reader #(
         end else begin
             if(state == 0) begin
                 if (DONE==0) begin
-                    if(rdone) begin // sector was read
+                    if(rdone) begin
                         state <= 20;
                         DATA <= {mem[3], mem[2], mem[1], mem[0]};
                     end
@@ -104,6 +104,7 @@ sd_file_reader #(
         end
     end
 
+    reg rstatechanged=0;
     always @(posedge clk27mhz) begin
         if(!resetn) begin
             waddr <= 0;
@@ -112,10 +113,14 @@ sd_file_reader #(
                 mem[waddr] <= outbyte;
                 waddr <= (waddr + 1) & 2'b11;
             end
-            if(waddr == 2'b11)
+            if(waddr == 2'b11 && rstatechanged) begin
                 rdone <= 1;
-            else
+                rstatechanged <= 0;
+            end else begin
                 rdone <= 0;
+                if(waddr != 2'b11)
+                    rstatechanged <= 1;
+            end
         end
     end
 
