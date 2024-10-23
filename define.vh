@@ -16,6 +16,7 @@
 //`define NUTTX_FLAT
 `define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
+//`define FAT32_SD
 
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
