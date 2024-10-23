@@ -74,7 +74,6 @@ sd_file_reader #(
         if(!resetn) begin
             rsector <= 0;
             state <= 0;
-            DATA <= 0;
             WE <= 0;
             DONE <= 0;
             i <= 0;
@@ -83,7 +82,6 @@ sd_file_reader #(
                 if (DONE==0) begin
                     if(rdone) begin
                         state <= 20;
-                        DATA <= {mem[3], mem[2], mem[1], mem[0]};
                     end
                 end
             end else if(state == 20) begin
@@ -93,12 +91,12 @@ sd_file_reader #(
                         i <= i + 4;
                         state <= 21;
                     end
-                if(i>=`BIN_SIZE)
-                    DONE <= 1;
             end else if(state == 21) begin
                 if(w_ctrl_state != 0) begin
                     WE <= 0;
                     state <= 0;
+                    if(i>=`BIN_SIZE)
+                        DONE <= 1;
                 end
             end
         end
@@ -108,19 +106,17 @@ sd_file_reader #(
     always @(posedge clk27mhz) begin
         if(!resetn) begin
             waddr <= 0;
+            DATA <= 0;
         end else begin
             if(DONE==0 && outen && w_main_init_state == 3) begin
                 mem[waddr] <= outbyte;
                 waddr <= (waddr + 1) & 2'b11;
-            end
-            if(waddr == 2'b11 && rstatechanged) begin
-                rdone <= 1;
-                rstatechanged <= 0;
-            end else begin
+                if(waddr == 2'b11) begin
+                    DATA <= {outbyte, mem[2], mem[1], mem[0]};
+                    rdone <= 1;
+                end
+            end else if (rdone)
                 rdone <= 0;
-                if(waddr != 2'b11)
-                    rstatechanged <= 1;
-            end
         end
     end
 
