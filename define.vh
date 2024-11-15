@@ -14,7 +14,9 @@
 `define SIM_MODE
 //`define USE_SINGLE_CORE
 //`define NUTTX_FLAT
+`ifndef SIM_MODE
 `define TN_DRAM_REFRESH // for tang nano
+`endif
 `define EMU_EXTINT1
 //`define FAT32_SD
 
