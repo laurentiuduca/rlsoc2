@@ -47,7 +47,7 @@ module DRAM_conRV
     output wire RAS,
     output wire SDWE,
     output wire SDCS0,
-    inout [15:0]Data,
+    inout wire [15:0]Data,
     output wire [12:0]Address,
     output wire [1:0]Bank,
 `endif
@@ -425,30 +425,41 @@ endtask
     );
 `else
 `ifdef QMTECH
-    wire [6:0] drvstate;
-    assign SDCLK0=clk_sdram;
-    sdramwinb sdram_instance_name(
-        .clk(clk_sdram),
-        .rst(rst_x), // active low
-        .data(Data),
-        .addr(Address),
-        .ba(Bank),
-        .cke(SDCKE0),
-        .cs_n(SDCS0),
-        .ras_n(RAS),
-        .cas_n(CAS),
-        .we_n(SDWE),
-        .dqm(DQM),
+	DRAM_conRVqm #(.PRELOAD_FILE({`HEX_DIR,`HEXFILE}))
+    		dram_conqm (
+                               // user interface ports
+                               .i_rd_en(r_rd),
+                               .i_wr_en(r_we),
+                               .i_addr(r_maddr),
+                               .i_data(r_wdata),
+                               .o_data(w_dram_odata),
+                               .o_busy(w_busy),
+                               .i_ctrl(r_mask),
+                               .sys_state(0),
+                               .w_bus_cpustate(0),
+                               .mem_state(),
+                               .d_pc(0),
 
-        .dqmi(~r_mask),
-        .busy(w_busy),
-        .uaddr(r_maddr),
-        .ucmd(r_rd | r_we),
-        .uwe(r_we),
-        .uwrdata(r_wdata),
-        .urddata(w_dram_odata),
-        .state_cnt(drvstate)
-);
+                               .clk(clk),
+                               .rst_x(rst_x),
+                               .clk_sdram(clk_sdram),
+
+                                `ifdef SIM_MODE
+                                .w_mtime()
+                                `else
+                                // SDRAM
+                                .SDCLK0(SDCLK0),
+                                .SDCKE0(SDCKE0),
+                                .DQM(DQM),
+                                .CAS(CAS),
+                                .RAS(RAS),
+                                .SDWE(SDWE),
+                                .SDCS0(SDCS0),
+                                .Data(Data),
+                                .Address(Address),
+                                .Bank(Bank)
+                               `endif
+                               );
 `endif
 `endif
 `endif

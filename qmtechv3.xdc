@@ -23,7 +23,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports w_txd]
 #
 # SDRAM signals
 #
-set_property -dict {PACKAGE_PIN G22 IOSTANDARD LVCMOS33 SLEW FAST} [get_ports SDCLK0]
+set_property PACKAGE_PIN G22 [get_ports SDCLK0]
+set_property IOSTANDARD LVCMOS33 [get_ports SDCLK0]
+set_property SLEW FAST [get_ports SDCLK0]
+
 set_property PACKAGE_PIN H22 [get_ports SDCKE0]
 set_property IOSTANDARD LVCMOS33 [get_ports SDCKE0]
 

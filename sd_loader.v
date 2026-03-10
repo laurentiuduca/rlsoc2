@@ -21,7 +21,10 @@ module sd_loader (
     
     output reg  [31:0]  DATA,
     output reg          WE,
-    output reg          DONE
+    output reg          DONE,
+
+    output wire [3:0] card_stat,
+    output wire [1:0] card_type
     );
 
 assign sdcard_pwr_n = 1'b0;                  // keep SDcard power-on
@@ -97,8 +100,8 @@ reg [$clog2(`SD_SECTOR_SIZE):0] i=0;
         end
     end
 
-wire [3:0] card_stat;
-wire [1:0] card_type;
+//wire [3:0] card_stat;
+//wire [1:0] card_type;
 
 //----------------------------------------------------------------------------------------------------
 // sd_reader

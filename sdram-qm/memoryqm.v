@@ -8,7 +8,7 @@
 `include "define.vh"
 
 /**************************************************************************************************/
-module DRAM_conRV #(parameter PRELOAD_FILE = "")
+module DRAM_conRVqm #(parameter PRELOAD_FILE = "")
     (
      // user interface ports
      input  wire                         i_rd_en,

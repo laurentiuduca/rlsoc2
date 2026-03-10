@@ -32,8 +32,8 @@ error
   //`define DRAM_SIM // slower, for nexysa7
   //`define CACHE_DEBUG
 `else
-  //`define QMTECH
-  `define TNSRAM
+  `define QMTECH
+  //`define TNSRAM
 `ifdef TNSRAM
 `define TN_DRAM_REFRESH // for tang nano
 `else

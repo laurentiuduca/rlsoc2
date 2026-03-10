@@ -41,6 +41,9 @@ module m_maintn(
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm,       // 32/4
+
+    // when sdcard_pwr_n = 0, SDcard power on
+    output wire         sdcard_pwr_n,
 `else
 `ifdef QMTECH
     // SDRAM
@@ -51,14 +54,12 @@ module m_maintn(
     output wire RAS,
     output wire SDWE,
     output wire SDCS0,
-    inout [15:0]Data,
+    inout wire [15:0]Data,
     output wire [12:0]Address,
     output wire [1:0]Bank,
 `endif
 `endif
 
-    // when sdcard_pwr_n = 0, SDcard power on
-    output wire         sdcard_pwr_n,
     // signals connect to SD bus
     output wire         sdclk,
     inout  wire         sdcmd,
@@ -90,6 +91,8 @@ module m_maintn(
     );
     `else
     `ifdef QMTECH
+    wire         sdcard_pwr_n;	    
+    wire locked;
     reg rst_n = 0;
     reg [7:0] rst_cnt = 0;
     always @(posedge pll_clk) begin
@@ -692,8 +695,9 @@ module m_topsim(CLK, RST_X);
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
         .w_ctrl_state(r_sd_state),
         .sdcard_pwr_n(sdcard_pwr_n), .sdclk(sdclk), .sdcmd(sdcmd), 
-        .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3));
-    assign sd_led_status = {!w_sd_init_done, 5'b0};
+        .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
+	.card_stat(sd_led_status[5:2]), .card_type(sd_led_status[1:0]));
+    //assign sd_led_status = {!w_sd_init_done, 5'b0};
     `endif
 
     // sd state machine for copying sd to dram
@@ -1037,10 +1041,10 @@ module m_topsim(CLK, RST_X);
             r_extint1_done <= 1;
         end
 
-    assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
+    assign w_led = (w_btnl == 0 && w_btnr == 0) ? ~sd_led_status : 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} :
-                        sd_led_status;
+                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} ;
+                        //sd_led_status;
 `endif
     /**********************************************************************************************/
 
