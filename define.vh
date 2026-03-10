@@ -15,7 +15,7 @@
 //`define USE_SINGLE_CORE
 //`define NUTTX_FLAT
 `define EMU_EXTINT1
-//`define FAT32_SD
+`define FAT32_SD
 
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
@@ -239,7 +239,7 @@ error
 // Note: This cache support only 4-byte instructions
 //`define ICACHE_ENABLE
 
-//`endif
+`endif //__CONFIG_VH__
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/
