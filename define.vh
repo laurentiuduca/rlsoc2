@@ -15,7 +15,7 @@
 //`define USE_SINGLE_CORE
 //`define NUTTX_FLAT
 `define EMU_EXTINT1
-`define FAT32_SD
+//`define FAT32_SD
 
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
@@ -34,12 +34,12 @@ error
 `else
   //`define QMTECH
   `define TNSRAM
-`endif
 `ifdef TNSRAM
 `define TN_DRAM_REFRESH // for tang nano
 `else
 `ifndef QMTECH
   error
+`endif
 `endif
 `endif
 //`define RAM_DEBUG
