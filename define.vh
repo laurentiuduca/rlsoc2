@@ -11,12 +11,10 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-`define SIM_MODE
+//`define SIM_MODE
 //`define USE_SINGLE_CORE
 //`define NUTTX_FLAT
-`ifndef SIM_MODE
-`define TN_DRAM_REFRESH // for tang nano
-`endif
+//`define TN_DRAM_REFRESH // for tang nano
 `define EMU_EXTINT1
 //`define FAT32_SD
 
@@ -26,15 +24,23 @@
 error
 `endif
 `endif
-// verify dts
 
 `ifdef SIM_MODE
-`define SIM_TNSRAM // tang nano sim ram
-//`define SIM_TNREFRESH
-//`define RAM_DEBUG
-`define mtsm 1
-//`define DRAM_SIM // slower, for nexysa7
-//`define CACHE_DEBUG
+  `define SIM_TNSRAM // tang nano sim ram
+  //`define SIM_TNREFRESH
+  //`define RAM_DEBUG
+  `define mtsm 1
+  //`define DRAM_SIM // slower, for nexysa7
+  //`define CACHE_DEBUG
+`else
+  //`define QMTECH
+  `define TNSRAM
+`endif
+`ifndef TNSRAM
+`else
+`ifndef QMTECH
+  error
+`endif
 `endif
 //`define RAM_DEBUG
 
@@ -84,7 +90,13 @@ error
 
 `define CACHE_SIZE (128*1024)
 
+`ifdef TNSRAM
 `define FREQ 27_000_000
+`else
+`ifdef QMTECH
+`define FREQ 50_000_000
+`endif
+`endif
 `ifdef SIM_MAIN
 // speed up a little bit the simulation
 `define SERIAL_WCNT 2
@@ -227,7 +239,7 @@ error
 // Note: This cache support only 4-byte instructions
 //`define ICACHE_ENABLE
 
-`endif
+//`endif
 /**************************************************************************************************/
 /**************************************************************************************************/
 /**************************************************************************************************/

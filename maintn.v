@@ -14,7 +14,13 @@ module m_maintn(
     input wire CLK,
     input  wire        w_rxd,
     output wire        w_txd,
+    `ifdef TNSRAM
     output wire [5:0] w_led,
+    `else
+    `ifdef QMTECH
+    output wire [1:0] w_led,
+    `endif
+    `endif
 	input wire w_btnl,
 	input wire w_btnr,
 
@@ -23,6 +29,7 @@ module m_maintn(
     output reg r_extint1_ack,
     `endif
 
+`ifdef TNSRAM
     // tang nano 20k SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -34,6 +41,21 @@ module m_maintn(
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm,       // 32/4
+`else
+`ifdef QMTECH
+    // SDRAM
+    output wire SDCLK0,
+    output wire SDCKE0,
+    output wire [1:0]DQM,
+    output wire CAS,
+    output wire RAS,
+    output wire SDWE,
+    output wire SDCS0,
+    inout [15:0]Data,
+    output wire [12:0]Address,
+    output wire [1:0]Bank,
+`endif
+`endif
 
     // when sdcard_pwr_n = 0, SDcard power on
     output wire         sdcard_pwr_n,
@@ -49,24 +71,50 @@ module m_maintn(
     output wire MAX7219_LOAD
     );
 
+
     wire pll_clk, clk_sdram;
+    `ifdef TNSRAM
+    reg RST_X = 0;
+    reg [7:0] rst_cnt = 0;
+    always @(posedge pll_clk) begin
+        if(rst_cnt < 25) begin
+          rst_cnt <= rst_cnt + 1;
+          RST_X <= 0;
+        end else
+        RST_X <= 1;
+    end
     Gowin_rPLL_nes pll_nes(
     .clkin(CLK),
     .clkout(pll_clk),          // FREQ main clock
     .clkoutp(clk_sdram)    // FREQ main clock phase shifted
     );
+    `else
+    `ifdef QMTECH
+    reg rst_n = 0;
+    reg [7:0] rst_cnt = 0;
+    always @(posedge pll_clk) begin
+        if(rst_cnt < 25) begin
+          rst_cnt <= rst_cnt + 1;
+          rst_n <= 0;
+        end else
+        rst_n <= 1;
+    end
+    artix7_pll u_pll(
+    .clkref_i(CLK)           // 50
+    ,.rst(~rst_n)
+    ,.locked(locked)
+    // Outputs
+    ,.clkout0_o(clk_sdram)         // 100
+    ,.clkout1_o()     // 400
+    ,.clkout2_o()     // 200
+    ,.clkout3_o() // 400 (phase 90)
+    ,.clkout4_o(pll_clk)
+);
+    wire RST_X = locked;
+    `endif
+    `endif
 
-reg RST_X = 0;
-reg [7:0] rst_cnt = 0;
-always @(posedge pll_clk) begin
-    if(rst_cnt < 25) begin
-      rst_cnt <= rst_cnt + 1;
-		RST_X <= 0;
-	 end else
-      RST_X <= 1;
-end
-
-`else
+`else // we have SIM_MODE
 module m_topsim(CLK, RST_X);
     input wire CLK, RST_X;
     wire pll_clk = CLK;
@@ -921,7 +969,8 @@ module m_topsim(CLK, RST_X);
                                 `ifdef SIM_MODE
                                 .w_mtime(w_mtime)
                                 `else
-                                .O_sdram_clk(O_sdram_clk),
+				`ifdef TNSRAM
+                               .O_sdram_clk(O_sdram_clk),
                                .O_sdram_cke(O_sdram_cke),
                                .O_sdram_cs_n(O_sdram_cs_n),            // chip select
                                .O_sdram_cas_n(O_sdram_cas_n),           // columns address select
@@ -931,6 +980,20 @@ module m_topsim(CLK, RST_X);
                                .O_sdram_addr(O_sdram_addr),     // 11 bit multiplexed address bus
                                .O_sdram_ba(O_sdram_ba),        // two banks
                                .O_sdram_dqm(O_sdram_dqm)       // 32/4
+                                `else
+				`ifdef QMTECH
+                                // SDRAM
+                                .SDCLK0(SDCLK0),
+                                .SDCKE0(SDCKE0),
+                                .DQM(DQM),
+                                .CAS(CAS),
+                                .RAS(RAS),
+                                .SDWE(SDWE),
+                                .SDCS0(SDCS0),
+                                .Data(Data),
+                                .Address(Address),
+                                .Bank(Bank)
+                               `endif
                                `endif
                                );
     /**********************************************************************************************/

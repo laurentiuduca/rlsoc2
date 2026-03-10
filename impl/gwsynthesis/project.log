@@ -1,0 +1,82 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":4)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":4)
+ERROR (EX3863) : Syntax error near 'module'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":6)
+ERROR (EX2656) : Verilog 2001 keyword 'module' used in incorrect context("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":6)
+ERROR (EX3863) : Syntax error near 'output'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":8)
+ERROR (EX2656) : Verilog 2001 keyword 'output' used in incorrect context("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":8)
+WARN  (EX3209) : Root scope declaration is not allowed in Verilog 2001 mode("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":39)
+ERROR (EX3863) : Syntax error near 'assign'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":40)
+ERROR (EX2656) : Verilog 2001 keyword 'assign' used in incorrect context("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v":40)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/busarbiter.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/console.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/console.v":7)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/console.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/console.v":7)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/console.v":119)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh":593)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/console.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v":4)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v":4)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v":173)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v":172)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/cpummu.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh":595)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/gowin_rpll.v'
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v":7)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v":7)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v":158)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v":91)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/loader.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v":8)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v":8)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v":1062)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v":1059)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/maintn.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v":6)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v":6)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v":141)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v":8)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memory_controller.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v":8)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v":8)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v":488)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v":485)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/memorytn.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v":10)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v":10)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v":434)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v":303)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/mmu.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v":11)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v":11)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v":1535)
+Unterminated preprocessor directive was used here("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v":1530)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/rvcorem.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sdram.v'
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/max7219.v'
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/clkdivider.v'
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_loader.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_loader.v":6)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_loader.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_loader.v":6)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_loader.v":125)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_loader.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_loader.v'
+Analyzing included file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/define.vh'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_loader.v":10)
+Back to file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_loader.v'("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_loader.v":10)
+ERROR (EX3846) : Unexpected EOF, expected `else, `elsif, or matching `endif("/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_loader.v":123)
+Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_loader.v' ignored due to errors
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_file_reader.v'
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sd_reader.v'
+Analyzing Verilog file '/home/laur/lucru/cn/riscv/rvsoc-site-japan/rvsoc_src_ver053/src/sdcmd_ctrl.v'
+GowinSynthesis finish

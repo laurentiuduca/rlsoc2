@@ -25,6 +25,7 @@ module DRAM_conRV
    `ifdef SIM_MODE
       input wire [31:0] w_mtime,
    `else
+`ifdef TNSRAM
     // SDRAM
     output wire O_sdram_clk,
     output wire O_sdram_cke,
@@ -36,6 +37,21 @@ module DRAM_conRV
     output wire [10:0] O_sdram_addr,     // 11 bit multiplexed address bus
     output wire [1:0] O_sdram_ba,        // two banks
     output wire [3:0] O_sdram_dqm,       // 32/4
+`else
+`ifdef QMTECH
+    // SDRAM
+    output wire SDCLK0,
+    output wire SDCKE0,
+    output wire [1:0]DQM,
+    output wire CAS,
+    output wire RAS,
+    output wire SDWE,
+    output wire SDCS0,
+    inout [15:0]Data,
+    output wire [12:0]Address,
+    output wire [1:0]Bank,
+`endif
+`endif
     `endif
 
      `ifdef TN_DRAM_REFRESH
@@ -49,15 +65,6 @@ module DRAM_conRV
      output wire sdram_fail
 );
 
-`ifdef SIM_TNSRAM
-`define TNSRAM
-`else
-`ifndef SIM_MODE
-`define TNSRAM
-`endif
-`endif
-
-`ifdef TNSRAM
     reg         r_we    = 0;
     reg         r_rd    = 0;
     wire 	w_busy;
@@ -383,7 +390,6 @@ endtask
 	end
 	endcase
 	end
-`endif // SIM_MODE
 
 `ifdef SIM_MODE
 `ifdef SIM_TNSRAM
@@ -402,6 +408,7 @@ endtask
         .w_mtime(w_mtime[31:0]));
 `endif
 `else
+`ifdef TNSRAM
     MemoryController memory(.clk(clk), .clk_sdram(clk_sdram), .resetn(rst_x),
         .read_a(r_rd), 
         .read_b(1'b0),
@@ -416,8 +423,35 @@ endtask
         .SDRAM_nWE(O_sdram_wen_n), .SDRAM_nRAS(O_sdram_ras_n), .SDRAM_nCAS(O_sdram_cas_n), 
         .SDRAM_CLK(O_sdram_clk), .SDRAM_CKE(O_sdram_cke), .SDRAM_DQM(O_sdram_dqm)
     );
-`endif
+`else
+`ifdef QMTECH
+    wire [6:0] drvstate;
+    assign SDCLK0=clk_sdram;
+    sdramwinb sdram_instance_name(
+        .clk(clk_sdram),
+        .rst(rst_x), // active low
+        .data(Data),
+        .addr(Address),
+        .ba(Bank),
+        .cke(SDCKE0),
+        .cs_n(SDCS0),
+        .ras_n(RAS),
+        .cas_n(CAS),
+        .we_n(SDWE),
+        .dqm(DQM),
 
+        .dqmi(~r_mask),
+        .busy(w_busy),
+        .uaddr(r_maddr),
+        .ucmd(r_rd | r_we),
+        .uwe(r_we),
+        .uwrdata(r_wdata),
+        .urddata(w_dram_odata),
+        .state_cnt(drvstate)
+);
+`endif
+`endif
+`endif
 /**********************************************************************************************/
 
 `ifdef SIM_MODE

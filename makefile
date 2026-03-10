@@ -28,7 +28,7 @@ endif
 VERILATOR  = verilator
 #VERIFLAGS  = -DSIM_MODE #-DVERILATOR
 #VERIFLAGS = -DSIM_MAIN // must be defined in defines.vh
-VERIFLAGS += --public --top-module m_topsim --clk CLK
+VERIFLAGS += --public --top-module m_topsim
 VERIFLAGS += --x-assign 0 --x-initial 0
 VERIFLAGS += --threads 1 -O2
 #VERIFLAGS += --threads 3 -DVL_THREADED -O2
@@ -50,6 +50,7 @@ clean:
 	rm -rf obj_dir
 	rm -rf synth.vg impl serialout.txt ftn.txt *out stip*.txt
 	rm -rf laur2.txt log*txt
+	rm -rf vivado*
 logclean:
 	rm -f log_*.txt diff_*.txt
 
@@ -77,7 +78,9 @@ run-i:
 run:
 	./simv
 gwsynth:
-	time gw_sh run.tcl
+	time gw_sh run-tn.tcl
+qmsynth:
+	time vivado -mode batch -source run-qm.tcl
 
 
 # run2: simv
