@@ -56,7 +56,7 @@ PLLE2_BASE
     .CLKOUT1_DIVIDE(3), // CLK1=
     .CLKOUT2_DIVIDE(6), // CLK2=
     .CLKOUT3_DIVIDE(3), // CLK3=
-    .CLKOUT4_DIVIDE(20), // 
+    .CLKOUT4_DIVIDE(`frdiv), // 
 
     // CLKOUTx_DUTY_CYCLE: Duty cycle for each CLKOUT
     .CLKOUT0_DUTY_CYCLE(0.5),

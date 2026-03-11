@@ -107,7 +107,7 @@ reg [$clog2(`SD_SECTOR_SIZE):0] i=0;
 // sd_reader
 //----------------------------------------------------------------------------------------------------
 sd_reader #(
-    .CLK_DIV          ( 2              )   // because clk=27MHz, CLK_DIV must ≥2
+    .CLK_DIV          (`FREQ < 50_000_000 ? 2 : 3)   // clk=27MHz, CLK_DIV must ≥2
 ) u_sd_reader (
     .rstn             ( resetn         ),
     .clk              ( clk27mhz      ),

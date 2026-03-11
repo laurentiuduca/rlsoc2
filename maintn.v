@@ -95,7 +95,7 @@ module m_maintn(
     wire locked;
     reg rst_n = 0;
     reg [7:0] rst_cnt = 0;
-    always @(posedge pll_clk) begin
+    always @(posedge CLK) begin
         if(rst_cnt < 25) begin
           rst_cnt <= rst_cnt + 1;
           rst_n <= 0;
@@ -113,7 +113,8 @@ module m_maintn(
     ,.clkout3_o() // 400 (phase 90)
     ,.clkout4_o(pll_clk)
 );
-    wire RST_X = locked;
+    wire RST_X;
+    assign RST_X = locked;
     `endif
     `endif
 
@@ -891,7 +892,7 @@ module m_topsim(CLK, RST_X);
 	    r_zero_we <= 0;
 	    r_zero_done <= 1;
 `else
-        if(!w_dram_busy && !r_zero_done && calib_done) 
+        if(!w_dram_busy && !r_zero_done /*&& calib_done*/) 
 				r_zero_we <= 1;
 		  else if(w_dram_busy && r_zero_we) begin
             r_zero_we    <= 0;
@@ -1008,7 +1009,7 @@ module m_topsim(CLK, RST_X);
 `define LAUR_WRITE_TIME
 `ifdef LAUR_WRITE_TIME
     reg [63:0] old_w_mtime=0;
-    always @(posedge CLK) begin
+    always @(posedge pll_clk) begin
 	    if(old_w_mtime != w_mtime) begin
 		    old_w_mtime = w_mtime;
 		    if(w_mtime % 64'd10000000 == 64'd0) begin
@@ -1031,7 +1032,7 @@ module m_topsim(CLK, RST_X);
     wire [31:0] data_vector;
     clkdivider cd(.clk(pll_clk), .reset_n(RST_X), .n(100), .clkdiv(clkdiv));
 
-    assign data_vector = (w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl == 0 ? w_pc1 : w_sd_checksum;
+    assign data_vector = r_initaddr3; //(w_btnr == 0 && w_btnl == 0) ? w_pc0 : w_btnl == 0 ? w_pc1 : w_sd_checksum;
 
     reg r_extint1_done=0;
     reg [31:0] r_dbg_data=0;
@@ -1041,10 +1042,10 @@ module m_topsim(CLK, RST_X);
             r_extint1_done <= 1;
         end
 
-    assign w_led = (w_btnl == 0 && w_btnr == 0) ? ~sd_led_status : 
+    assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
                         ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} ;
-                        //sd_led_status;
+                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} :
+                        ~sd_led_status;
 `endif
     /**********************************************************************************************/
 

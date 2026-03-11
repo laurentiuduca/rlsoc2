@@ -12,10 +12,10 @@
 //`define ARTYA7
 /**************************************************************************************************/
 //`define SIM_MODE
-//`define USE_SINGLE_CORE
+`define USE_SINGLE_CORE
 //`define NUTTX_FLAT
 `define EMU_EXTINT1
-//`define FAT32_SD
+`define FAT32_SD
 
 //`define SIM_MAIN // for xsim
 `ifdef SIM_MAIN
@@ -94,7 +94,8 @@ error
 `define FREQ 27_000_000
 `else
 `ifdef QMTECH
-`define FREQ 50_000_000
+`define frdiv 40
+`define FREQ (1_000_000 * (1000 / `frdiv))
 `endif
 `endif
 `ifdef SIM_MAIN
