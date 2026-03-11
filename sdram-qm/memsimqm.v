@@ -3,7 +3,7 @@
 
 `include "define.vh"
 
-module m_sbu_mem #(parameter MEM_SIZE = `BIN_SIZE)
+module m_sbu_memqm #(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
     input  wire             CLK;
     input  wire [31:0] w_addr;
@@ -87,7 +87,7 @@ module m_sbu_mem #(parameter MEM_SIZE = `BIN_SIZE)
     end
 endmodule
 
-module m_sdram_sim#(parameter MEM_SIZE = `BIN_SIZE)
+module m_sdram_simqm#(parameter MEM_SIZE = `BIN_SIZE)
             (CLK, w_addr, w_odata, w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
     input  wire             CLK;
     input  wire [31:0] w_addr;
@@ -99,7 +99,7 @@ module m_sdram_sim#(parameter MEM_SIZE = `BIN_SIZE)
     input  wire      [31:0] w_mtime;
     input  wire             w_refresh;
 
-    m_sbu_mem#(MEM_SIZE) idbmem(CLK, w_addr, w_odata,
+    m_sbu_memqm#(MEM_SIZE) idbmemqm(CLK, w_addr, w_odata,
                                 w_we, w_le, w_wdata, w_mask, w_stall, w_mtime, w_refresh);
 
 endmodule

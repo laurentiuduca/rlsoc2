@@ -11,7 +11,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-//`define SIM_MODE
+`define SIM_MODE
 `define USE_SINGLE_CORE
 //`define NUTTX_FLAT
 `define EMU_EXTINT1
@@ -25,7 +25,10 @@ error
 `endif
 
 `ifdef SIM_MODE
-  `define SIM_TNSRAM // tang nano sim ram
+  //`define SIM_TNSRAM // tang nano sim ram
+  `define winbaddrlen 24
+  `define winbdatalen 16
+  `define winbmasklen 2
   //`define SIM_TNREFRESH
   //`define RAM_DEBUG
   `define mtsm 1

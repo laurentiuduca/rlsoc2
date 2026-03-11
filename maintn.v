@@ -124,7 +124,7 @@ module m_topsim(CLK, RST_X);
     wire pll_clk = CLK;
     wire w_txd;
     wire w_rxd;
-    wire clk_sdram;
+    wire clk_sdram = CLK;
     wire MAX7219_CLK;
     wire MAX7219_DATA;
     wire MAX7219_LOAD;
@@ -1043,8 +1043,8 @@ module m_topsim(CLK, RST_X);
         end
 
     assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
-                        ~ {w_sd_checksum_match, r_mem_rb_done, w_sd_init_done, 
-                        r_extint1_done, r_zero_done, calib_done & !sdram_fail & !w_late_refresh} :
+                        ~ {w_sd_checksum_match, w_sd_init_done, 
+                        r_zero_done, r_init_state /*calib_done & !sdram_fail & !w_late_refresh*/} :
                         ~sd_led_status;
 `endif
     /**********************************************************************************************/

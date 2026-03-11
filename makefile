@@ -13,7 +13,7 @@ TOPSOURCE = maintn.v
 TOPSOURCE-SIM-MAIN = main.v dram.v
 OTHERSOURCE = rvcorem.v busarbiter.v cpummu.v memsim.v mmu.v loader.v read_file.v memorytn.v
 OLDSOURCE = disk.v microc.v debug.v
-
+QMSOURCE = sdram-qm/af.v  sdram-qm/memoryqm.v  sdram-qm/memsimqm.v  sdram-qm/sdramwinb.v
 
 # VCS
 VCS       = vcs
@@ -59,7 +59,7 @@ vcs:
 
 veri:
 	printf "\n\nfor make veri, the variable SIM_MODE must be enabled in define.vh\n\n\n"
-	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE}
+	${VERILATOR} ${VERIFLAGS2} ${TOPSOURCE} ${OTHERSOURCE} ${QMSOURCE}
 	make -j -C obj_dir -f Vm_topsim.mk Vm_topsim
 	cp obj_dir/Vm_topsim simv
 

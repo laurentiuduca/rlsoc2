@@ -242,7 +242,7 @@ end
 end
 
 `ifdef SIM_MODE
-    m_sdram_sim #(`BIN_SIZE/2) idbmem(.CLK(clk), .w_addr(r_maddr), .w_odata(w_dram_odata),
+    m_sdram_simqm #(`BIN_SIZE/2) idbmemqm(.CLK(clk_sdram), .w_addr(r_maddr), .w_odata(w_dram_odata),
         .w_we(r_we), .w_le(r_rd), .w_wdata(r_mwdata), .w_mask(~r_mmask), .w_stall(w_busy), 
         .w_mtime(w_mtime[31:0]),
         .w_refresh(0)
@@ -292,8 +292,8 @@ end
         j=0;
 
         for(i=0;i<`BBL_SIZE;i=i+2) begin
-	    idbmem.idbmem.mem[j][7:0]=mem_bbl[i];
-	    idbmem.idbmem.mem[j][15:8]=mem_bbl[i+1];
+	    idbmemqm.idbmemqm.mem[j][7:0]=mem_bbl[i];
+	    idbmemqm.idbmemqm.mem[j][15:8]=mem_bbl[i+1];
             j=j+1;
         end
         $write("-------------------------------------------------------------------\n");

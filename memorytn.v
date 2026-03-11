@@ -403,9 +403,11 @@ endtask
         `endif
         );
 `else
-    m_dram_sim #(`MEM_SIZE) idbmem(.CLK(clk), .w_addr(i_addr), .w_odata(o_data), 
-        .w_we(i_wr_en), .w_le(i_rd_en), .w_wdata(i_data), .w_ctrl(i_ctrl), .w_stall(o_busy), 
-        .w_mtime(w_mtime[31:0]));
+        DRAM_conRVqm #(.PRELOAD_FILE({`HEX_DIR,`HEXFILE})) dram_conqm (
+            .i_rd_en(r_rd), .i_wr_en(r_we), .i_addr(r_maddr), .i_data(r_wdata), .o_data(w_dram_odata), .o_busy(w_busy), .i_ctrl(r_mask),
+                               .sys_state(0), .w_bus_cpustate(0), .mem_state(), .d_pc(0),
+                               .clk(clk), .rst_x(rst_x), .clk_sdram(clk_sdram),
+			       .w_mtime());
 `endif
 `else
 `ifdef TNSRAM
@@ -425,28 +427,10 @@ endtask
     );
 `else
 `ifdef QMTECH
-	DRAM_conRVqm #(.PRELOAD_FILE({`HEX_DIR,`HEXFILE}))
-    		dram_conqm (
-                               // user interface ports
-                               .i_rd_en(r_rd),
-                               .i_wr_en(r_we),
-                               .i_addr(r_maddr),
-                               .i_data(r_wdata),
-                               .o_data(w_dram_odata),
-                               .o_busy(w_busy),
-                               .i_ctrl(r_mask),
-                               .sys_state(0),
-                               .w_bus_cpustate(0),
-                               .mem_state(),
-                               .d_pc(0),
-
-                               .clk(clk),
-                               .rst_x(rst_x),
-                               .clk_sdram(clk_sdram),
-
-                                `ifdef SIM_MODE
-                                .w_mtime()
-                                `else
+	DRAM_conRVqm #(.PRELOAD_FILE({`HEX_DIR,`HEXFILE})) dram_conqm (
+            .i_rd_en(r_rd), .i_wr_en(r_we), .i_addr(r_maddr), .i_data(r_wdata), .o_data(w_dram_odata), .o_busy(w_busy), .i_ctrl(r_mask),
+                               .sys_state(0), .w_bus_cpustate(0), .mem_state(), .d_pc(0),
+			       .clk(clk), .rst_x(rst_x), .clk_sdram(clk_sdram), 
                                 // SDRAM
                                 .SDCLK0(SDCLK0),
                                 .SDCKE0(SDCKE0),
@@ -457,15 +441,14 @@ endtask
                                 .SDCS0(SDCS0),
                                 .Data(Data),
                                 .Address(Address),
-                                .Bank(Bank)
-                               `endif
-                               );
+                                .Bank(Bank));
 `endif
 `endif
 `endif
 /**********************************************************************************************/
 
 `ifdef SIM_MODE
+`ifdef SIM_TNSRAM
     // LOAD linux
     integer i, j;
     //integer k;
@@ -493,6 +476,7 @@ endtask
         end
         $write("-------------------------------------------------------------------\n");
     end
+`endif
 `endif
 endmodule
 /**************************************************************************************************/
