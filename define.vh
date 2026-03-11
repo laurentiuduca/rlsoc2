@@ -11,7 +11,7 @@
 
 //`define ARTYA7
 /**************************************************************************************************/
-`define SIM_MODE
+//`define SIM_MODE
 `define USE_SINGLE_CORE
 //`define NUTTX_FLAT
 `define EMU_EXTINT1
@@ -25,7 +25,7 @@ error
 `endif
 
 `ifdef SIM_MODE
-  //`define SIM_TNSRAM // tang nano sim ram
+  `define SIM_TNSRAM // tang nano sim ram
   `define winbaddrlen 24
   `define winbdatalen 16
   `define winbmasklen 2
@@ -97,7 +97,7 @@ error
 `define FREQ 27_000_000
 `else
 `ifdef QMTECH
-`define frdiv 40
+`define frdiv 20
 `define FREQ (1_000_000 * (1000 / `frdiv))
 `endif
 `endif

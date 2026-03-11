@@ -37,7 +37,9 @@ reg [1:0] nw=0;
 reg [15:0] urddata0, urddata1;
 assign urddata={urddata1, urddata0};
 reg [1:0] ndqmi=0;
+reg [3:0] nudqmi=0;
 reg [15:0] nwrdata=0;
+reg [31:0] nuwrdata=0;
 reg [23:0] naddr=0;
 reg         [6  :0 ] refreshcnt=0;
 wire        [15 : 0] data = dq;
@@ -204,7 +206,7 @@ task write;
     end
 endtask
 
-`define maxrefreshcnt 7'b111_0000
+`define maxrefreshcnt 7'b100_0000
 always @ ( posedge clk or negedge rst )
 	if( !rst )
 		begin
@@ -240,20 +242,22 @@ always @ ( posedge clk or negedge rst )
 				'd31: nop (0, hi_z);                     //31 Nop, 2tCLK                                
 				'd32: begin
 			              if(refreshcnt >= `maxrefreshcnt) begin
-					refreshcnt <= 'd0;
+					//refreshcnt <= 'd0;
 					state_cnt <= 'd91;
 				      end else if(nw == 1) begin
                                                 naddr <= naddr + 1;
-                                                nwrdata <= uwrdata[31:16];
-                                                ndqmi <= dqmi[3:2];
+                                                nwrdata <= nuwrdata[31:16];
+                                                ndqmi <= nudqmi[3:2];
                                                 state_cnt <= 'd33;
 				      end else if (ucmd) begin
 					busy <= 1;
 					naddr <= uaddr >> 1;
 					ndqmi <= dqmi[1:0];
+					nudqmi <= dqmi;
 					nw <= 0;
 					if(uwe) begin
 						nwrdata <= uwrdata[15:0];
+						nuwrdata <= uwrdata;
 						state_cnt <= 'd33;
 					end
 					else 
@@ -286,14 +290,17 @@ always @ ( posedge clk or negedge rst )
 				// precharge
 				'd67: precharge_all_bank(0, hi_z);       //9 Precharge ALL Bank
 				'd68: nop (0, hi_z);                  //10-11 Nop, tRP's minimum value is 20ns
-				'd69: begin
+				'd71: begin
 						state_cnt <= 'd32;
 						busy <= 0;
 				end
 
 				'd91: auto_refresh;                      //91 Auto Refresh                       
                                 'd92: nop (0, hi_z);                     //92-99 Nop, tRFC's minimum value is 66ns
-				'd99: state_cnt <= 'd32;
+				'd99: begin
+					state_cnt <= 'd32;
+					refreshcnt <= 'd0;
+				end
 			endcase
 		end
 
