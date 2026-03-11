@@ -292,7 +292,8 @@ always @ ( posedge clk or negedge rst )
 				'd68: nop (0, hi_z);                  //10-11 Nop, tRP's minimum value is 20ns
 				'd71: begin
 						state_cnt <= 'd32;
-						busy <= 0;
+						if(nw != 1)
+							busy <= 0;
 				end
 
 				'd91: auto_refresh;                      //91 Auto Refresh                       
