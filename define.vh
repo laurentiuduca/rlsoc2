@@ -35,12 +35,20 @@ error
   //`define DRAM_SIM // slower, for nexysa7
   //`define CACHE_DEBUG
 `else
-  //`define QMTECH
-  `define TNSRAM
+  `define QMTECH
+  //`define TNSRAM
 `ifdef TNSRAM
-`define TN_DRAM_REFRESH // for tang nano
+  `define TN_DRAM_REFRESH // for tang nano
 `else
-`ifndef QMTECH
+`ifdef QMTECH
+  `define SDSPI
+  `ifdef SDSPI
+    `define SDSPI_DEVADDR 16'h8000
+    `define SDSPI_BLOCKSIZE 16'd512
+    `define SDSPI_BLOCKADDR (`SDSPI_DEVADDR + `SDSPI_BLOCKSIZE)
+    `define SDSPI_ADDRUH 16'h4000
+  `endif
+`else
   error
 `endif
 `endif

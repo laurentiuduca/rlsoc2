@@ -684,6 +684,97 @@ module m_topsim(CLK, RST_X);
     wire [31:0] w_sd_init_data;
     wire w_sd_init_we, w_sd_init_done;
     wire [5:0] sd_led_status;
+    `ifdef SDSPI
+    // sd
+    // spi
+    wire spi_clk, spi_mosi, spi_cs, spi_miso;
+    assign sdclk = spi_clk;
+    assign sdcmd = spi_mosi;
+    assign spi_miso = sddat0;
+    assign {sddat3, sddat2, sddat1} = {spi_cs, 2'b11};
+
+    wire sdspi_psel, m_psel;
+    wire sdspi_penable, m_penable;
+    wire sdspi_pwrite, m_pwrite;
+    wire [15:0] sdspi_paddr, m_paddr;
+    wire [31:0] sdspi_pwdata, m_pwdata;
+    wire [31:0] sdspi_prdata, m_prdata;
+    wire sdspi_pready, m_pready;
+    wire sdspi_pslverr, m_pslverr;
+    wire sdsbusy, m_sdsbusy;
+    wire [31:0] sdspi_status, m_sdspi_status;
+
+    assign {sdspi_psel, sdspi_penable, sdspi_pwrite, sdspi_paddr, sdspi_pwdata} = 
+                           {m_psel,  m_penable,  m_pwrite,  m_paddr,  m_pwdata};
+    assign {m_prdata, m_pready, m_pslverr} = {sdspi_prdata, sdspi_pready, sdspi_pslverr};
+    assign m_sdsbusy = sdsbusy;
+    assign m_sdspi_status = sdspi_status;
+
+    hazard3_sd sd (
+        .clk  (pll_clk),
+        .rst_n(locked),
+
+        .psel   (sdspi_psel),
+        .penable(sdspi_penable),
+        .pwrite (sdspi_pwrite),
+        .paddr  (sdspi_paddr),
+        .pwdata (sdspi_pwdata),
+        .prdata (sdspi_prdata),
+        .pready (sdspi_pready),
+        .pslverr(sdspi_pslverr),
+
+        .spi_clk (spi_clk),
+        .spi_mosi(spi_mosi),
+        .spi_cs  (spi_cs),
+        .spi_miso(spi_miso),
+
+        .sdsbusy(sdsbusy),
+        .sdspi_status(sdspi_status)
+    );
+
+    wire [31:0] w_sdloader_state, file_size;
+    `ifdef FAT32_SD
+    sdspi_file_reader #(
+        .FILE_NAME_LEN    ( 11      ),
+        .FILE_NAME        ( "initmem.bin"  )
+    ) u_sd_file_reader (
+    .rstn             ( RST_X         ),
+    .clk              ( pll_clk       ),
+    .filesystem_type  ( filesystem_type      ),  // 0=UNASSIGNED , 1=UNKNOWN , 2=FAT16 , 3=FAT32
+    .file_found       ( file_found        ),  // 0=file not found, 1=file found
+    .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .BOOTDONE(w_sd_init_done), .w_ctrl_state(r_sd_state),
+                                .w_reader_status(w_sdloader_state),
+                                // signals connect to SD controller
+                                .m_psel(m_psel),
+                                .m_penable(m_penable),
+                                .m_pwrite(m_pwrite),
+                                .m_paddr(m_paddr),
+                                .m_pwdata(m_pwdata),
+                                .m_prdata(m_prdata),
+                                .m_pready(m_pready),
+                                .m_pslverr(m_pslverr),
+                                .m_sdsbusy(m_sdsbusy),
+                                .m_sdspi_status(m_sdspi_status), .file_size(file_size));
+        wire file_found;
+        wire [1:0] filesystem_type;
+        //assign sd_led_status = ~{w_sd_init_done, file_found, filesystem_type, 2'b00};
+    `else
+    sdspi_loader sdspi_loader(.clk(clk), .resetn(rst_x),
+        .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
+        .w_ctrl_state(r_sd_state), .w_loader_status(w_sdloader_state),
+                                // signals connect to SD controller
+                                .psel(m_psel),
+                                .penable(m_penable),
+                                .pwrite(m_pwrite),
+                                .paddr(m_paddr),
+                                .pwdata(m_pwdata),
+                                .prdata(m_prdata),
+                                .pready(m_pready),
+                                .pslverr(m_pslverr),
+                                .sdsbusy(m_sdsbusy),
+                                .sdspi_status(m_sdspi_status));
+    `endif
+    `else
     `ifdef FAT32_SD
     sd_file_loader sd_file_loader(.clk27mhz(pll_clk), .resetn(RST_X), 
         .w_main_init_state(r_init_state), .DATA(w_sd_init_data), .WE(w_sd_init_we), .DONE(w_sd_init_done),
@@ -699,6 +790,7 @@ module m_topsim(CLK, RST_X);
         .sddat0(sddat0), .sddat1(sddat1), .sddat2(sddat2), .sddat3(sddat3),
 	.card_stat(sd_led_status[5:2]), .card_type(sd_led_status[1:0]));
     //assign sd_led_status = {!w_sd_init_done, 5'b0};
+    `endif
     `endif
 
     // sd state machine for copying sd to dram
@@ -1043,9 +1135,9 @@ module m_topsim(CLK, RST_X);
             r_extint1_done <= 1;
         end
 
-    assign w_led = (w_btnl == 0 && w_btnr == 0) ? 
-                        ~ {w_sd_checksum_match, w_sd_init_done, 
-                        r_zero_done, r_init_state /*calib_done & !sdram_fail & !w_late_refresh*/} :
+    assign w_led = (w_btnl == 1 && w_btnr == 1) ? 
+                        ~ {r_zero_done, r_init_state, w_sd_checksum_match, w_sd_init_done} :
+                        //r_zero_done, r_init_state /*calib_done & !sdram_fail & !w_late_refresh*/} :
                         ~sd_led_status;
 `endif
     /**********************************************************************************************/
