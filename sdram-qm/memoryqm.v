@@ -133,10 +133,18 @@ always@(posedge clk) begin
     case(state)
 	8'd0: // idle
        		if(i_rd_en && !ramstate && empty_afifo1 && empty_afifo2) begin
-         		prepare_read;
+         		//prepare_read;
+         		r_stall <= 1;
+         		state <= 11;
+			din_afifo1 <= {i_addr, 4'hf, 1'b1, 1'b0, 32'h0};
+               		wen_afifo1 <= 1;
       		end else if(i_wr_en && !ramstate && empty_afifo1 && empty_afifo2) begin
-         		prepare_write;
-      		end
+         		//prepare_write;
+		         r_stall <= 1;
+		         state <= 21;
+			 din_afifo1 <= {i_addr, i_ctrl, 1'b0, 1'b1, i_data};
+	                 wen_afifo1 <= 1;
+		end
         8'd10: begin // mem read
 	       din_afifo1 <= {r_addr, r_mask, 1'b1, 1'b0, r_wdata};
 	       wen_afifo1 <= 1;

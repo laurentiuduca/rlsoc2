@@ -25,10 +25,7 @@ error
 `endif
 
 `ifdef SIM_MODE
-  `define SIM_TNSRAM // tang nano sim ram
-  `define winbaddrlen 24
-  `define winbdatalen 16
-  `define winbmasklen 2
+  //`define SIM_TNSRAM // tang nano sim ram
   //`define SIM_TNREFRESH
   //`define RAM_DEBUG
   `define mtsm 1
@@ -36,25 +33,24 @@ error
   //`define CACHE_DEBUG
 `else
   `define QMTECH
-  //`define TNSRAM
-`ifdef TNSRAM
-  `define TN_DRAM_REFRESH // for tang nano
-`else
-`ifdef QMTECH
-  `define SDSPI
-  `ifdef SDSPI
+    `define SDSPI
     `define SDSPI_DEVADDR 16'h8000
     `define SDSPI_BLOCKSIZE 16'd512
     `define SDSPI_BLOCKADDR (`SDSPI_DEVADDR + `SDSPI_BLOCKSIZE)
     `define SDSPI_ADDRUH 16'h4000
-  `endif
+  //`define TNSRAM
+`ifdef TNSRAM
+  `define TN_DRAM_REFRESH // for tang nano
 `else
+`ifndef QMTECH
   error
 `endif
 `endif
 `endif
 //`define RAM_DEBUG
-
+    `define winbaddrlen 24
+    `define winbdatalen 16
+    `define winbmasklen 2
 //`define SKIP_CACHE
 `define KEYBOARD_QUEUE_SIZE 32
 `define IPI_MAX_DISPLAYS 20
@@ -105,7 +101,7 @@ error
 `define FREQ 27_000_000
 `else
 `ifdef QMTECH
-`define frdiv 20
+`define frdiv 10
 `define FREQ (1_000_000 * (1000 / `frdiv))
 `endif
 `endif

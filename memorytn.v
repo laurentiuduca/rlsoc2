@@ -403,6 +403,34 @@ endtask
         `endif
         );
 `else
+`ifdef laur0
+    m_sdram_simqm #(`MEM_SIZE/2) idbmemqm(.CLK(clk_sdram), .w_addr(r_maddr), .w_odata(w_dram_odata),
+        .w_we(r_we), .w_le(r_rd), .w_wdata(r_wdata), .w_mask(~r_mask), .w_stall(w_busy),
+        .w_mtime(w_mtime[31:0]),
+        .w_refresh(0)
+        );
+    // LOAD linux
+    integer i, j;
+    //integer k;
+    reg  [7:0] mem_bbl [0:`BBL_SIZE-1];
+    initial begin
+`ifndef VERILATOR
+    $display("VERILATOR NOT DEFINED");
+    #1
+`endif
+
+        $write("Running %s\n", {`HEX_DIR,`HEXFILE});
+        $readmemh({`HEX_DIR,`HEXFILE}, mem_bbl);
+        j=0;
+
+        for(i=0;i<`BBL_SIZE;i=i+2) begin
+            idbmemqm.idbmemqm.mem[j][7:0]=mem_bbl[i];
+            idbmemqm.idbmemqm.mem[j][15:8]=mem_bbl[i+1];
+            j=j+1;
+        end
+        $write("-------------------------------------------------------------------\n");
+    end
+`endif
         DRAM_conRVqm #(.PRELOAD_FILE({`HEX_DIR,`HEXFILE})) dram_conqm (
             .i_rd_en(r_rd), .i_wr_en(r_we), .i_addr(r_maddr), .i_data(r_wdata), .o_data(w_dram_odata), .o_busy(w_busy), .i_ctrl(r_mask),
                                .sys_state(0), .w_bus_cpustate(0), .mem_state(), .d_pc(0),

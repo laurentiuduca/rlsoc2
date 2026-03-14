@@ -206,7 +206,7 @@ task write;
     end
 endtask
 
-`define maxrefreshcnt 7'b100_0000
+`define maxrefreshcnt 7'b111_0000
 always @ ( posedge clk or negedge rst )
 	if( !rst )
 		begin
